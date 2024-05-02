@@ -3,6 +3,9 @@ var router = express.Router();
 var testController = require('../controllers/testController.js');
 
 //Test
+
+
+//testiranje
 /*
  * GET
  */
