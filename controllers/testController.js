@@ -16,7 +16,6 @@ module.exports = {
     list: async function (req, res) {
         try {
             const tests = await TestModel.find();
-            console.log("hre");
 
             return res.json(tests);
         }
