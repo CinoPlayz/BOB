@@ -236,7 +236,8 @@ fun Content(
                 start = 0.dp, // No padding on the left side
                 top = 10.dp,
                 end = 10.dp,
-                bottom = 10.dp)
+                bottom = 10.dp
+            )
             .clip(RoundedCornerShape(8.dp)) // Rounded corners for box (Corners of Row are contained within)
             .border(
                 BorderStroke(1.dp, Color.LightGray),
@@ -252,6 +253,11 @@ fun Content(
             MenuState.GENERATOR -> TODO()
         }
     }
+}
+
+@Composable
+fun Scraper(modifier: Modifier = Modifier) {
+    TODO("Choose scraper source and get data + display errors/progress")
 }
 
 @Composable
