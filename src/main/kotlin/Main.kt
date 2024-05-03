@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
@@ -25,6 +24,11 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.runtime.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 const val NAME = "BandOfBytes"
 
@@ -35,6 +39,12 @@ enum class MenuState(val customName: String) {
     PROCESSOR("//Data Processor//"),
     GENERATOR("//Generator//"),
     ABOUT("About")
+}
+
+enum class ScraperMenuState(val customName: String) {
+    OFFICIAL("SZ Official"),
+    VLAKSI("Vlak.si"),
+    RESET("Reset")
 }
 
 @Composable
@@ -79,7 +89,7 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { menuState.value = MenuState.ADD_TRAIN }
+                    //.clickable { menuState.value = MenuState.ADD_TRAIN }
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     //.wrapContentWidth(Alignment.CenterHorizontally)
@@ -105,7 +115,7 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { menuState.value = MenuState.ALL_TRAINS }
+                    //.clickable { menuState.value = MenuState.ALL_TRAINS }
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
@@ -128,7 +138,7 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { menuState.value = MenuState.PROCESSOR }
+                    //.clickable { menuState.value = MenuState.PROCESSOR }
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
@@ -176,7 +186,7 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { menuState.value = MenuState.GENERATOR }
+                    //.clickable { menuState.value = MenuState.GENERATOR }
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
@@ -248,7 +258,7 @@ fun Content(
             MenuState.ABOUT -> AboutAppTab()
             MenuState.ADD_TRAIN -> TODO()
             MenuState.ALL_TRAINS -> TODO()
-            MenuState.SCRAPER -> TODO()
+            MenuState.SCRAPER -> Scraper(modifier)
             MenuState.PROCESSOR -> TODO()
             MenuState.GENERATOR -> TODO()
         }
@@ -256,8 +266,184 @@ fun Content(
 }
 
 @Composable
-fun Scraper(modifier: Modifier = Modifier) {
-    TODO("Choose scraper source and get data + display errors/progress")
+fun Scraper(
+    modifier: Modifier = Modifier,
+    scraperMenuState: MutableState<ScraperMenuState> = remember { mutableStateOf(ScraperMenuState.RESET) },
+    buttonPadding: Int = 10,
+    textOffset: Int = 25,
+    iconSize: Int = 20,
+    fontSize: Int = 16,
+    iconTextSpace: Int = 6,
+) {
+    Column(modifier) {
+        val functionProgress = remember { mutableStateOf("") }
+        // Bar (row) at the top
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+            //.height(50.dp)
+        ) {
+            Row(
+                modifier = modifier
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { scraperMenuState.value = ScraperMenuState.OFFICIAL }
+                        .background(if (scraperMenuState.value == ScraperMenuState.OFFICIAL) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally) // align horizontally
+                ) {
+                    Icon(
+                        Icons.Default.Train,
+                        contentDescription = ScraperMenuState.OFFICIAL.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp)) // spacing between icon and text
+                    Text(
+                        text = ScraperMenuState.OFFICIAL.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { scraperMenuState.value = ScraperMenuState.VLAKSI }
+                        .background(if (scraperMenuState.value == ScraperMenuState.VLAKSI) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+
+                ) {
+                    Icon(
+                        Icons.Default.Subway,
+                        contentDescription = ScraperMenuState.VLAKSI.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp))
+                    Text(
+                        text = ScraperMenuState.VLAKSI.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .width(50.dp)
+                        .clickable { scraperMenuState.value = ScraperMenuState.RESET }
+                        .background(Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = ScraperMenuState.RESET.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Text(
+                        //text = ScraperMenuState.VLAKSI.customName,
+                        text = "",
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+            }
+        }
+        Divider(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
+        // Content box that can be changed
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(
+                    start = 0.dp,
+                    top = 20.dp,
+                    end = 0.dp,
+                    bottom = 0.dp
+                )
+        ) {
+            when (scraperMenuState.value) {
+                ScraperMenuState.OFFICIAL -> ScraperOfficial()
+                ScraperMenuState.VLAKSI -> TODO()
+                ScraperMenuState.RESET -> ScraperReset()
+            }
+            // You can change the content of this box dynamically
+            // For example:
+            // Text("Dynamic Content")
+        }
+    }
+}
+
+@Composable
+fun ScraperOfficial(
+    modifier: Modifier = Modifier
+) {
+    // State to hold the result of the operation
+    val resultState = remember { mutableStateOf<Map<String, Any?>?>(null) }
+
+    // State to hold the loading status
+    val isLoading = remember { mutableStateOf(false) }
+
+    // LaunchedEffect to trigger the data fetching operation
+    LaunchedEffect(Unit) {
+        isLoading.value = true // Set loading to true before fetching data
+        try {
+            // Coroutine call - data fetch
+            withContext(Dispatchers.IO) { getDataAndProcess(SourceWebsite.Official, resultState) }
+        } catch (e: Exception) {
+            println("An error occurred: ${e.message}")
+        } finally {
+            isLoading.value = false // Set loading to false after fetching data
+        }
+    }
+
+    // Loading indicator - data processing
+    if (isLoading.value) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(32.dp)
+                .padding(16.dp)
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        // Display data
+        resultState.value?.let { result ->
+            Text("Result: $result", modifier = Modifier.padding(16.dp))
+        }
+    }
+}
+
+@Composable
+fun ScraperReset(
+    modifier: Modifier = Modifier,
+    titleFontSize: Int = 20,
+    bodyFontSize: Int = 14
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+            .fillMaxSize()
+            .wrapContentSize(Alignment.Center),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        TitleText(
+            text = "Choose data source",
+            fontSize = titleFontSize,
+            //modifier = Modifier.padding(bottom = 16.dp, top = 10.dp)
+        )
+    }
 }
 
 @Composable
