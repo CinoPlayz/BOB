@@ -4,8 +4,16 @@ var logger = require('morgan');
 var mongoose = require('mongoose');
 var cors = require('cors')
 
-var mongoDBURL = 'mongodb://127.0.0.1/Test'
-mongoose.connect(mongoDBURL)
+//Reading mongoDB URI from args
+var args = process.argv.slice(2);
+
+if (!args || !args.length) {
+    console.log("No database URI passed! Usage: node <filename> <URI>");
+    process.exit(1);
+}
+
+var mongoDBURI = args[0];
+mongoose.connect(mongoDBURI)
 mongoose.Promise = global.Promise
 var db = mongoose.connection
 db.on('error', console.error.bind(console, 'MongoDB connection error: '));
@@ -33,3 +41,5 @@ app.use('/tests', testRouter);
 app.use('/trainLocHistories', trainLocHistoryRouter);
 
 module.exports = app;
+
+

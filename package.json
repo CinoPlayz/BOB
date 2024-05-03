@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
-    "dev": "nodemon ./bin/www"
+    "start": "node ./bin/www mongodb://127.0.0.1/ZP",
+    "dev": "nodemon ./bin/www mongodb://127.0.0.1/ZP"
   },
   "author": "",
   "license": "ISC",
