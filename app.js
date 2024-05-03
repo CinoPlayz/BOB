@@ -26,8 +26,10 @@ app.use(cors(corsOptions));
 
 var indexRouter = require('./routes/index');
 var testRouter = require('./routes/testRoutes');
+var trainLocHistoryRouter = require('./routes/trainLocHistoryRoutes');
 
 app.use('/', indexRouter);
 app.use('/tests', testRouter);
+app.use('/trainLocHistories', trainLocHistoryRouter);
 
 module.exports = app;
