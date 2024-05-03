@@ -8,7 +8,7 @@ const trainLocHistorySchema = new mongoose.Schema({
     trainType: {
         type: String,
         required: true,
-        //enum: ['x', 'y']    omejitve vrst vlakov
+        //enum: ['x', 'y']    omejitve vrst vlakov po potrebi
     },
     trainNumber: {
         type: String,
@@ -23,7 +23,7 @@ const trainLocHistorySchema = new mongoose.Schema({
         required: true
     },
     routeStartTime: {
-        type: String,  // Format časa kot niz
+        type: String,  
         required: true
     },
     nextStation: {
@@ -33,7 +33,7 @@ const trainLocHistorySchema = new mongoose.Schema({
     delay: {
         type: Number,
         required: true,
-        min: 0  // Zagotavlja, da je zamuda ne negativno število
+        min: 0  
     },
     coordinates: {
         lat: {
