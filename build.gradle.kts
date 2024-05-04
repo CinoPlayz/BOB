@@ -20,10 +20,15 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
+    testImplementation(kotlin("test")) // test environment
     implementation("androidx.compose.material:material-icons-extended:1.6.7") // Google Fonts Icons
     implementation("com.google.code.gson:gson:2.10.1") // JSON
     implementation("com.github.kittinunf.fuel:fuel:2.3.1") // Fuel library (HTTP)
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1") // .env file support
+    implementation("org.mongodb:mongodb-driver-sync:5.1.0") // MongoDB Driver
+    implementation("org.slf4j:slf4j-api:2.0.13") // Logger for MongoDB Driver
+    implementation("org.slf4j:slf4j-simple:2.0.13") // Logger for MongoDB Driver
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0") // Test coroutines
 }
 
 compose.desktop {
@@ -36,4 +41,8 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

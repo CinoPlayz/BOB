@@ -1,8 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -25,9 +22,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.runtime.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 const val NAME = "BandOfBytes"
@@ -369,14 +364,14 @@ fun Scraper(
                 .weight(1f)
                 .padding(
                     start = 0.dp,
-                    top = 20.dp,
+                    top = 0.dp,
                     end = 0.dp,
                     bottom = 0.dp
                 )
         ) {
             when (scraperMenuState.value) {
-                ScraperMenuState.OFFICIAL -> ScraperOfficial()
-                ScraperMenuState.VLAKSI -> TODO()
+                ScraperMenuState.OFFICIAL -> ScraperGetAndProcessData(SourceWebsite.Official)
+                ScraperMenuState.VLAKSI -> ScraperGetAndProcessData(SourceWebsite.Vlaksi)
                 ScraperMenuState.RESET -> ScraperReset()
             }
             // You can change the content of this box dynamically
@@ -387,7 +382,8 @@ fun Scraper(
 }
 
 @Composable
-fun ScraperOfficial(
+fun ScraperGetAndProcessData(
+    sourceWebsite: SourceWebsite,
     modifier: Modifier = Modifier
 ) {
     // State to hold the result of the operation
@@ -401,7 +397,7 @@ fun ScraperOfficial(
         isLoading.value = true // Set loading to true before fetching data
         try {
             // Coroutine call - data fetch
-            withContext(Dispatchers.IO) { getDataAndProcess(SourceWebsite.Official, resultState) }
+            withContext(Dispatchers.IO) { getDataAndProcess(sourceWebsite, resultState) }
         } catch (e: Exception) {
             println("An error occurred: ${e.message}")
         } finally {
@@ -421,9 +417,18 @@ fun ScraperOfficial(
         }
     } else {
         // Display data
-        resultState.value?.let { result ->
-            Text("Result: $result", modifier = Modifier.padding(16.dp))
+        Box(
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()) // Box with enabled scroll
+        ) {
+            resultState.value?.let { result ->
+                Text("Result: $result")
+            }
         }
+        /*resultState.value?.let { result ->
+            Text("Result: $result", modifier = Modifier.padding(16.dp))
+        }*/
     }
 }
 
