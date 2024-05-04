@@ -4,15 +4,26 @@ var logger = require('morgan');
 var mongoose = require('mongoose');
 var cors = require('cors')
 
-//Reading mongoDB URI from args
+//Reading mongoDB URI from args or env variable
 var args = process.argv.slice(2);
+var mongoDBURI = ""
 
 if (!args || !args.length) {
-    console.log("No database URI passed! Usage: node <filename> <URI>");
-    process.exit(1);
+    if(process.env.DBURL === undefined){
+        console.log("No database URI passed! Usage: node <filename> <URI>");
+        process.exit(1);
+    }
+    else {
+        mongoDBURI = process.env.DBURL;
+        console.log("Read URI from env variable!");
+    }        
+}
+else {
+    mongoDBURI = args[0];
+    console.log("Read URI from args!")
 }
 
-var mongoDBURI = args[0];
+
 mongoose.connect(mongoDBURI)
 mongoose.Promise = global.Promise
 var db = mongoose.connection
