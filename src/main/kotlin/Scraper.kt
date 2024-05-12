@@ -7,6 +7,10 @@ import com.google.gson.JsonElement
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import models.Official
+import models.OfficialRequest
+import models.VlakiSi
+import models.VlakiSiRequest
 import java.net.InetAddress
 import java.nio.charset.Charset
 import java.time.LocalDateTime
@@ -155,6 +159,21 @@ suspend fun getDataAndProcess(
                             result["data"] = resultGet.value
                             result["time_of_request"] = getCurrentTime()
                             result["source_website"] = source.name
+
+                            when(source){
+                                SourceWebsite.Official -> {
+                                    val listOfficial = Gson().fromJson(resultGet.value, Array<Official>::class.java).toList()
+                                    val requestOfficial = OfficialRequest(null, LocalDateTime.now(), listOfficial)
+                                    result["parsed"] = requestOfficial.toListTrainLocHistory()
+                                    println(result["parsed"])
+                                }
+                                SourceWebsite.Vlaksi -> {
+                                    val vlakSi = Gson().fromJson(resultGet.value, VlakiSi::class.java)
+                                    val requestVlakSi = VlakiSiRequest(null, LocalDateTime.now(), vlakSi)
+                                    result["parsed"] = requestVlakSi.toListTrainLocHistory()
+                                    println(result["parsed"])
+                                }
+                            }
                         }
                     }
                 }
