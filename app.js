@@ -45,12 +45,14 @@ app.use(cors(corsOptions));
 
 var indexRouter = require('./routes/index');
 var testRouter = require('./routes/testRoutes');
-var trainLocHistoryRouter = require('./routes/trainLocHistoryRoutes');
+const trainLocHistoryRouter = require('./routes/trainLocHistoryRoutes');
 const stationRouter = require('./routes/stationRoutes');
+const delayRouter = require('./routes/delayRoutes');
 
 app.use('/', indexRouter);
 app.use('/tests', testRouter);
 app.use('/trainLocHistories', trainLocHistoryRouter);
 app.use('/stations', stationRouter);
+app.use('delays', delayRouter);
 
 module.exports = app;
