@@ -1,31 +1,24 @@
-var express = require('express');
-var router = express.Router();
-var trainLocHistoryController = require('../controllers/trainLocHistoryController.js');
+const express = require('express');
+const router = express.Router();
+const trainLocHistoryController = require('../controllers/trainLocHistoryController.js');
 
-
-/*
- * GET
+/**
+ * TODO: middleware (auth)
  */
+
+// GET all
 router.get('/', trainLocHistoryController.list);
 
-/*
- * GET
- */
+// GET by ID
 router.get('/:id', trainLocHistoryController.show);
 
-/*
- * POST
- */
+// POST (create)
 router.post('/', trainLocHistoryController.create);
 
-/*
- * PUT
- */
+// PUT (update)
 router.put('/:id', trainLocHistoryController.update);
 
-/*
- * DELETE
- */
+// DELETE (remove)
 router.delete('/:id', trainLocHistoryController.remove);
 
 module.exports = router;

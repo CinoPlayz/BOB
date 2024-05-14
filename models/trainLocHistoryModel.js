@@ -1,50 +1,68 @@
 const mongoose = require('mongoose');
 
 const trainLocHistorySchema = new mongoose.Schema({
-    timeOfRequest: {
-        type: Date,
-        required: true
-    },
     trainType: {
         type: String,
         required: true,
+        // enum: ['LP', 'ICS'] // options list
     },
     trainNumber: {
-        type: String,
+        type: Number,
         required: true
     },
-    routeFrom: {
-        type: String,
+    vaildFrom: {
+        type: Date,
         required: true
     },
-    routeTo: {
-        type: String,
+    validUntil: {
+        type: Date,
         required: true
     },
-    routeStartTime: {
-        type: String,  
+    canSupportBikes: {
+        type: Boolean,
         required: true
     },
-    nextStation: {
-        type: String,
-        required: true
-    },
-    delay: {
+    drivesOn: [{
         type: Number,
         required: true,
-        min: 0  
-    },
-    coordinates: {
-        lat: {
-            type: Number,
+        min: 0, // 0 - Sunday, 1 - Monday ... 6 - Saturday, 7 - Holidays
+        max: 7
+    }],
+    start: {
+        station: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'station',
             required: true
         },
-        lng: {
-            type: Number,
+        time: {
+            type: Date, // time
             required: true
         }
-    }
+    },
+    end: {
+        station: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'station',
+            required: true
+        },
+        time: {
+            type: Date, // time
+            required: true
+        }
+    },
+    middle: [{
+        station: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'station',
+            required: true
+        },
+        time: {
+            type: Date, // time
+            required: true
+        }
+    }]
+}, {
+    timestamps: true
 });
 
-const TrainLocHistory = mongoose.model('TrainLocHistory', trainLocHistorySchema);
-module.exports = TrainLocHistory;
+module.exports = mongoose.model('trainLocHistory', trainLocHistorySchema);

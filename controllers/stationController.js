@@ -20,7 +20,7 @@ module.exports = {
         const id = req.params.id;
 
         try {
-            const station = await StationModel.findOne({ _id: id });
+            const station = await StationModel.findById(id);
 
             if (!station) {
                 console.log("Error. stationController, show(), 1");
