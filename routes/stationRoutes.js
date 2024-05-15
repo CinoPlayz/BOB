@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const stationController = require('../controllers/stationController.js');
-
-/**
- * TODO: middleware (auth)
- */
+const { extractToken } = require('../controllers/shared');
+const { getRoleFromToken } = require('../controllers/shared');
 
 // GET all
 router.get('/', stationController.list);
@@ -13,12 +11,12 @@ router.get('/', stationController.list);
 router.get('/:id', stationController.show);
 
 // POST (create)
-router.post('/', stationController.create);
+router.post('/', extractToken, getRoleFromToken, stationController.create);
 
 // PUT (update)
-router.put('/:id', stationController.update);
+router.put('/:id', extractToken, getRoleFromToken, stationController.update);
 
 // DELETE (remove)
-router.delete('/:id', stationController.remove);
+router.delete('/:id', extractToken, getRoleFromToken, stationController.remove);
 
 module.exports = router;

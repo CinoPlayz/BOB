@@ -1,13 +1,14 @@
 var express = require('express');
 var router = express.Router();
 var userController = require('../controllers/userController.js');
-
+const { extractToken } = require('../controllers/shared');
+const { getRoleFromToken } = require('../controllers/shared');
 
 /*
  * GET
  */
-router.get('/', userController.list);
-router.get('/:id', userController.show);
+router.get('/', extractToken, getRoleFromToken, userController.list);
+router.get('/:id', extractToken, getRoleFromToken, userController.show);
 
 
 /*
@@ -20,12 +21,11 @@ router.post('/TwoFaLogin', userController.twoFaLogin);
 /*
  * PUT
  */
-router.put('/:id', userController.update);
+router.put('/:id', extractToken, getRoleFromToken, userController.update);
 
 /*
  * DELETE
  */
-router.delete('/:id', userController.remove);
-router.delete('/:userId/tokens', userController.deleteAllTokens); // Dodajanje rute za brisanje vseh tokenov
+router.delete('/:id', extractToken, getRoleFromToken, userController.remove);
 
 module.exports = router;

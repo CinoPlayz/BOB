@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const delayController = require('../controllers/delayController.js');
-
-/**
- * TODO: middleware (auth)
- */
+const { extractToken } = require('../controllers/shared');
+const { getRoleFromToken } = require('../controllers/shared');
 
 // GET all
 router.get('/', delayController.list);
@@ -13,12 +11,12 @@ router.get('/', delayController.list);
 router.get('/:id', delayController.show);
 
 // POST (create)
-router.post('/', delayController.create);
+router.post('/', extractToken, getRoleFromToken, delayController.create);
 
 // PUT (update)
-router.put('/:id', delayController.update);
+router.put('/:id', extractToken, getRoleFromToken, delayController.update);
 
 // DELETE (remove)
-router.delete('/:id', delayController.remove);
+router.delete('/:id', extractToken, getRoleFromToken, delayController.remove);
 
 module.exports = router;
