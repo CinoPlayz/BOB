@@ -35,7 +35,7 @@ const trainLocHistorySchema = new mongoose.Schema({
             required: true
         },
         time: {
-            type: Date, // time
+            type: String, // time format: 08:45
             required: true
         }
     },
@@ -46,7 +46,7 @@ const trainLocHistorySchema = new mongoose.Schema({
             required: true
         },
         time: {
-            type: Date, // time
+            type: String, // time format: 08:45
             required: true
         }
     },
@@ -57,7 +57,7 @@ const trainLocHistorySchema = new mongoose.Schema({
             required: true
         },
         time: {
-            type: Date, // time
+            type: String, // time format: 08:45
             required: true
         }
     }]
