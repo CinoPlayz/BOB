@@ -53,6 +53,6 @@ app.use('/', indexRouter);
 app.use('/tests', testRouter);
 app.use('/trainLocHistories', trainLocHistoryRouter);
 app.use('/stations', stationRouter);
-app.use('delays', delayRouter);
+app.use('/delays', delayRouter);
 
 module.exports = app;
