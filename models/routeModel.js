@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const trainLocHistorySchema = new mongoose.Schema({
+const routeSchema = new mongoose.Schema({
     trainType: {
         type: String,
         required: true,
@@ -64,4 +64,4 @@ const trainLocHistorySchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('trainLocHistory', trainLocHistorySchema);
+module.exports = mongoose.model('route', routeSchema);
