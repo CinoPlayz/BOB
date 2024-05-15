@@ -1,5 +1,5 @@
 var UserModel = require('../models/userModel.js');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const OTPAuth = require('otpauth');
 var shared = require('./shared.js');
 
@@ -80,9 +80,6 @@ module.exports = {
         }
     }, 
 
-    /**
-     * userController.login()
-     */
     login: async function (req, res, next) {
         try {
             const { username, password } = req.body;
@@ -102,12 +99,12 @@ module.exports = {
                 if (existingLoginTokenIndex !== -1) {
                     // Posodabljanje obstoječega tokena
                     const existingLoginToken = user.tokens[existingLoginTokenIndex];
-                    existingLoginToken.token = jwt.sign({ userId: user._id }, 'temporary_login_secret', { expiresIn: '1h' });
+                    existingLoginToken.token = crypto.randomBytes(32).toString('hex');
                     existingLoginToken.expiresOn = new Date(Date.now() + 60 * 60000); // 1 ura veljavnosti
                 } else {
                     // Ustvarjanje novega začasnega login tokena
                     const loginToken = {
-                        token: jwt.sign({ userId: user._id }, 'temporary_login_secret', { expiresIn: '1h' }),
+                        token: crypto.randomBytes(32).toString('hex'),
                         expiresOn: new Date(Date.now() + 60 * 60000), // 1 ura veljavnosti
                         type: 'login'
                     };
@@ -123,13 +120,13 @@ module.exports = {
                     // Posodabljanje obstoječega tokena
                     console.log("posodabljanje obstoječega tokena");
                     const existingAllToken = user.tokens[existingAllTokenIndex];
-                    existingAllToken.token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '14d' });
+                    existingAllToken.token = crypto.randomBytes(32).toString('hex');
                     existingAllToken.expiresOn = new Date(Date.now() + 14 * 24 * 3600 * 1000); // 14 dni veljavnosti
                 } else {
                     // Ustvarjanje novega all tokena
                     console.log("ustvarjanje novega");
                     const allToken = {
-                        token: jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '14d' }),
+                        token: crypto.randomBytes(32).toString('hex'),
                         expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 dni veljavnosti
                         type: 'all'
                     };
@@ -142,8 +139,6 @@ module.exports = {
             return next(err);
         }
     },
-
-   
 
     isLoggedIn: async function(req, res, next) {
         try {
@@ -165,9 +160,8 @@ module.exports = {
     },
 
     TwofaSetup: [
-        //še dodati->verifyToken,
+        //validateToken->še implemetirati
         async function (req, res, next) {
-            
             await module.exports.isLoggedIn(req, res, async function() {
                 try {
                     const user = req.user;
@@ -181,7 +175,7 @@ module.exports = {
                         return res.status(400).json({ error: "2FA is already enabled" });
                     }
 
-                    // Ustvari naključno skrivnost
+                    // Ustvari naključno 2faSecret
                     const secret = new OTPAuth.Secret({ size: 32 });
                     console.log('Secret generated:', secret.base32); 
 
