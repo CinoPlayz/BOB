@@ -1,4 +1,4 @@
-const TrainLocHistoryModel = require('../models/trainLocHistory.js');
+const TrainLocHistoryModel = require('../models/trainLocHistoryModel.js');
 const shared = require('./shared.js');
 
 module.exports = {
