@@ -1,4 +1,6 @@
 var UserModel = require('../models/userModel.js');
+const jwt = require('jsonwebtoken');
+const OTPAuth = require('otpauth');
 var shared = require('./shared.js');
 
 
@@ -93,18 +95,125 @@ module.exports = {
                 return next(err);
             }
 
-            return res.json(user);
+            if (user['2faEnabled']) {
+                // Preverba, če že obstaja začasni login token
+                const existingLoginTokenIndex = user.tokens.findIndex(token => token.type === 'login' && new Date(token.expiresOn) > new Date());
+                
+                if (existingLoginTokenIndex !== -1) {
+                    // Posodabljanje obstoječega tokena
+                    const existingLoginToken = user.tokens[existingLoginTokenIndex];
+                    existingLoginToken.token = jwt.sign({ userId: user._id }, 'temporary_login_secret', { expiresIn: '1h' });
+                    existingLoginToken.expiresOn = new Date(Date.now() + 60 * 60000); // 1 ura veljavnosti
+                } else {
+                    // Ustvarjanje novega začasnega login tokena
+                    const loginToken = {
+                        token: jwt.sign({ userId: user._id }, 'temporary_login_secret', { expiresIn: '1h' }),
+                        expiresOn: new Date(Date.now() + 60 * 60000), // 1 ura veljavnosti
+                        type: 'login'
+                    };
+                    user.tokens.push(loginToken);
+                }
+                await user.save();
+                return res.json({ message: '2FA enabled, provide the OTP code', loginToken: user.tokens.find(token => token.type === 'login').token });
+            } else {
+                // Preverba, če že obstaja all token
+                const existingAllTokenIndex = user.tokens.findIndex(token => token.type === 'all' && new Date(token.expiresOn) > new Date());
+
+                if (existingAllTokenIndex !== -1) {
+                    // Posodabljanje obstoječega tokena
+                    console.log("posodabljanje obstoječega tokena");
+                    const existingAllToken = user.tokens[existingAllTokenIndex];
+                    existingAllToken.token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '14d' });
+                    existingAllToken.expiresOn = new Date(Date.now() + 14 * 24 * 3600 * 1000); // 14 dni veljavnosti
+                } else {
+                    // Ustvarjanje novega all tokena
+                    console.log("ustvarjanje novega");
+                    const allToken = {
+                        token: jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '14d' }),
+                        expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 dni veljavnosti
+                        type: 'all'
+                    };
+                    user.tokens.push(allToken);
+                }
+                await user.save();
+                return res.json({ token: user.tokens.find(token => token.type === 'all').token });
+            }
         } catch (err) {
             return next(err);
         }
     },
 
+   
+
+    isLoggedIn: async function(req, res, next) {
+        try {
+            const userId = req.params.id; // Vzeme ID iz URL parametrov zaenkrat->zaradi testiranja
+            console.log('User ID from URL:', userId); 
+
+            const user = await UserModel.findById(userId);
+            console.log('User found:', user); 
+
+            if (!user) {
+                return res.status(404).send('User not found');
+            }
+            req.user = user;
+            next();
+        } catch (err) {
+            console.error('Error in isLoggedIn middleware:', err); 
+            return res.status(500).send('Server error');
+        }
+    },
+
+    TwofaSetup: [
+        //še dodati->verifyToken,
+        async function (req, res, next) {
+            
+            await module.exports.isLoggedIn(req, res, async function() {
+                try {
+                    const user = req.user;
+                    console.log('User in TwofaSetup:', user); 
+
+                    if (!user) {
+                        return res.status(400).json({ error: "User not found" });
+                    }
+
+                    if (user['2faEnabled']) {
+                        return res.status(400).json({ error: "2FA is already enabled" });
+                    }
+
+                    // Ustvari naključno skrivnost
+                    const secret = new OTPAuth.Secret({ size: 32 });
+                    console.log('Secret generated:', secret.base32); 
+
+                    // Ustvari TOTP objekt
+                    const totp = new OTPAuth.TOTP({
+                        secret: secret,
+                        issuer: "BOB",
+                        label: `${user.username} Login`
+                    });
+
+                    // Shranjevanje 2faSecret v uporabniški račun
+                    user['2faSecret'] = secret.base32;
+                    user['2faEnabled'] = true;
+                    await user.save();
+
+                    // Vrni URI za Google Authenticator
+                    const uri = totp.toString();
+                    console.log('TOTP URI:', uri); 
+                    return res.json({ uri });
+                } catch (err) {
+                    console.error('Error in TwofaSetup:', err); 
+                    return next(err);
+                }
+            });
+        }
+    ],
     /**
      * userController.update()
      */
     update: async function (req, res) {
         var id = req.params.id;
-
+        
         try {
             const userFound = await UserModel.findOne({ _id: id });
 
@@ -137,6 +246,30 @@ module.exports = {
         }
         catch (err) {
             return shared.handleError(err, 500, "Error when deleting the user", res);
+        }
+    },
+
+     /**
+     * userController.deleteAllTokens()
+     */
+     deleteAllTokens: async function (req, res, next) {
+        try {
+            const { userId } = req.params;
+
+            // Najdi uporabnika po ID-ju in izprazni polje tokens
+            const user = await UserModel.findByIdAndUpdate(
+                userId,
+                { $set: { tokens: [] } },
+                { new: true } // Vrne posodobljen dokument
+            );
+
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            return res.status(200).json({ message: "All tokens deleted successfully", user });
+        } catch (err) {
+            return next(err);
         }
     },
 };

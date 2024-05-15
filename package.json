@@ -12,7 +12,9 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.3.3",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "otpauth": "^9.2.4"
   }
 }

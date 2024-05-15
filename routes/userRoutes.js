@@ -15,6 +15,7 @@ router.get('/:id', userController.show);
  */
 router.post('/', userController.create);
 router.post('/login', userController.login);
+router.post('/:id/TwofaSetup', userController.TwofaSetup);
 /*
  * PUT
  */
@@ -24,5 +25,6 @@ router.put('/:id', userController.update);
  * DELETE
  */
 router.delete('/:id', userController.remove);
+router.delete('/:userId/tokens', userController.deleteAllTokens); // Dodajanje rute za brisanje vseh tokenov
 
 module.exports = router;
