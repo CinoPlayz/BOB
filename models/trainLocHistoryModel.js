@@ -1,68 +1,53 @@
 const mongoose = require('mongoose');
 
 const trainLocHistorySchema = new mongoose.Schema({
+    timeOfRequest: {
+        type: Date,
+        required: true
+    },
     trainType: {
         type: String,
         required: true,
-        // enum: ['LP', 'ICS'] // options list
+
+        //enum: ['x', 'y']    omejitve vrst vlakov po potrebi
+
     },
     trainNumber: {
-        type: Number,
+        type: String,
         required: true
     },
-    vaildFrom: {
-        type: Date,
+    routeFrom: {
+        type: String,
         required: true
     },
-    validUntil: {
-        type: Date,
+    routeTo: {
+        type: String,
         required: true
     },
-    canSupportBikes: {
-        type: Boolean,
+    routeStartTime: {
+        type: String,  
         required: true
     },
-    drivesOn: [{
+    nextStation: {
+        type: String,
+        required: true
+    },
+    delay: {
         type: Number,
         required: true,
-        min: 0, // 0 - Sunday, 1 - Monday ... 6 - Saturday, 7 - Holidays
-        max: 7
-    }],
-    start: {
-        station: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'station',
-            required: true
-        },
-        time: {
-            type: String, // time format: 08:45
-            required: true
-        }
+        min: 0  
     },
-    end: {
-        station: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'station',
+    coordinates: {
+        lat: {
+            type: Number,
             required: true
         },
-        time: {
-            type: String, // time format: 08:45
+        lng: {
+            type: Number,
             required: true
         }
-    },
-    middle: [{
-        station: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'station',
-            required: true
-        },
-        time: {
-            type: String, // time format: 08:45
-            required: true
-        }
-    }]
-}, {
-    timestamps: true
+    }
 });
 
-module.exports = mongoose.model('trainLocHistory', trainLocHistorySchema);
+const TrainLocHistory = mongoose.model('TrainLocHistory', trainLocHistorySchema);
+module.exports = TrainLocHistory;

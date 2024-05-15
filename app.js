@@ -48,11 +48,13 @@ var testRouter = require('./routes/testRoutes');
 const trainLocHistoryRouter = require('./routes/trainLocHistoryRoutes');
 const stationRouter = require('./routes/stationRoutes');
 const delayRouter = require('./routes/delayRoutes');
+const routeRouter = require('./routes/routeRoutes');
 
 app.use('/', indexRouter);
 app.use('/tests', testRouter);
 app.use('/trainLocHistories', trainLocHistoryRouter);
 app.use('/stations', stationRouter);
 app.use('/delays', delayRouter);
+app.use('/routes', routeRouter);
 
 module.exports = app;
