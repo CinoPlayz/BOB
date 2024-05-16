@@ -15,7 +15,8 @@ router.get('/:id', userController.show);
  */
 router.post('/', userController.create);
 router.post('/login', userController.login);
-router.post('/:id/TwofaSetup', userController.TwofaSetup);
+router.post('/:id/TwoFaSetup', userController.twoFaSetup);
+router.post('/TwoFaLogin', userController.twoFaLogin);
 /*
  * PUT
  */

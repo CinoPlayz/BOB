@@ -159,13 +159,13 @@ module.exports = {
         }
     },
 
-    TwofaSetup: [
+    twoFaSetup: [
         //validateToken->še implemetirati
         async function (req, res, next) {
             await module.exports.isLoggedIn(req, res, async function() {
                 try {
                     const user = req.user;
-                    console.log('User in TwofaSetup:', user); 
+                    console.log('User in TwoFaSetup:', user); 
 
                     if (!user) {
                         return res.status(400).json({ error: "User not found" });
@@ -196,12 +196,82 @@ module.exports = {
                     console.log('TOTP URI:', uri); 
                     return res.json({ uri });
                 } catch (err) {
-                    console.error('Error in TwofaSetup:', err); 
+                    console.error('Error in TwoFaSetup:', err); 
                     return next(err);
                 }
             });
         }
     ],
+
+
+     /**
+     * userController.2faLogin()
+     */
+     twoFaLogin: async function (req, res, next) {
+        try {
+            const { loginToken, otpCode } = req.body;
+
+            if (!loginToken || !otpCode) {
+                console.log('Missing login token or OTP code');
+                return res.status(400).json({ error: 'Missing login token or OTP code' });
+            }
+
+            console.log('Received loginToken:', loginToken);
+            console.log('Received otpCode:', otpCode);
+
+            // Poiščemo uporabnika na podlagi login tokena                                          //expiry date mora biti večji od trenutnega časa
+            const user = await UserModel.findOne({ 'tokens.token': loginToken, 'tokens.expiresOn': { $gt: new Date() }, 'tokens.type': 'login' });
+            if (!user) {
+                console.log('Invalid or expired login token');
+                return res.status(401).json({ error: 'Invalid or expired login token' });
+            }
+
+            console.log('User found:', user.username);
+
+            // Ustvari TOTP objekt s shranjeno skrivnostjo, da lahko preverjamo otp kode
+            const totp = new OTPAuth.TOTP({
+                secret: OTPAuth.Secret.fromBase32(user['2faSecret']),//upoorabimo 2faSecret, ki je bila 
+                issuer: "BOB",                                      //ustvarjena med TwoFaSetup
+                label: `${user.username} Login`
+            });
+
+            console.log('TOTP object created with secret:', user['2faSecret']);
+
+            // Preveri OTP kodo
+            const delta = totp.validate({ token: otpCode, window: 1 });
+            if (delta === null) {
+                console.log('Invalid OTP code');
+                return res.status(401).json({ error: 'Invalid OTP code' });
+            }
+
+            console.log('OTP code is valid');
+
+            // Ustvari dolgoročni all token
+            const allToken = {
+                token: crypto.randomBytes(32).toString('hex'),
+                expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 dni veljavnosti
+                type: 'all'
+            };
+
+            console.log('Generated new all token:', allToken.token);
+
+            // Odstranimo prejšnji login token
+            user.tokens = user.tokens.filter(token => token.token !== loginToken);
+
+            // Dodamo novi all token
+            user.tokens.push(allToken);
+            await user.save();
+
+            console.log('Saved user with new all token');
+
+            return res.json({ token: allToken.token });
+        } catch (err) {
+            console.error('Error in TwofaLogin:', err);
+            return next(err);
+        }
+    },
+    
+
     /**
      * userController.update()
      */
