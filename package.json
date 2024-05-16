@@ -12,7 +12,6 @@
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "express": "^4.19.2",
     "express-bearer-token": "^2.4.0",
     "mongoose": "^8.3.3",

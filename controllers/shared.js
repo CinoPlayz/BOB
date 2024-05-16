@@ -24,7 +24,7 @@ module.exports = {
      * Check received token against userbase
      * Return 401 HTTP code and write to console on error.
      */
-    getRoleFromToken: (req, res, next) => {
+    getRoleFromToken: async (req, res, next) => {
         // Check if empty token
         if (!req.token) {
             console.log("Error. getRoleFromToken(), token empty");
@@ -34,9 +34,10 @@ module.exports = {
         const currentToken = req.token;
 
         // Find the user with the matching token
-        const user = UserModel.findOne({
-            tokens: { $elemMatch: { currentToken } },
-        }).populate('tokens'); // populate tokens array for verification
+        const user = await UserModel.findOne({
+            "tokens.token": currentToken,
+        })
+
         if (!user) {
             console.log("Error. getRoleFromToken(), user with provided token not found");
             return res.status(401).json({ message: 'Unauthorized access.', error: null });
@@ -59,5 +60,26 @@ module.exports = {
         req.role = user.role;
 
         next();
+    },
+
+    /**
+     * Check if request role is specific role
+     */
+    
+    isReqRole : (role) => {
+        return (req, res, next) => {
+            // Check if empty role
+            if (!req.role) {
+                console.log("Error. getRoleFromToken(), role empty");
+                return res.status(401).json({ message: 'Unauthorized access.', error: null });
+            }
+
+            //Check if role
+            if(req.role != role){
+                return res.status(401).json({ message: 'Unauthorized access.', error: null });
+            }
+
+            next();
+        }
     }
 }

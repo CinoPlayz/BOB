@@ -64,10 +64,10 @@ module.exports = {
 			username : req.body.username,
 			password : req.body.password,
 			email : req.body.email,
-            tokens: req.body.tokens || [], // polje tokenov
-            '2faEnabled': req.body['2faEnabled'],
-            '2faSecret': req.body['2faEnabled'] ? req.body['2faSecret'] : undefined, // doda samo, če je 2faEnabled enak true
-            role: req.body.role || 'user'
+            tokens: [], // polje tokenov
+            '2faEnabled': false,
+            '2faSecret': undefined, // doda samo, če je 2faEnabled enak true
+            role: 'user'
         });
 
 

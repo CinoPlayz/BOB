@@ -17,6 +17,7 @@ router.get('/:id', extractToken, getRoleFromToken, userController.show);
 router.post('/', userController.create);
 router.post('/login', userController.login);
 router.post('/:id/TwofaSetup', userController.TwofaSetup);
+
 /*
  * PUT
  */
@@ -25,7 +26,6 @@ router.put('/:id', extractToken, getRoleFromToken, userController.update);
 /*
  * DELETE
  */
-router.delete('/:id', extractToken, getRoleFromToken, userController.remove);
 router.delete('/:id', extractToken, getRoleFromToken, userController.remove);
 router.delete('/:userId/tokens', extractToken, getRoleFromToken, userController.deleteAllTokens); // Dodajanje rute za brisanje vseh tokenov
 

@@ -3,6 +3,7 @@ var router = express.Router();
 var testController = require('../controllers/testController.js');
 const { extractToken } = require('../controllers/shared');
 const { getRoleFromToken } = require('../controllers/shared');
+const { isReqRole } = require('../controllers/shared');
 
 //Test
 
@@ -19,16 +20,16 @@ router.get('/:id', testController.show);
 /*
  * POST
  */
-router.post('/', extractToken, getRoleFromToken, testController.create);
+router.post('/', extractToken, getRoleFromToken, isReqRole("user"), testController.create);
 
 /*
  * PUT
  */
-router.put('/:id', extractToken, getRoleFromToken, testController.update);
+router.put('/:id', extractToken, getRoleFromToken, isReqRole("user"), testController.update);
 
 /*
  * DELETE
  */
-router.delete('/:id', extractToken, getRoleFromToken, testController.remove);
+router.delete('/:id', extractToken, getRoleFromToken, isReqRole("user"), testController.remove);
 
 module.exports = router;
