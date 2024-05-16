@@ -47,6 +47,8 @@ const trainLocHistorySchema = new mongoose.Schema({
             required: true
         }
     }
+}, {
+    timestamps: true
 });
 
 const TrainLocHistory = mongoose.model('TrainLocHistory', trainLocHistorySchema);
