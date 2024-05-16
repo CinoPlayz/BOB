@@ -3,6 +3,7 @@ const router = express.Router();
 const routeController = require('../controllers/routeController.js');
 const { extractToken } = require('../controllers/shared');
 const { getRoleFromToken } = require('../controllers/shared');
+const { isReqRole } = require('../controllers/shared');
 
 // GET all
 router.get('/', routeController.list);
@@ -11,12 +12,12 @@ router.get('/', routeController.list);
 router.get('/:id', routeController.show);
 
 // POST (create)
-router.post('/', extractToken, getRoleFromToken, routeController.create);
+router.post('/', extractToken, getRoleFromToken, isReqRole("admin"), routeController.create);
 
 // PUT (update)
-router.put('/:id', extractToken, getRoleFromToken, routeController.update);
+router.put('/:id', extractToken, getRoleFromToken, isReqRole("admin"), routeController.update);
 
 // DELETE (remove)
-router.delete('/:id', extractToken, getRoleFromToken, routeController.remove);
+router.delete('/:id', extractToken, getRoleFromToken, isReqRole("admin"), routeController.remove);
 
 module.exports = router;
