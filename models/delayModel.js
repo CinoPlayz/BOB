@@ -7,7 +7,7 @@ const delaySchema = new mongoose.Schema({
     },
     route: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'trainLocHistory',
+        ref: 'route',
         required: true
     },
     currentStation: {
