@@ -1,9 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var testController = require('../controllers/testController.js');
-const { extractToken } = require('../controllers/shared');
-const { getRoleFromToken } = require('../controllers/shared');
-const { isReqRole } = require('../controllers/shared');
+const { extractToken, getRoleFromToken, isReqRole } = require('./shared');
 
 //Test
 

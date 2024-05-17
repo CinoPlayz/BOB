@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const routeController = require('../controllers/routeController.js');
-const { extractToken } = require('../controllers/shared');
-const { getRoleFromToken } = require('../controllers/shared');
-const { isReqRole } = require('../controllers/shared');
+const { extractToken, getRoleFromToken, isReqRole } = require('./shared');
 
 // GET all
 router.get('/', routeController.list);

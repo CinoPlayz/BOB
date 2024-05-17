@@ -1,9 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var userController = require('../controllers/userController.js');
-const { extractToken } = require('../controllers/shared');
-const { getRoleFromToken } = require('../controllers/shared');
-const { isReqRole } = require('../controllers/shared');
+const { extractToken, getRoleFromToken, getRoleAndUserFromToken, isReqRole } = require('./shared');
 
 /*
  * GET
@@ -17,7 +15,8 @@ router.get('/:id', extractToken, getRoleFromToken, userController.show);
  */
 router.post('/', userController.create);
 router.post('/login', userController.login);
-router.post('/:id/TwofaSetup', userController.TwofaSetup);
+router.post('/twoFaSetup', extractToken, getRoleAndUserFromToken, userController.twoFaSetup);
+router.post('/twoFaLogin', extractToken, getRoleAndUserFromToken, userController.twoFaLogin);
 
 /*
  * PUT

@@ -140,68 +140,39 @@ module.exports = {
         }
     },
 
-    isLoggedIn: async function(req, res, next) {
+    twoFaSetup: async function (req, res, next) {
         try {
-            const userId = req.params.id; // Vzeme ID iz URL parametrov zaenkrat->zaradi testiranja
-            //console.log('User ID from URL:', userId); 
-
-            const user = await UserModel.findById(userId);
-            //console.log('User found:', user); 
+            const user = req.user;
 
             if (!user) {
-                return res.status(404).send('User not found');
+                return res.status(400).json({ error: "User not found" });
             }
-            req.user = user;
-            next();
-        } catch (err) {
-            console.error('Error in isLoggedIn middleware:', err); 
-            return res.status(500).send('Server error');
-        }
-    },
 
-    twoFaSetup: [
-        //validateToken->še implemetirati
-        async function (req, res, next) {
-            await module.exports.isLoggedIn(req, res, async function() {
-                try {
-                    const user = req.user;
-                    //console.log('User in TwoFaSetup:', user); 
+            if (user['2faEnabled']) {
+                return res.status(400).json({ error: "2FA is already enabled" });
+            }
 
-                    if (!user) {
-                        return res.status(400).json({ error: "User not found" });
-                    }
+            const secret = new OTPAuth.Secret({ size: 32 });
 
-                    if (user['2faEnabled']) {
-                        return res.status(400).json({ error: "2FA is already enabled" });
-                    }
-
-                    // Ustvari naključno 2faSecret
-                    const secret = new OTPAuth.Secret({ size: 32 });
-                    //console.log('Secret generated:', secret.base32); 
-
-                    // Ustvari TOTP objekt
-                    const totp = new OTPAuth.TOTP({
-                        secret: secret,
-                        issuer: "BOB",
-                        label: `${user.username} Login`
-                    });
-
-                    // Shranjevanje 2faSecret v uporabniški račun
-                    user['2faSecret'] = secret.base32;
-                    user['2faEnabled'] = true;
-                    await user.save();
-
-                    // Vrni URI za Google Authenticator
-                    const uri = totp.toString();
-                    console.log('TOTP URI:', uri); 
-                    return res.json({ uri });
-                } catch (err) {
-                    console.error('Error in TwoFaSetup:', err); 
-                    return next(err);
-                }
+            const totp = new OTPAuth.TOTP({
+                secret: secret,
+                issuer: "BOB",
+                label: `${user.username} Login`
             });
+
+            user['2faSecret'] = secret.base32;
+            user['2faEnabled'] = true;
+            await user.save();
+
+            const uri = totp.toString();
+            return res.json({ uri });
+        } catch (err) {
+            console.error('Error in TwoFaSetup:', err); 
+            return next(err);
         }
-    ],
+        
+    },
+    
 
 
      /**
