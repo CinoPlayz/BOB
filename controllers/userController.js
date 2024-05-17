@@ -143,10 +143,10 @@ module.exports = {
     isLoggedIn: async function(req, res, next) {
         try {
             const userId = req.params.id; // Vzeme ID iz URL parametrov zaenkrat->zaradi testiranja
-            console.log('User ID from URL:', userId); 
+            //console.log('User ID from URL:', userId); 
 
             const user = await UserModel.findById(userId);
-            console.log('User found:', user); 
+            //console.log('User found:', user); 
 
             if (!user) {
                 return res.status(404).send('User not found');
@@ -165,7 +165,7 @@ module.exports = {
             await module.exports.isLoggedIn(req, res, async function() {
                 try {
                     const user = req.user;
-                    console.log('User in TwoFaSetup:', user); 
+                    //console.log('User in TwoFaSetup:', user); 
 
                     if (!user) {
                         return res.status(400).json({ error: "User not found" });
@@ -177,7 +177,7 @@ module.exports = {
 
                     // Ustvari naključno 2faSecret
                     const secret = new OTPAuth.Secret({ size: 32 });
-                    console.log('Secret generated:', secret.base32); 
+                    //console.log('Secret generated:', secret.base32); 
 
                     // Ustvari TOTP objekt
                     const totp = new OTPAuth.TOTP({
