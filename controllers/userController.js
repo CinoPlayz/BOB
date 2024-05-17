@@ -145,11 +145,11 @@ module.exports = {
             const user = req.user;
 
             if (!user) {
-                return res.status(400).json({ error: "User not found" });
+                return shared.handleError(err, null, 400, "User not found", res);
             }
 
             if (user['2faEnabled']) {
-                return res.status(400).json({ error: "2FA is already enabled" });
+                shared.handleError(err, null, 404, "2FA is already enabled", res);
             }
 
             const secret = new OTPAuth.Secret({ size: 32 });

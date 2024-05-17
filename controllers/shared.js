@@ -3,10 +3,10 @@ const bearerToken = require('express-bearer-token');
 var UserModel = require('../models/userModel.js');
 
 module.exports = {
-    handleError: function (err, code, message, res) {
-        return res.status(code).json({
+    handleError: function (response, httpCode, message, errObject) {
+        return response.status(httpCode).json({
             message: message,
-            error: err
+            error: errObject
         });
     }    
 }

@@ -20,7 +20,7 @@ module.exports = {
             return res.json(tests);
         }
         catch (err) {
-            return shared.handleError(err, 500, "Error when getting tests", res);
+            return shared.handleError(res, 500, "Error when getting tests", err);
         }
 
     },
@@ -28,6 +28,7 @@ module.exports = {
     /**
      * testController.show()
      */
+    //TODO: Fix shared.handleError
     show: async function (req, res) {
         var id = req.params.id;
 
