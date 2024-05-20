@@ -9,8 +9,7 @@ module.exports = {
             const delays = await DelayModel.find();
             return res.json(delays);
         } catch (err) {
-            console.log("Error. delayController, list(), 1");
-            return shared.handleError(err, 500, "Error when getting all delays.", res);
+            return shared.handleError(res, 500, "Error when getting all delays", err);
         }
     },
 
@@ -22,14 +21,12 @@ module.exports = {
             const delay = await DelayModel.findById(id);
 
             if (!delay) {
-                console.log("Error. delayController, show(), 1");
-                return shared.handleError(err, 404, "Delay not found", res);
+                return shared.handleError(res, 404, "Delay not found", null);
             }
 
             return res.json(delay);
         } catch (err) {
-            console.log("Error. delayController, show(), 2");
-            return shared.handleError(err, 500, "Error when getting delay.", res);
+            return shared.handleError(res, 500, "Error when getting delay", err);
         }
     },
 
@@ -41,8 +38,7 @@ module.exports = {
             const savedDelay = await newDelay.save();
             return res.status(201).json(savedDelay);
         } catch (err) {
-            console.log("Error. delayController, create(), 1");
-            return shared.handleError(err, 500, "Error when creating delay", res);
+            return shared.handleError(res, 500, "Error when creating delay", err);
         }
     },
 
@@ -56,14 +52,12 @@ module.exports = {
             );
 
             if (!delay) {
-                console.log("Error. delayController, update(), 1");
-                return res.status(404).json({ message: "Delay not found" });
+                return shared.handleError(res, 404, "Delay not found", null);
             }
 
             return res.json(delay);
         } catch (err) {
-            console.log("Error. delayController, update(), 2");
-            return shared.handleError(err, 500, "Error when updating delay", res);
+            return shared.handleError(res, 500, "Error when updating delay", err);
         }
     },
 
@@ -75,14 +69,12 @@ module.exports = {
             const delay = await DelayModel.findByIdAndDelete(id);
 
             if (!delay) {
-                console.log("Error. delayController, remove(), 1");
-                return res.status(404).json({ message: "Delay not found" });
+                return shared.handleError(res, 404, "Delay not found", null);
             }
 
             return res.status(204).json();
         } catch (err) {
-            console.log("Error. delayController, remove(), 2");
-            return shared.handleError(err, 500, "Error when deleting delay", res);
+            return shared.handleError(res, 500, "Error when deleting delay", err);
         }
     }
 };

@@ -10,7 +10,7 @@ module.exports = {
             const trainHistory = await TrainLocHistory.find();
             return res.json(trainHistory);
         } catch (err) {
-            return shared.handleError(err, 500, "Error when getting train location history", res);
+            return shared.handleError(res, 500, "Error when getting train location history", err);
         }
     },
 
@@ -19,11 +19,11 @@ module.exports = {
         try {
             const train = await TrainLocHistory.findById(req.params.id);
             if (!train) {
-                return res.status(404).json({ message: "Train not found" });
+                return shared.handleError(res, 404, "Train not found", null);
             }
             return res.json(train);
         } catch (err) {
-            return shared.handleError(err, 500, "Error when getting train", res);
+            return shared.handleError(res, 500, "Error when getting train location history", err);
         }
     },
 
@@ -31,7 +31,6 @@ module.exports = {
     create: async function (req, res) {
         try {
             const newTrain = new TrainLocHistory({
-
                 timeOfRequest: req.body.timeOfRequest,
                 trainType: req.body.trainType,
                 trainNumber: req.body.trainNumber,
@@ -45,7 +44,7 @@ module.exports = {
             const savedTrain = await newTrain.save();
             return res.status(201).json(savedTrain);
         } catch (err) {
-            return shared.handleError(err, 500, "Error when creating train", res);
+            return shared.handleError(res, 500, "Error when creating train location history", err);
         }
     },
 
@@ -54,11 +53,11 @@ module.exports = {
         try {
             const train = await TrainLocHistory.findByIdAndUpdate(req.params.id, req.body, { new: true });
             if (!train) {
-                return res.status(404).json({ message: "Train not found" });
+                return shared.handleError(res, 404, "Train not found", null);
             }
             return res.json(train);
         } catch (err) {
-            return shared.handleError(err, 500, "Error when updating train", res);
+            return shared.handleError(res, 500, "Error when updating train location history", err);
         }
     },
 
@@ -67,11 +66,11 @@ module.exports = {
         try {
             const train = await TrainLocHistory.findByIdAndDelete(req.params.id);
             if (!train) {
-                return res.status(404).json({ message: "Train not found" });
+                return shared.handleError(res, 404, "Train not found", null);
             }
             return res.status(204).json(); 
         } catch (err) {
-            return shared.handleError(err, 500, "Error when deleting train", res);
+            return shared.handleError(res, 500, "Error when deleting train location history", err);
         }
     },
 

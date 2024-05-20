@@ -9,8 +9,7 @@ module.exports = {
             const routes = await RouteModel.find();
             return res.json(routes);
         } catch (err) {
-            console.log("Error. routeController, list(), 1");
-            return shared.handleError(err, 500, "Error when getting all routes.", res);
+            return shared.handleError(res, 500, "Error when getting all routes", err);
         }
     },
 
@@ -22,14 +21,12 @@ module.exports = {
             const route = await RouteModel.findById(id);
 
             if (!route) {
-                console.log("Error. routeController, show(), 1");
-                return shared.handleError(err, 404, "Route not found.", res);
+                return shared.handleError(res, 404, "Route not found", null);
             }
 
             return res.json(route);
         } catch (err) {
-            console.log("Error. routeController, show(), 2");
-            return shared.handleError(err, 500, "Error when getting route.", res);
+            return shared.handleError(res, 500, "Error when getting route", err);
         }
     },
 
@@ -51,8 +48,7 @@ module.exports = {
             const savedRoute = await newRoute.save();
             return res.status(201).json(savedRoute);
         } catch (err) {
-            console.log("Error. routeController, create(), 1");
-            return shared.handleError(err, 500, "Error when creating route", res);
+            return shared.handleError(res, 500, "Error when creating route", err);
         }
     },
 
@@ -66,14 +62,12 @@ module.exports = {
             );
 
             if (!route) {
-                console.log("Error. routeController, update(), 1");
-                return res.status(404).json({ message: "Route not found" });
+                return shared.handleError(res, 404, "Route not found", null);
             }
 
             return res.json(route);
         } catch (err) {
-            console.log("Error. routeController, update(), 2");
-            return shared.handleError(err, 500, "Error when updating route", res);
+            return shared.handleError(res, 500, "Error when updating route", err);
         }
     },
 
@@ -85,14 +79,12 @@ module.exports = {
             const route = await RouteModel.findByIdAndDelete(id);
 
             if (!route) {
-                console.log("Error. routeController, remove(), 1");
-                return res.status(404).json({ message: "Route not found" });
+                return shared.handleError(res, 404, "Route not found", null);
             }
 
             return res.status(204).json();
         } catch (err) {
-            console.log("Error. routeController, remove(), 2");
-            return shared.handleError(err, 500, "Error when deleting route", res);
+            return shared.handleError(res, 500, "Error when deleting route", err);
         }
     }
 };

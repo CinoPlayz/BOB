@@ -3,9 +3,6 @@ const crypto = require('crypto');
 const OTPAuth = require('otpauth');
 var shared = require('./shared.js');
 
-
-
-
 module.exports = {
 
     /**
@@ -18,29 +15,29 @@ module.exports = {
             return res.json(users);
         }
         catch (err) {
-            return shared.handleError(err, 500, "Error when getting users", res);
+            return shared.handleError(res, 500, "Error when getting users", err);
         }
 
     },
 
 
-     /**
-     * userController.show()
-     */
-     show: async function (req, res) {
+    /**
+    * userController.show()
+    */
+    show: async function (req, res) {
         var id = req.params.id;
 
         try {
             const user = await UserModel.findOne({ _id: id });
 
             if (!user) {
-                return shared.handleError(err, 404, "No such user", res);
+                return shared.handleError(res, 404, "No such user", null);
             }
 
             return res.json(user);
         }
         catch (err) {
-            return shared.handleError(err, 500, "Error when getting user", res);
+            return shared.handleError(res, 500, "Error when getting user", err);
         }
     },
 
@@ -51,22 +48,16 @@ module.exports = {
     create: async function (req, res) {
 
         if (!req.body.username || !req.body.password || !req.body.email) {
-            return res.status(400).json({ error: "Missing required fields" });
+            return shared.handleError(res, 400, "Missing required fields", null);
         }
-
-        // Preverite, če je 2FA omogočen, potem mora biti prisoten tudi 2faSecret
-        if (req.body['2faEnabled'] && !req.body['2faSecret']) {
-            return res.status(400).json({ error: "2faSecret is required when 2faEnabled is true" });
-        }
-
 
         var userToCreate = new UserModel({
-			username : req.body.username,
-			password : req.body.password,
-			email : req.body.email,
-            tokens: [], // polje tokenov
+            username: req.body.username,
+            password: req.body.password,
+            email: req.body.email,
+            tokens: [],
             '2faEnabled': false,
-            '2faSecret': undefined, // doda samo, če je 2faEnabled enak true
+            '2faSecret': undefined,
             role: 'user'
         });
 
@@ -76,36 +67,28 @@ module.exports = {
             return res.status(201).json(user);
         }
         catch (err) {
-            shared.handleError(err, 500, "Error when creating user", res)
+            return shared.handleError(res, 500, "Error when creating user", err);
         }
-    }, 
+    },
 
-    login: async function (req, res, next) {
+    login: async function (req, res) {
         try {
             const { username, password } = req.body;
-
             const user = await UserModel.authenticate(username, password);
 
-            if (!user) {
-                const err = new Error('Wrong username or password');
-                err.status = 401;
-                return next(err);
-            }
-
             if (user['2faEnabled']) {
-                // Preverba, če že obstaja začasni login token
+                //Checks if login token exists
                 const existingLoginTokenIndex = user.tokens.findIndex(token => token.type === 'login' && new Date(token.expiresOn) > new Date());
-                
+
                 if (existingLoginTokenIndex !== -1) {
-                    // Posodabljanje obstoječega tokena
+                    //Update existing login token
                     const existingLoginToken = user.tokens[existingLoginTokenIndex];
                     existingLoginToken.token = crypto.randomBytes(32).toString('hex');
-                    existingLoginToken.expiresOn = new Date(Date.now() + 60 * 60000); // 1 ura veljavnosti
+                    existingLoginToken.expiresOn = new Date(Date.now() + 60 * 60000); // 1 hour
                 } else {
-                    // Ustvarjanje novega začasnega login tokena
                     const loginToken = {
                         token: crypto.randomBytes(32).toString('hex'),
-                        expiresOn: new Date(Date.now() + 60 * 60000), // 1 ura veljavnosti
+                        expiresOn: new Date(Date.now() + 60 * 60000), // 1 hour
                         type: 'login'
                     };
                     user.tokens.push(loginToken);
@@ -113,30 +96,19 @@ module.exports = {
                 await user.save();
                 return res.json({ message: '2FA enabled, provide the OTP code', loginToken: user.tokens.find(token => token.type === 'login').token });
             } else {
-                // Preverba, če že obstaja all token
-                const existingAllTokenIndex = user.tokens.findIndex(token => token.type === 'all' && new Date(token.expiresOn) > new Date());
 
-                if (existingAllTokenIndex !== -1) {
-                    // Posodabljanje obstoječega tokena
-                    console.log("posodabljanje obstoječega tokena");
-                    const existingAllToken = user.tokens[existingAllTokenIndex];
-                    existingAllToken.token = crypto.randomBytes(32).toString('hex');
-                    existingAllToken.expiresOn = new Date(Date.now() + 14 * 24 * 3600 * 1000); // 14 dni veljavnosti
-                } else {
-                    // Ustvarjanje novega all tokena
-                    console.log("ustvarjanje novega");
-                    const allToken = {
-                        token: crypto.randomBytes(32).toString('hex'),
-                        expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 dni veljavnosti
-                        type: 'all'
-                    };
-                    user.tokens.push(allToken);
-                }
+                const allToken = {
+                    token: crypto.randomBytes(32).toString('hex'),
+                    expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 days
+                    type: 'all'
+                };
+                user.tokens.push(allToken);
+
                 await user.save();
                 return res.json({ token: user.tokens.find(token => token.type === 'all').token });
             }
         } catch (err) {
-            return next(err);
+            return shared.handleError(res, 500, "Error while logging in", err.message);
         }
     },
 
@@ -145,11 +117,11 @@ module.exports = {
             const user = req.user;
 
             if (!user) {
-                return shared.handleError(err, null, 400, "User not found", res);
+                return shared.handleError(res, 404, "User not found", null);
             }
 
             if (user['2faEnabled']) {
-                shared.handleError(err, null, 404, "2FA is already enabled", res);
+                return shared.handleError(res, 400, "2FA is already enabled", null);
             }
 
             const secret = new OTPAuth.Secret({ size: 32 });
@@ -167,104 +139,79 @@ module.exports = {
             const uri = totp.toString();
             return res.json({ uri });
         } catch (err) {
-            console.error('Error in TwoFaSetup:', err); 
-            return next(err);
+            return shared.handleError(res, 500, "Error in TwoFaSetup", err);
         }
-        
+
     },
-    
 
 
-     /**
-     * userController.2faLogin()
-     */
-     twoFaLogin: async function (req, res, next) {
+
+    /**
+    * userController.2faLogin()
+    */
+    twoFaLogin: async function (req, res) {
         try {
             const { loginToken, otpCode } = req.body;
 
             if (!loginToken || !otpCode) {
-                console.log('Missing login token or OTP code');
-                return res.status(400).json({ error: 'Missing login token or OTP code' });
+                return shared.handleError(res, 400, "Missing login token or OTP code", null);
             }
 
-            console.log('Received loginToken:', loginToken);
-            console.log('Received otpCode:', otpCode);
-
-            // Poiščemo uporabnika na podlagi login tokena                                          //expiry date mora biti večji od trenutnega časa
+            //Finds user by login token
             const user = await UserModel.findOne({ 'tokens.token': loginToken, 'tokens.expiresOn': { $gt: new Date() }, 'tokens.type': 'login' });
             if (!user) {
-                console.log('Invalid or expired login token');
-                return res.status(401).json({ error: 'Invalid or expired login token' });
+                return shared.handleError(res, 401, "Invalid or expired login token", null);
             }
 
-            console.log('User found:', user.username);
-
-            // Ustvari TOTP objekt s shranjeno skrivnostjo, da lahko preverjamo otp kode
             const totp = new OTPAuth.TOTP({
-                secret: OTPAuth.Secret.fromBase32(user['2faSecret']),//upoorabimo 2faSecret, ki je bila 
-                issuer: "BOB",                                      //ustvarjena med TwoFaSetup
+                secret: OTPAuth.Secret.fromBase32(user['2faSecret']),
+                issuer: "BOB",
                 label: `${user.username} Login`
             });
 
-            console.log('TOTP object created with secret:', user['2faSecret']);
-
-            // Preveri OTP kodo
             const delta = totp.validate({ token: otpCode, window: 1 });
             if (delta === null) {
-                console.log('Invalid OTP code');
-                return res.status(401).json({ error: 'Invalid OTP code' });
+                return shared.handleError(res, 401, "Invalid OTP code", null);
             }
 
-            console.log('OTP code is valid');
-
-            // Ustvari dolgoročni all token
             const allToken = {
                 token: crypto.randomBytes(32).toString('hex'),
-                expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 dni veljavnosti
+                expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 days
                 type: 'all'
             };
 
-            console.log('Generated new all token:', allToken.token);
-
-            // Odstranimo prejšnji login token
-            user.tokens = user.tokens.filter(token => token.token !== loginToken);
-
-            // Dodamo novi all token
             user.tokens.push(allToken);
             await user.save();
 
-            console.log('Saved user with new all token');
-
             return res.json({ token: allToken.token });
         } catch (err) {
-            console.error('Error in TwofaLogin:', err);
-            return next(err);
+            return shared.handleError(res, 500, "Invalid OTP code", err);
         }
     },
-    
+
 
     /**
      * userController.update()
      */
     update: async function (req, res) {
         var id = req.params.id;
-        
+
         try {
             const userFound = await UserModel.findOne({ _id: id });
 
             if (!userFound) {
-                return shared.handleError(err, 404, "No such user", res);
+                return shared.handleError(res, 404, "No such user", null);
             }
 
             userFound.username = req.body.username ? req.body.username : userFound.username;
-			userFound.password = req.body.password ? req.body.password : userFound.password;
-			userFound.email = req.body.email ? req.body.email : userFound.email;
+            userFound.password = req.body.password ? req.body.password : userFound.password;
+            userFound.email = req.body.email ? req.body.email : userFound.email;
             const userUpdated = await userFound.save();
 
             return res.json(userUpdated);
         }
         catch (err) {
-            return shared.handleError(err, "Error when updating user", res);
+            return shared.handleError(res, 500, "Error when updating user", err);
         }
     },
 
@@ -280,31 +227,49 @@ module.exports = {
             return res.status(204).json();
         }
         catch (err) {
-            return shared.handleError(err, 500, "Error when deleting the user", res);
+            return shared.handleError(res, 500, "Error when deleting the user", err);
         }
     },
 
-     /**
-     * userController.deleteAllTokens()
-     */
-     deleteAllTokens: async function (req, res, next) {
+    /**
+    * userController.deleteAllTokens()
+    */
+    deleteAllTokens: async function (req, res) {
         try {
             const { userId } = req.params;
 
-            // Najdi uporabnika po ID-ju in izprazni polje tokens
             const user = await UserModel.findByIdAndUpdate(
                 userId,
                 { $set: { tokens: [] } },
-                { new: true } // Vrne posodobljen dokument
+                { new: true }
             );
 
             if (!user) {
-                return res.status(404).json({ error: "User not found" });
+                return shared.handleError(res, 404, "User not found", null);
             }
 
             return res.status(200).json({ message: "All tokens deleted successfully", user });
         } catch (err) {
-            return next(err);
+            return shared.handleError(res, 500, "Error when deleting user tokens", err);
+        }
+    },
+
+    /**
+    * userController.deleteToken()
+    */
+    deleteToken: async function (req, res) {
+        try {
+            const user = req.user
+
+            const index = user.tokens.indexOf(req.token);
+            if (index > -1){
+                user.tokens.splice(index, 1)
+            }
+
+            user.save();
+            return res.status(200).json({ message: "All tokens deleted successfully", user });
+        } catch (err) {
+            return shared.handleError(res, 500, "Error when deleting user tokens", err);
         }
     },
 };

@@ -73,12 +73,10 @@ userSchema.pre('save', async function(next) {
     }
 });
 
-// Metoda za preverjanje gesla
 userSchema.methods.comparePassword = async function(candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Metoda za preverjanje avtentikacije
 userSchema.statics.authenticate = async function(username, password) {
     const user = await this.findOne({ username }).exec();
     if (!user) {

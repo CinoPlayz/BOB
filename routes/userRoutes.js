@@ -16,7 +16,7 @@ router.get('/:id', extractToken, getRoleFromToken, userController.show);
 router.post('/', userController.create);
 router.post('/login', userController.login);
 router.post('/twoFaSetup', extractToken, getRoleAndUserFromToken, userController.twoFaSetup);
-router.post('/twoFaLogin', extractToken, getRoleAndUserFromToken, userController.twoFaLogin);
+router.post('/twoFaLogin', extractToken, userController.twoFaLogin);
 
 /*
  * PUT
@@ -27,6 +27,7 @@ router.put('/:id', extractToken, getRoleFromToken, isReqRole("admin"),  userCont
  * DELETE
  */
 router.delete('/:id', extractToken, getRoleFromToken, isReqRole("admin"), userController.remove);
-router.delete('/:userId/tokens', extractToken, getRoleFromToken, isReqRole("admin"), userController.deleteAllTokens); // Dodajanje rute za brisanje vseh tokenov
+router.delete('/:userId/tokens', extractToken, getRoleFromToken, isReqRole("admin"), userController.deleteAllTokens); 
+router.delete('/token', extractToken, getRoleAndUserFromToken, userController.deleteToken); 
 
 module.exports = router;

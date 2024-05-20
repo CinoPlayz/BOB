@@ -36,13 +36,13 @@ module.exports = {
             const test = await TestModel.findOne({ _id: id });
 
             if (!test) {
-                return shared.handleError(err, 404, "No such test", res);
+                return shared.handleError(res, 404, "No such test", null);
             }
 
             return res.json(test);
         }
         catch (err) {
-            return shared.handleError(err, 500, "Error when getting test", res);
+            return shared.handleError(res, 500, "Error when getting test", err);
         }
     },
 
@@ -61,7 +61,7 @@ module.exports = {
             return res.status(201).json(test);
         }
         catch (err) {
-            shared.handleError(err, 500, "Error when creating test", res)
+            return shared.handleError(res, 500, "Error when creating test", err);
         }
     },
 
@@ -75,7 +75,7 @@ module.exports = {
             const testFound = await TestModel.findOne({ _id: id });
 
             if (!testFound) {
-                return shared.handleError(err, 404, "No such test", res);
+                return shared.handleError(res, 404, "No such test", null);
             }
 
             testFound.name = req.body.name ? req.body.name : testFound.name;
@@ -85,7 +85,7 @@ module.exports = {
             return res.json(testUpdated);
         }
         catch (err) {
-            return shared.handleError(err, "Error when updating test", res);
+            return shared.handleError(res, 500, "Error when updating test", err);
         }
     },
 
@@ -101,7 +101,7 @@ module.exports = {
             return res.status(204).json();
         }
         catch (err) {
-            return shared.handleError(err, 500, "Error when deleting the test", res);
+            return shared.handleError(res, 500, "Error when deleting the test", err);
         }
     },
 };

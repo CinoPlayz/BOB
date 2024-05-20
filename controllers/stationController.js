@@ -10,8 +10,7 @@ module.exports = {
 
             return res.json(stations);
         } catch (err) {
-            console.log("Error. stationController, list(), 1");
-            return shared.handleError(err, 500, "Error when getting all stations.", res);
+            return shared.handleError(res, 500, "Error when getting all stations", err);
         }
     },
 
@@ -23,14 +22,12 @@ module.exports = {
             const station = await StationModel.findById(id);
 
             if (!station) {
-                console.log("Error. stationController, show(), 1");
-                return shared.handleError(err, 404, "Station not found", res);
+                return shared.handleError(res, 404, "Station not found", null);
             }
 
             return res.json(station);
         } catch (err) {
-            console.log("Error. stationController, show(), 2");
-            return shared.handleError(err, 500, "Error when getting station.", res);
+            return shared.handleError(res, 500, "Error when getting station", err);
         }
     },
 
@@ -46,8 +43,7 @@ module.exports = {
             const savedStation = await newStation.save();
             return res.status(201).json(savedStation);
         } catch (err) {
-            console.log("Error. stationController, create(), 1");
-            return shared.handleError(err, 500, "Error when creating station", res);
+            return shared.handleError(res, 500, "Error when creating station", err);
         }
     },
 
@@ -61,14 +57,12 @@ module.exports = {
             );
 
             if (!station) {
-                console.log("Error. stationController, update(), 1");
-                return res.status(404).json({ message: "Station not found" });
+                return shared.handleError(res, 404, "Station not found", null);
             }
 
             return res.json(station);
         } catch (err) {
-            console.log("Error. stationController, update(), 2");
-            return shared.handleError(err, 500, "Error when updating station", res);
+            return shared.handleError(res, 500, "Error when updating station", err);
         }
     },
 
@@ -80,14 +74,12 @@ module.exports = {
             const station = await StationModel.findByIdAndDelete(id);
 
             if (!station) {
-                console.log("Error. stationController, remove(), 1");
-                return res.status(404).json({ message: "Station not found" });
+                return shared.handleError(res, 404, "Station not found", null);
             }
 
             return res.status(204).json();
         } catch (err) {
-            console.log("Error. stationController, remove(), 2");
-            return shared.handleError(err, 500, "Error when deleting station", res);
+            return shared.handleError(res, 500, "Error when deleting station", err);
         }
     }
 };
