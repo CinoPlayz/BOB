@@ -9,12 +9,12 @@ var args = process.argv.slice(2);
 var mongoDBURI = ""
 
 if (!args || !args.length) {
-    if(process.env.DBURL === undefined){
+    if(process.env.DBURI === undefined){
         console.log("No database URI passed! Usage: node <filename> <URI>");
         process.exit(1);
     }
     else {
-        mongoDBURI = process.env.DBURL;
+        mongoDBURI = process.env.DBURI;
         console.log("Read URI from env variable!");
     }        
 }

@@ -7,7 +7,7 @@ FROM node:22.1 AS builder
 
 # Declaring env
 ENV NODE_ENV production
-ENV DBURL=$DBURL
+ENV DBURI=$DBURI
 
 # Working directory in the container
 WORKDIR /BOB-ZPBackend
