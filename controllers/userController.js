@@ -1,5 +1,5 @@
 var UserModel = require('../models/userModel.js');
-const crypto = require('crypto');
+const crypto = require('node:crypto')
 const OTPAuth = require('otpauth');
 var shared = require('./shared.js');
 
@@ -266,7 +266,7 @@ module.exports = {
                 user.tokens.splice(index, 1)
             }
 
-            user.save();
+            await user.save();
             return res.status(200).json({ message: "All tokens deleted successfully", user });
         } catch (err) {
             return shared.handleError(res, 500, "Error when deleting user tokens", err);

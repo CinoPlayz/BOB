@@ -115,7 +115,7 @@ module.exports = {
 
             //Check if role
             if(req.role != role && req.role != "admin"){
-                return res.status(401).json({ message: 'Unauthorized access - Insufficient role', error: null });
+                return res.status(403).json({ message: 'Unauthorized access - Insufficient role', error: null });
             }
 
             next();
