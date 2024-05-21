@@ -1,13 +1,14 @@
 package models
 
 import kotlinx.serialization.Serializable
-import org.bson.types.ObjectId
+import utils.parsing.LocalDateTimeSerializer
 import java.time.LocalDateTime
 
 @Serializable
 data class DelayInsert(
+    @Serializable(with = LocalDateTimeSerializer::class)
     val timeOfRequest: LocalDateTime,
-    val route: ObjectId,
-    val currentStation: ObjectId,
+    val route: String,
+    val currentStation: String,
     val delay: Int
 )

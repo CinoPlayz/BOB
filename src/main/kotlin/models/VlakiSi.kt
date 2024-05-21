@@ -1,15 +1,23 @@
 package models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class VlakiSi(val success: Boolean, val data: List<VlakSiTrain>)
 
+@Serializable
 data class VlakSiTrain(val train_cache: VlakiSiTrainCache, val train_data: VlakiSiTrainData , val coordinates: Coordinates)
 
+@Serializable
 data class VlakiSiTrainCache(val composition: List<VlakiSiTrainComposition>, val delay: Int, val is_bus: Boolean)
 
+@Serializable
 data class VlakiSiTrainComposition(val timestamp: String, val source: String, val composition: List<VlakiSiTrainCompositionInner>)
 
+@Serializable
 data class VlakiSiTrainCompositionInner(val kind: String, val uicNumber: String)
 
+@Serializable
 data class VlakiSiTrainTimes(
     val stop_sequence: Int,
     val stop_name: String,
@@ -17,6 +25,7 @@ data class VlakiSiTrainTimes(
     val departure_time: String?
 )
 
+@Serializable
 data class VlakiSiTrainData(
     val train_number: String,
     val train_type: String,

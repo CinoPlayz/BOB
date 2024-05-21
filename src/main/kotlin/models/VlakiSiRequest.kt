@@ -1,7 +1,8 @@
 package models
 
-import kotlinx.serialization.Serializable
-import org.bson.types.ObjectId
+import utils.api.dao.ApiContext
+import utils.api.dao.getAllRoutes
+import utils.api.dao.getAllStations
 import java.time.LocalDateTime
 
 //Can be used for both database conversion and in app request conversion
@@ -26,7 +27,6 @@ data class VlakiSiRequest(val timeOfRequest: LocalDateTime, val data: VlakiSi) {
                 delay = item.train_cache.delay,
                 coordinates = item.coordinates
             )
-
             trainLocHistoryList.add(trainLocHistory)
         }
         return trainLocHistoryList
@@ -35,18 +35,28 @@ data class VlakiSiRequest(val timeOfRequest: LocalDateTime, val data: VlakiSi) {
     fun toListDelay(): List<DelayInsert> {
         val delayList = mutableListOf<DelayInsert>()
 
-        //TODO: get stations and routes from backend
-        val stations: List<Station> = mutableListOf()
-        val routes: List<Route> = mutableListOf()
-
+        //TODO: ApiContext should be build when reading .env files
+        val stations: List<Station> = getAllStations(ApiContext("http://127.0.0.1:3001", ""))
+        val routes: List<Route> = getAllRoutes(ApiContext("http://127.0.0.1:3001", ""))
 
         for (item in data.data) {
+            val route = routes.firstOrNull { it.trainType == item.train_data.train_type && it.trainNumber.toString() == item.train_data.train_number }
+            val nextStation: String =
+                if (item.train_data.current_stop_sequence > item.train_data.train_times.count()) "" else item.train_data.train_times[item.train_data.next_stop_sequence - 1].stop_name
+            val station = stations.firstOrNull { it.name == nextStation }
+
+            if(route == null || station == null){
+                continue
+            }
+
             val delay = DelayInsert(
                 timeOfRequest = timeOfRequest,
-                route = ds,
-                currentStation = sc,
+                route = route.id,
+                currentStation = station.id,
                 delay = item.train_cache.delay
             )
+
+            delayList.add(delay)
         }
         return delayList
     }

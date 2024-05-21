@@ -1,12 +1,12 @@
 package models
 
 import kotlinx.serialization.Serializable
-import org.bson.types.ObjectId
 import utils.parsing.LocalDateTimeSerializer
 import java.time.LocalDateTime
 
-@Serializable(with = LocalDateTimeSerializer::class)
+@Serializable
 data class TrainLocHistoryInsert(
+    @Serializable(with = LocalDateTimeSerializer::class)
     val timeOfRequest: LocalDateTime,
     val trainType: String,
     val trainNumber: String,

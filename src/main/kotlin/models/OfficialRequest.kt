@@ -1,12 +1,12 @@
 package models
 
-import kotlinx.serialization.Serializable
-import org.bson.types.ObjectId
+import utils.api.dao.ApiContext
+import utils.api.dao.getAllRoutes
+import utils.api.dao.getAllStations
 import utils.parsing.unescapeUnicode
 import java.time.LocalDateTime
 
 //Can be used for both database conversion and in app request conversion
-@Serializable
 data class OfficialRequest(val timeOfRequest: LocalDateTime, val data: List<Official>) {
 
     fun toListTrainLocHistory(): List<TrainLocHistoryInsert> {
@@ -33,5 +33,32 @@ data class OfficialRequest(val timeOfRequest: LocalDateTime, val data: List<Offi
             trainLocHistoryList.add(trainLocHistory)
         }
         return trainLocHistoryList
+    }
+
+    fun toListDelay(): List<DelayInsert> {
+        val delayList = mutableListOf<DelayInsert>()
+
+        //TODO: ApiContext should be build when reading .env files
+        val stations: List<Station> = getAllStations(ApiContext("http://127.0.0.1:3001", ""))
+        val routes: List<Route> = getAllRoutes(ApiContext("http://127.0.0.1:3001", ""))
+
+        for (item in data) {
+            val route = routes.firstOrNull { it.trainType == item.Rang && it.trainNumber.toString() == item.St_vlaka }
+            val station = stations.firstOrNull { it.name == item.Postaja }
+
+            if(route == null || station == null){
+                continue
+            }
+
+            val delay = DelayInsert(
+                timeOfRequest = timeOfRequest,
+                route = route.id,
+                currentStation = station.id,
+                delay = item.Zamuda_cas
+            )
+
+            delayList.add(delay)
+        }
+        return delayList
     }
 }

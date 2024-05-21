@@ -2,11 +2,10 @@ import androidx.compose.runtime.MutableState
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.result.Result
-import com.google.gson.Gson
-import com.google.gson.JsonElement
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import models.Official
 import models.OfficialRequest
 import models.VlakiSi
@@ -29,7 +28,8 @@ fun getCurrentTime(): String {
 
 fun isStringJson(json: String?): Boolean {
     try {
-        Gson().getAdapter(JsonElement::class.java).fromJson(json)
+        //Gson().getAdapter(JsonElement::class.java).fromJson(json)
+        //TODO: Fix this
         return true
     } catch (ex: Exception) {
         return false
@@ -162,16 +162,21 @@ suspend fun getDataAndProcess(
 
                             when(source){
                                 SourceWebsite.Official -> {
-                                    val listOfficial = Gson().fromJson(resultGet.value, Array<Official>::class.java).toList()
+                                    val listOfficial = Json.decodeFromString<List<Official>>(resultGet.value)
                                     val requestOfficial = OfficialRequest(LocalDateTime.now(), listOfficial)
                                     result["parsed"] = requestOfficial.toListTrainLocHistory()
+                                    result["parsedDelay"] = requestOfficial.toListTrainLocHistory()
+                                    result["parsedDelay"] = requestOfficial.toListDelay()
                                     println(result["parsed"])
+                                    println(result["parsedDelay"])
                                 }
                                 SourceWebsite.Vlaksi -> {
-                                    val listVlakSi = Gson().fromJson(resultGet.value, VlakiSi::class.java)
+                                    val listVlakSi = Json.decodeFromString<VlakiSi>(resultGet.value)
                                     val requestVlakSi = VlakiSiRequest(LocalDateTime.now(), listVlakSi)
                                     result["parsed"] = requestVlakSi.toListTrainLocHistory()
+                                    result["parsedDelay"] = requestVlakSi.toListDelay()
                                     println(result["parsed"])
+                                    println(result["parsedDelay"])
                                 }
                             }
                         }
