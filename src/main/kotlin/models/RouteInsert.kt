@@ -1,12 +1,11 @@
 package models
 
 import kotlinx.serialization.Serializable
-import org.bson.types.String
+import org.bson.types.ObjectId
 import java.time.LocalDateTime
 
 @Serializable
-data class Route(
-    val id: String,
+data class RouteInsert(
     val trainType: String,
     val trainNumber: String,
     val vaildFrom: LocalDateTime,
@@ -16,6 +15,4 @@ data class Route(
     val start: RouteStop,
     val end: RouteStop,
     val middle: List<RouteStop>,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
 )

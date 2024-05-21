@@ -1,5 +1,8 @@
 package models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Official(
     val St_vlaka: String,
     val St: Int,

@@ -1,14 +1,12 @@
 package models
 
 import kotlinx.serialization.Serializable
+import org.bson.types.ObjectId
 import java.time.LocalDateTime
 
 @Serializable
-data class Station(
-    val id: String,
+data class StationInsert(
     val name: String,
     val officialStationNumber: String,
-    val coordinates: Coordinates,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime
+    val coordinates: Coordinates
 )

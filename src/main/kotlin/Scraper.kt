@@ -163,13 +163,13 @@ suspend fun getDataAndProcess(
                             when(source){
                                 SourceWebsite.Official -> {
                                     val listOfficial = Gson().fromJson(resultGet.value, Array<Official>::class.java).toList()
-                                    val requestOfficial = OfficialRequest(null, LocalDateTime.now(), listOfficial)
+                                    val requestOfficial = OfficialRequest(LocalDateTime.now(), listOfficial)
                                     result["parsed"] = requestOfficial.toListTrainLocHistory()
                                     println(result["parsed"])
                                 }
                                 SourceWebsite.Vlaksi -> {
-                                    val vlakSi = Gson().fromJson(resultGet.value, VlakiSi::class.java)
-                                    val requestVlakSi = VlakiSiRequest(null, LocalDateTime.now(), vlakSi)
+                                    val listVlakSi = Gson().fromJson(resultGet.value, VlakiSi::class.java)
+                                    val requestVlakSi = VlakiSiRequest(LocalDateTime.now(), listVlakSi)
                                     result["parsed"] = requestVlakSi.toListTrainLocHistory()
                                     println(result["parsed"])
                                 }

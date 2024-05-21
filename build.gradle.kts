@@ -3,6 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
+    kotlin("plugin.serialization")
 }
 
 group = "bob.zp.app"
@@ -22,7 +23,8 @@ dependencies {
     implementation(compose.desktop.currentOs)
     testImplementation(kotlin("test")) // test environment
     implementation("androidx.compose.material:material-icons-extended:1.6.7") // Google Fonts Icons
-    implementation("com.google.code.gson:gson:2.10.1") // JSON
+    //implementation("com.google.code.gson:gson:2.10.1") // JSON
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3") // JSON
     implementation("com.github.kittinunf.fuel:fuel:2.3.1") // Fuel library (HTTP)
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1") // .env file support
     implementation("org.mongodb:mongodb-driver-sync:5.1.0") // MongoDB Driver
