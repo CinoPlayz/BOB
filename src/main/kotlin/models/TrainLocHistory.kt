@@ -3,15 +3,15 @@ package models
 import java.time.LocalDateTime
 
 data class TrainLocHistory(
-    var timeOfRequest: LocalDateTime,
+    val timeOfRequest: LocalDateTime,
     val trainType: String,
-    var trainNumber: String,
-    var routeFrom: String,
-    var routeTo: String,
-    var routeStartTime: String,
-    var nextStation: String,
-    var delay: Int,
-    var coordinates: Coordinates
+    val trainNumber: String,
+    val routeFrom: String,
+    val routeTo: String,
+    val routeStartTime: String,
+    val nextStation: String,
+    val delay: Int,
+    val coordinates: Coordinates
 )
 
 

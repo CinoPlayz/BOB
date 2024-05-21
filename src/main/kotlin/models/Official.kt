@@ -1,18 +1,18 @@
 package models
 
 data class Official(
-    var St_vlaka: String,
-    var St: Int,
-    var Postaja_SZ_OD: String,
+    val St_vlaka: String,
+    val St: Int,
+    val Postaja_SZ_OD: String,
     val Postaja_SZ_DO: String,
-    var Relacija: String,
-    var St_postaje: String,
-    var Postaja: String,
-    var Odhod: String,
-    var Koordinate: String,
-    var Vrsta: Int,
-    var Zamuda_cas: Int,
-    var Predviden_prihod: Int,
-    var Vrsta_vlaka: String,
-    var Rang: String
+    val Relacija: String,
+    val St_postaje: String,
+    val Postaja: String,
+    val Odhod: String,
+    val Koordinate: String,
+    val Vrsta: Int,
+    val Zamuda_cas: Int,
+    val Predviden_prihod: Int,
+    val Vrsta_vlaka: String,
+    val Rang: String
 )

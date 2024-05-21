@@ -4,7 +4,7 @@ import org.bson.types.ObjectId
 import java.time.LocalDateTime
 
 //Can be used for both database conversion and in app request conversion
-data class VlakiSiRequest(var id: ObjectId?, var timeOfRequest: LocalDateTime, var data: VlakiSi) {
+data class VlakiSiRequest(val id: ObjectId?, val timeOfRequest: LocalDateTime, val data: VlakiSi) {
     fun toListTrainLocHistory(): List<TrainLocHistory> {
         val trainLocHistoryList = mutableListOf<TrainLocHistory>()
         for (item in data.data) {

@@ -1,3 +1,3 @@
 package models
 
-data class Coordinates(var lat: Float, var lng: Float)
+data class Coordinates(val lat: Float, val lng: Float)

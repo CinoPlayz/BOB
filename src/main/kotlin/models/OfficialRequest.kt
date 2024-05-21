@@ -5,7 +5,7 @@ import utils.parsing.unescapeUnicode
 import java.time.LocalDateTime
 
 //Can be used for both database conversion and in app request conversion
-data class OfficialRequest(var id: ObjectId?, var timeOfRequest: LocalDateTime, var data: List<Official>) {
+data class OfficialRequest(val id: ObjectId?, val timeOfRequest: LocalDateTime, val data: List<Official>) {
 
     fun toListTrainLocHistory(): List<TrainLocHistory> {
         val trainLocHistoryList = mutableListOf<TrainLocHistory>()
