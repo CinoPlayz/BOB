@@ -1,4 +1,6 @@
 import androidx.compose.runtime.MutableState
+import com.fleeksoft.ksoup.Ksoup
+import com.fleeksoft.ksoup.nodes.Document
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.result.Result
@@ -10,6 +12,7 @@ import models.Official
 import models.OfficialRequest
 import models.VlakiSi
 import models.VlakiSiRequest
+import java.io.File
 import java.net.InetAddress
 import java.nio.charset.Charset
 import java.time.LocalDateTime
@@ -179,6 +182,67 @@ suspend fun getDataAndProcess(
                                     println(result["parsedDelay"])
                                 }
                             }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("${getCurrentTime()} - Exception occurred while making the request: ${e.message}")
+                result["error"] = "Exception occurred while making the request: ${e.message}"
+            }
+            resultState.value = result
+        }
+    }
+}
+
+suspend fun getStationsAndProcess(
+    resultState: MutableState<Map<String, Any?>?>
+) {
+    return coroutineScope {
+        launch {
+            val result = mutableMapOf<String, Any?>()
+            try {
+                val request = Fuel.get("https://potniski.sz.si/")
+
+                val (_, response, resultGet) = request.header("Accept-Language", "en")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
+                    .allowRedirects(true)
+                    .responseString()
+
+                when (resultGet) {
+                    is Result.Failure -> {
+                        println("${getCurrentTime()} - Error occurred while getting stations: ${resultGet.error.message}")
+
+                        if (false) {
+                            println("More details: ${resultGet.error.response.body().asString("text/html")}")
+                        }
+
+                        result["error"] = "Error occurred while getting from Stations: ${resultGet.error.message}"
+                    }
+                    is Result.Success -> {
+                        println("${getCurrentTime()} - Got stations!")
+
+                        if (!isStringJson(resultGet.value)) {
+                            result["error"] = "Data not in JSON format"
+                        } else {
+                            result["data"] = resultGet.value
+                            result["time_of_request"] = getCurrentTime()
+
+                            File("nek.html").writeText(resultGet.value)
+
+                            val doc: Document = Ksoup.parse(resultGet.value)
+                            val selectHtml = doc.body().getElementById("entry-station")!!.html()
+                            val options = Ksoup.parseBodyFragment(selectHtml).getAllElements()
+
+                            val stations = mutableListOf<Pair<String, String>>()
+                            options.forEach {
+                                if(it.attribute("value") != null){
+                                    stations.add(Pair(it.attribute("value")!!.value, it.text()))
+                                }
+
+                            }
+
+                            println("Stations From SZ: $stations")
+
                         }
                     }
                 }

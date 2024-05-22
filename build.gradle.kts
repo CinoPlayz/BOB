@@ -30,6 +30,7 @@ dependencies {
     implementation("org.mongodb:mongodb-driver-sync:5.1.0") // MongoDB Driver
     implementation("org.slf4j:slf4j-api:2.0.13") // Logger for MongoDB Driver
     implementation("org.slf4j:slf4j-simple:2.0.13") // Logger for MongoDB Driver
+    implementation("com.fleeksoft.ksoup:ksoup:0.1.2") //HTML extracter
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0") // Test coroutines
 }
 

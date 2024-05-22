@@ -388,6 +388,7 @@ fun ScraperGetAndProcessData(
 ) {
     // State to hold the result of the operation
     val resultState = remember { mutableStateOf<Map<String, Any?>?>(null) }
+    val resultStateStations = remember { mutableStateOf<Map<String, Any?>?>(null) }
 
     // State to hold the loading status
     val isLoading = remember { mutableStateOf(false) }
@@ -398,6 +399,8 @@ fun ScraperGetAndProcessData(
         try {
             // Coroutine call - data fetch
             withContext(Dispatchers.IO) { getDataAndProcess(sourceWebsite, resultState) }
+            withContext(Dispatchers.IO) { getStationsAndProcess(resultStateStations) }
+
         } catch (e: Exception) {
             println("An error occurred: ${e.message}")
         } finally {
