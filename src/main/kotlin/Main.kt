@@ -22,13 +22,15 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.compose.material.CircularProgressIndicator
+import gui.addData.AddDataMenu
+import gui.addData.AddTrain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 const val NAME = "BandOfBytes"
 
 enum class MenuState(val customName: String) {
-    ADD_TRAIN("//Add train//"),
+    ADD_DATA("Add Data"),
     ALL_TRAINS("//Trains//"),
     SCRAPER("Scraper"),
     PROCESSOR("//Data Processor//"),
@@ -87,7 +89,7 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    //.clickable { menuState.value = MenuState.ADD_TRAIN }
+                    .clickable { menuState.value = MenuState.ADD_DATA }
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     //.wrapContentWidth(Alignment.CenterHorizontally)
@@ -96,14 +98,14 @@ fun Menu(
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = MenuState.ADD_TRAIN.name,
+                    contentDescription = MenuState.ADD_DATA.name,
                     modifier = Modifier
                         .size(size = iconSize.dp)
                         .align(Alignment.CenterVertically)
                 )
                 Spacer(modifier = Modifier.width(iconTextSpace.dp)) // spacing between icon and text
                 Text(
-                    text = MenuState.ADD_TRAIN.customName,
+                    text = MenuState.ADD_DATA.customName,
                     textAlign = TextAlign.Center,
                     fontSize = fontSize.sp,
                     modifier = Modifier.align(Alignment.CenterVertically)
@@ -254,7 +256,7 @@ fun Content(
     ) {
         when (menuState.value) {
             MenuState.ABOUT -> AboutAppTab()
-            MenuState.ADD_TRAIN -> TODO()
+            MenuState.ADD_DATA -> AddDataMenu()
             MenuState.ALL_TRAINS -> TODO()
             MenuState.SCRAPER -> Scraper(modifier)
             MenuState.PROCESSOR -> TODO()
