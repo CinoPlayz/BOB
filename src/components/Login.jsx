@@ -11,7 +11,8 @@ function Login() {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        const success = userContext.login(username, password);
+        const success = await userContext.login(username, password);
+        console.log(success);
         if (!success) {
             setUsername("");
             setPassword("");
@@ -58,11 +59,7 @@ function Login() {
                             <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900 font-bold">
                                 Password
                             </label>
-                            <div className="text-sm">
-                                <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
-                                    Forgot password?
-                                </a>
-                            </div>
+                           
                         </div>
                         <div className="mt-2">
                             <input

@@ -24,7 +24,7 @@ function Register() {
         });
         const data = await res.json();
         if (data.email && data.username && data.password) {
-            const loginSuccess = userContext.login(username, password);
+            const loginSuccess = await userContext.login(username, password);
             if (!loginSuccess) {
                 setError("Registration successful, but automatic login failed.");
             }

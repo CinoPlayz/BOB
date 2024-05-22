@@ -43,6 +43,7 @@ function App() {
       updateUserData(data.token);
       return true;
     } else {
+      console.log("falsee");
       return false;
     }
   };
