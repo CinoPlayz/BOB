@@ -186,9 +186,7 @@ fun AddDataMenu(
     }
 }
 
-fun AddRoute() {
-    TODO("Add route")
-}
+
 
 fun AddStation() {
     TODO("Add station")
