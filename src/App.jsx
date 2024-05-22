@@ -1,35 +1,72 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { UserContext } from "./UserContext.jsx";
+import Register from "./components/Register.jsx";
+import Header from "./components/Header.jsx";
+import Login from './components/Login.jsx';
+import Logout from "./components/Logout.jsx";
+
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+
+  const updateUserData = (token) => {//če token obstaja ga shrani v localstorage
+    if (token) {
+      localStorage.setItem("token", token);
+    } else {
+      localStorage.removeItem("token");
+    }
+    setToken(token);
+  };
+
+  useEffect(() => {//preverja ali je token prisoten v localstorage ob inicializaciji
+    const savedToken = localStorage.getItem('token');
+    if (savedToken) {
+      setToken(savedToken);
+    }
+  }, []);
+
+
+  const login = async (username, password) => {
+    const res = await fetch("http://localhost:3001/users/login", {
+      method: "POST",
+      credentials: "include",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    })
+    const data = await res.json();
+    if (data.token) {
+      updateUserData(data.token);
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <BrowserRouter>
+      <UserContext.Provider value={{
+        token: token,
+        setUserContext: updateUserData,
+        login: login
+      }}>
+
+        <Header title="Zelezniski promet" />
+        <div className="App pt-16">
+          <Routes>
+            <Route path="/login" exact element={<Login />}></Route>
+            <Route path="/register" element={<Register />}></Route>
+            <Route path="/logout" element={<Logout />}></Route>
+
+          </Routes>
+        </div>
+      </UserContext.Provider>
+    </BrowserRouter>
   )
 }
 
-export default App
+export default App;
