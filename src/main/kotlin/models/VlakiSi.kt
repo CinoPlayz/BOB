@@ -9,10 +9,7 @@ data class VlakiSi(val success: Boolean, val data: List<VlakSiTrain>)
 data class VlakSiTrain(val train_cache: VlakiSiTrainCache, val train_data: VlakiSiTrainData , val coordinates: Coordinates)
 
 @Serializable
-data class VlakiSiTrainCache(val composition: List<VlakiSiTrainComposition>, val delay: Int, val is_bus: Boolean)
-
-@Serializable
-data class VlakiSiTrainComposition(val timestamp: String, val source: String, val composition: List<VlakiSiTrainCompositionInner>)
+data class VlakiSiTrainCache(val delay: Int, val is_bus: Boolean)
 
 @Serializable
 data class VlakiSiTrainCompositionInner(val kind: String, val uicNumber: String)

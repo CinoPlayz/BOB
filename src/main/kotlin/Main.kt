@@ -39,6 +39,7 @@ enum class MenuState(val customName: String) {
 enum class ScraperMenuState(val customName: String) {
     OFFICIAL("SZ Official"),
     VLAKSI("Vlak.si"),
+    STATION("Station"),
     RESET("Reset")
 }
 
@@ -284,6 +285,7 @@ fun Scraper(
                 modifier = modifier
                     .fillMaxWidth()
             ) {
+                //Official
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -307,6 +309,7 @@ fun Scraper(
                         fontSize = fontSize.sp
                     )
                 }
+                //VlakSi
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -331,6 +334,32 @@ fun Scraper(
                         fontSize = fontSize.sp
                     )
                 }
+                //Station
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { scraperMenuState.value = ScraperMenuState.STATION }
+                        .background(if (scraperMenuState.value == ScraperMenuState.STATION) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+
+                ) {
+                    Icon(
+                        Icons.Default.Apartment,
+                        contentDescription = ScraperMenuState.STATION.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp))
+                    Text(
+                        text = ScraperMenuState.STATION.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+                //Reset
                 Row(
                     modifier = Modifier
                         .width(50.dp)
@@ -372,6 +401,7 @@ fun Scraper(
             when (scraperMenuState.value) {
                 ScraperMenuState.OFFICIAL -> ScraperGetAndProcessData(SourceWebsite.Official)
                 ScraperMenuState.VLAKSI -> ScraperGetAndProcessData(SourceWebsite.Vlaksi)
+                ScraperMenuState.STATION -> ScraperStationGetAndProcessData()
                 ScraperMenuState.RESET -> ScraperReset()
             }
             // You can change the content of this box dynamically
@@ -388,7 +418,6 @@ fun ScraperGetAndProcessData(
 ) {
     // State to hold the result of the operation
     val resultState = remember { mutableStateOf<Map<String, Any?>?>(null) }
-    val resultStateStations = remember { mutableStateOf<Map<String, Any?>?>(null) }
 
     // State to hold the loading status
     val isLoading = remember { mutableStateOf(false) }
@@ -399,7 +428,6 @@ fun ScraperGetAndProcessData(
         try {
             // Coroutine call - data fetch
             withContext(Dispatchers.IO) { getDataAndProcess(sourceWebsite, resultState) }
-            withContext(Dispatchers.IO) { getStationsAndProcess(resultStateStations) }
 
         } catch (e: Exception) {
             println("An error occurred: ${e.message}")
@@ -428,6 +456,55 @@ fun ScraperGetAndProcessData(
             resultState.value?.let { result ->
                 Text("Result: $result")
             }
+        }
+        /*resultState.value?.let { result ->
+            Text("Result: $result", modifier = Modifier.padding(16.dp))
+        }*/
+    }
+}
+
+@Composable
+fun ScraperStationGetAndProcessData(
+    modifier: Modifier = Modifier
+) {
+    // State to hold the result of the operation
+    val resultStateStations = remember { mutableStateOf<ResultStations>(ResultStations()) }
+
+    // State to hold the loading status
+    val isLoading = remember { mutableStateOf(false) }
+
+    // LaunchedEffect to trigger the data fetching operation
+    LaunchedEffect(Unit) {
+        isLoading.value = true // Set loading to true before fetching data
+        try {
+            // Coroutine call - data fetch
+            withContext(Dispatchers.IO) { getStationsAndProcess(resultStateStations) }
+
+        } catch (e: Exception) {
+            println("An error occurred: ${e.message}")
+        } finally {
+            isLoading.value = false // Set loading to false after fetching data
+        }
+    }
+
+    // Loading indicator - data processing
+    if (isLoading.value) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(32.dp)
+                .padding(16.dp)
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        // Display data
+        Box(
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()) // Box with enabled scroll
+        ) {
+            Text("Result: ${resultStateStations.value.listOfStations}")
         }
         /*resultState.value?.let { result ->
             Text("Result: $result", modifier = Modifier.padding(16.dp))
