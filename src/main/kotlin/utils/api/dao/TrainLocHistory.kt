@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import models.TrainLocHistoryInsert
 
-suspend fun insertTrain(train: TrainLocHistoryInsert): Boolean {
+suspend fun insertTrainLocHistory(train: TrainLocHistoryInsert): Boolean {
     val url = "${apiContextGlobal.url}/trainLocHistories"
     val body = Json.encodeToString(train)
 

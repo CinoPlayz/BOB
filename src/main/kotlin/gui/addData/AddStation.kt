@@ -14,12 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import models.Coordinates
 import models.StationInsert
-import org.bson.Document
-import utils.DatabaseUtil
 import utils.api.dao.insertStation
 
 @Composable
@@ -81,7 +77,7 @@ fun InputStationData(
         OutlinedTextField(
             value = stationName,
             onValueChange = { stationName = it },
-            label = { Text("Staion Name") },
+            label = { Text("Station Name") },
             modifier = Modifier.fillMaxWidth()
         )
 

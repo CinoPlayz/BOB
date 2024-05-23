@@ -12,14 +12,9 @@ import androidx.compose.ui.unit.dp
 import gui.CustomDropdownMenu
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import models.Coordinates
 import models.TrainLocHistoryInsert
-import org.bson.Document
-import utils.DatabaseUtil
-import utils.api.dao.insertStation
-import utils.api.dao.insertTrain
+import utils.api.dao.insertTrainLocHistory
 import java.time.LocalDateTime
 
 @Composable
@@ -34,7 +29,7 @@ fun AddTrain(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         TitleText(
-            text = "Add new train to database",
+            text = "Add new train location history to database",
             fontSize = titleFontSize,
             modifier = Modifier.padding(bottom = 10.dp)
         )
@@ -249,7 +244,7 @@ suspend fun writeTrainToDB(
 
     return try {
         coroutineScope {
-            insertTrain(trainLocHistoryInsert)
+            insertTrainLocHistory(trainLocHistoryInsert)
         }
         onReset()
         "Station successfully written to the database."

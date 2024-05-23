@@ -8,6 +8,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Subway
 import androidx.compose.material.icons.filled.Train
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.sp
 enum class ScraperMenuState(val customName: String) {
     OFFICIAL("SZ Official"),
     VLAKSI("Vlak.si"),
+    STATIONS("Stations"),
     RESET("Reset")
 }
 
@@ -50,6 +52,7 @@ fun Scraper(
                 modifier = modifier
                     .fillMaxWidth()
             ) {
+                //Official
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -73,6 +76,7 @@ fun Scraper(
                         fontSize = fontSize.sp
                     )
                 }
+                //VlakSi
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -97,6 +101,32 @@ fun Scraper(
                         fontSize = fontSize.sp
                     )
                 }
+                //Stations
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { scraperMenuState.value = ScraperMenuState.STATIONS }
+                        .background(if (scraperMenuState.value == ScraperMenuState.STATIONS) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+
+                ) {
+                    Icon(
+                        Icons.Default.Apartment,
+                        contentDescription = ScraperMenuState.STATIONS.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp))
+                    Text(
+                        text = ScraperMenuState.STATIONS.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+                //Reset
                 Row(
                     modifier = Modifier
                         .width(50.dp)
@@ -138,6 +168,7 @@ fun Scraper(
             when (scraperMenuState.value) {
                 ScraperMenuState.OFFICIAL -> ScraperFetchData(SourceWebsite.Official)
                 ScraperMenuState.VLAKSI -> ScraperFetchData(SourceWebsite.Vlaksi)
+                ScraperMenuState.STATIONS -> ScraperFetchStations()
                 ScraperMenuState.RESET -> ScraperReset()
             }
             // You can change the content of this box dynamically
