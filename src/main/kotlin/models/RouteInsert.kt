@@ -9,7 +9,7 @@ data class RouteInsert(
     val trainType: String,
     val trainNumber: String,
     @Serializable(with = LocalDateTimeSerializer::class)
-    val vaildFrom: LocalDateTime,
+    val validFrom: LocalDateTime,
     @Serializable(with = LocalDateTimeSerializer::class)
     val validUntil: LocalDateTime,
     val canSupportBikes: String,

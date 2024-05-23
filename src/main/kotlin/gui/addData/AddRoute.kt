@@ -1,10 +1,10 @@
 package gui.addData
 
 import TitleText
+import gui.daysOfWeek
+import gui.daysOfWeekMap
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -18,7 +18,14 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.material.Button
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-
+import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import models.RouteInsert
+import org.bson.Document
+import utils.DatabaseUtil
+import java.time.LocalDateTime
+import java.time.format.DateTimeParseException
 
 @Composable
 fun AddRoute(
@@ -59,15 +66,12 @@ fun InputRouteData(
 
     var canSupportBikes by remember { mutableStateOf("") }
 
-    var drivesOn by remember { mutableStateOf("") }
-
     var startStationName by remember { mutableStateOf("") }
     var startDepartureTime by remember { mutableStateOf("") }
 
     var endStationName by remember { mutableStateOf("") }
     var endArrivalTime by remember { mutableStateOf("") }
 
-    //var middleStops by remember { mutableStateOf(listOf<RouteStop>()) }
     var middleStops by remember { mutableStateOf(listOf<MiddleStop>()) }
 
     val trainTypes = listOf("LP", "ICS")
@@ -88,9 +92,6 @@ fun InputRouteData(
     var validUntilMinute by remember { mutableStateOf("") }
     var validUntilSecond by remember { mutableStateOf("00") }
 
-    val daysOfWeek = listOf(
-        "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Holidays"
-    )
     val drivesOnDays = remember {
         mutableStateMapOf<String, Boolean>().apply {
             daysOfWeek.forEach { put(it, false) }
@@ -101,9 +102,10 @@ fun InputRouteData(
         trainNumber = ""
         trainType = ""
         canSupportBikes = ""
-        drivesOn = ""
         startStationName = ""
+        startDepartureTime = ""
         endStationName = ""
+        endArrivalTime = ""
         validFromYear = ""
         validFromMonth = ""
         validFromDay = ""
@@ -116,13 +118,11 @@ fun InputRouteData(
         validUntilHour = ""
         validUntilMinute = ""
         validUntilSecond = "00"
-        drivesOnDays.clear()
-        //middleStops = ""
+        drivesOnDays.keys.forEach { day -> drivesOnDays[day] = false }
+        middleStops = listOf()
     }
 
     val coroutineScope = rememberCoroutineScope() // writeTrainToDB
-
-    val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
     Column(
         modifier = modifier
@@ -324,25 +324,24 @@ fun InputRouteData(
             onAddStop = { middleStops = middleStops + MiddleStop() }
         )
 
-        // Add a mechanism to input multiple middle stops (omitted here for brevity)
-
-        /*Button(
+        Button(
             onClick = {
                 coroutineScope.launch {
                     val feedback = writeRouteToDB(
                         trainNumber = trainNumber,
                         trainType = trainType,
-                        routeFrom = routeFrom,
-                        routeTo = routeTo,
-                        routeStartTime = routeStartTime,
-                        nextStation = nextStation,
-                        delay = delay,
-                        latitude = latitude,
-                        longitude = longitude,
+                        canSupportBikes = canSupportBikes,
+                        drivesOnDays = drivesOnDays,
+                        validFrom = "$validFromYear-$validFromMonth-$validFromDay $validFromHour:$validFromMinute:$validFromSecond",
+                        validUntil = "$validUntilYear-$validUntilMonth-$validUntilDay $validUntilHour:$validUntilMinute:$validUntilSecond",
+                        startStationName = startStationName,
+                        startDepartureTime = startDepartureTime,
+                        endStationName = endStationName,
+                        endArrivalTime = endArrivalTime,
+                        middleStops = middleStops,
                         onReset = onReset // Pass the reset callback
                     )
 
-                    // Update feedback message
                     feedbackMessage = feedback
                 }
             },
@@ -351,7 +350,7 @@ fun InputRouteData(
                 .padding(top = 4.dp)
         ) {
             Text("Write data to database")
-        }*/
+        }
     }
 
     feedbackMessage?.let { message ->
@@ -429,6 +428,105 @@ fun MiddleStopInput(stop: MiddleStop) {
     }
 }
 
-suspend fun writeRouteToDB() {
-    TODO()
+suspend fun writeRouteToDB(
+    trainNumber: String,
+    trainType: String,
+    canSupportBikes: String,
+    drivesOnDays: Map<String, Boolean>,
+    validFrom: String,
+    validUntil: String,
+    startStationName: String,
+    startDepartureTime: String,
+    endStationName: String,
+    endArrivalTime: String,
+    middleStops: List<MiddleStop>,
+    onReset: () -> Unit
+): String {
+
+    if (trainNumber.isEmpty() ||
+        trainType.isEmpty() ||
+        canSupportBikes.isEmpty() ||
+        drivesOnDays.values.all { !it } || // active days not selected
+        validFrom.isEmpty() ||
+        validUntil.isEmpty() ||
+        startStationName.isEmpty() ||
+        startDepartureTime.isEmpty() ||
+        endStationName.isEmpty() ||
+        endArrivalTime.isEmpty()
+    ) {
+        return "Please fill in all fields."
+    }
+
+    val trainNumberInt = trainNumber.toIntOrNull() ?: return "Train number must be an integer."
+
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val validFromDate: LocalDateTime
+    val validUntilDate: LocalDateTime
+
+    try {
+        validFromDate = LocalDateTime.parse(validFrom, formatter)
+        validUntilDate = LocalDateTime.parse(validUntil, formatter)
+    } catch (e: DateTimeParseException) {
+        return ("Valid From and/or Valid Until timestamps format error.")
+    }
+
+    val canSupportBikesBoolean = if (canSupportBikes == "Yes") 1 else 0
+
+    val drivesOn: List<Int> = drivesOnDays
+        .filter { it.value } // Filter only checked
+        .keys
+        .mapNotNull { daysOfWeekMap[it] } // Map day to index
+        .sorted() // Sort low -> high
+
+    val timeRegex = Regex("""^(?:[01]\d|2[0-3]):[0-5]\d$""")
+    val isStartDepartureTimeValid = timeRegex.matches(startDepartureTime)
+    val isEndArrivalTimeValid = timeRegex.matches(endArrivalTime)
+
+    if (!isStartDepartureTimeValid || !isEndArrivalTimeValid) {
+        return ("Start and/or End Station Time format error. (Use HH:mm).")
+    }
+
+    val startRouteStop = RouteStop(startStationName, startDepartureTime)
+    val stopRouteStop = RouteStop(endStationName, endArrivalTime)
+
+    val middle: List<RouteStop> = middleStops.map { middleStop ->
+        val isTimeValid = timeRegex.matches(middleStop.arrivalTime)
+
+        if (!isTimeValid) {
+            throw IllegalArgumentException("Invalid time format for middle stop: ${middleStop.stationName}")
+        }
+
+        RouteStop(
+            station = middleStop.stationName,
+            time = middleStop.arrivalTime
+        )
+    }
+
+    // Prepare `middle` to save to MongoDB as an array
+    //val middleArray: Array<RouteStop> = middle.toTypedArray()
+
+    val routeInset = RouteInsert(
+        trainType = trainType,
+        trainNumber = trainNumberInt.toString(),
+        validFrom = validFromDate,
+        validUntil = validUntilDate,
+        canSupportBikes = canSupportBikesBoolean.toString(),
+        drivesOn = drivesOn,
+        start = startRouteStop,
+        end = stopRouteStop,
+        middle = middle
+    )
+
+    val dbConnection = DatabaseUtil.connectDB() ?: return "Failed to connect to the database."
+
+    val jsonString = Json.encodeToString(routeInset)
+    val document = Document.parse(jsonString)
+
+    return try {
+        dbConnection.getDatabase("ZP").getCollection("routes").insertOne(document)
+        onReset()
+        "Data successfully written to the database."
+    } catch (e: Exception) {
+        "Error writing data to the database: ${e.message}"
+    }
 }
