@@ -45,3 +45,4 @@ bin/
 /config/blacklist.env
 /config/database.env
 /config/secrets.env
+/config/config.env

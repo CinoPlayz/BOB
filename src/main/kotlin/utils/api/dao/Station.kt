@@ -8,12 +8,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import models.Station
 import models.StationInsert
+import utils.context.appContextGlobal
 
 private val json = Json { ignoreUnknownKeys = true }
 
-fun getAllStations(apiContext: ApiContext): List<Station> {
+fun getAllStations(): List<Station> {
     val stations = mutableListOf<Station>()
-    val req = Fuel.get("${apiContext.url}/stations")
+    val req = Fuel.get("${appContextGlobal.url}/stations")
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
@@ -39,7 +40,7 @@ fun getAllStations(apiContext: ApiContext): List<Station> {
 }
 
 suspend fun insertStation(station: StationInsert): Boolean {
-    val url = "${apiContextGlobal.url}/stations"
+    val url = "${appContextGlobal.url}/stations"
     val body = Json.encodeToString(station)
 
     //println(apiContextGlobalTemp.url)
@@ -53,7 +54,7 @@ suspend fun insertStation(station: StationInsert): Boolean {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${apiContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()

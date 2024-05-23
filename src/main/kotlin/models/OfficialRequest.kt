@@ -1,6 +1,5 @@
 package models
 
-import utils.api.dao.ApiContext
 import utils.api.dao.getAllRoutes
 import utils.api.dao.getAllStations
 import utils.parsing.unescapeUnicode
@@ -39,8 +38,8 @@ data class OfficialRequest(val timeOfRequest: LocalDateTime, val data: List<Offi
         val delayList = mutableListOf<DelayInsert>()
 
         //TODO: ApiContext should be build when reading .env files
-        val stations: List<Station> = getAllStations(ApiContext("http://127.0.0.1:3001", ""))
-        val routes: List<Route> = getAllRoutes(ApiContext("http://127.0.0.1:3001", ""))
+        val stations: List<Station> = getAllStations()
+        val routes: List<Route> = getAllRoutes()
 
         for (item in data) {
             val route = routes.firstOrNull { it.trainType == item.Rang && it.trainNumber.toString() == item.St_vlaka }

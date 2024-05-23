@@ -1,6 +1,7 @@
 package gui.scraper
 
 import ResultStations
+import ResultData
 import SourceWebsite
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -27,7 +28,7 @@ fun ScraperFetchData(
     modifier: Modifier = Modifier
 ) {
     // State to hold the result of the operation
-    val resultState = remember { mutableStateOf<Map<String, Any?>?>(null) }
+    val resultDataState = remember { mutableStateOf(ResultData()) }
 
     // State to hold the loading status
     val isLoading = remember { mutableStateOf(false) }
@@ -37,7 +38,7 @@ fun ScraperFetchData(
         isLoading.value = true // Set loading to true before fetching data
         try {
             // Coroutine call - data fetch
-            withContext(Dispatchers.IO) { getDataAndProcess(sourceWebsite, resultState) }
+            withContext(Dispatchers.IO) { getDataAndProcess(sourceWebsite, resultDataState) }
         } catch (e: Exception) {
             println("An error occurred: ${e.message}")
         } finally {
@@ -62,9 +63,7 @@ fun ScraperFetchData(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()) // Box with enabled scroll
         ) {
-            resultState.value?.let { result ->
-                Text("Result: $result")
-            }
+            Text("Result: ${resultDataState.value.listOfTrainLocHistory}")
         }
         /*resultState.value?.let { result ->
             Text("Result: $result", modifier = Modifier.padding(16.dp))

@@ -1,6 +1,5 @@
 package models
 
-import utils.api.dao.ApiContext
 import utils.api.dao.getAllRoutes
 import utils.api.dao.getAllStations
 import java.time.LocalDateTime
@@ -35,9 +34,8 @@ data class VlakiSiRequest(val timeOfRequest: LocalDateTime, val data: VlakiSi) {
     fun toListDelay(): List<DelayInsert> {
         val delayList = mutableListOf<DelayInsert>()
 
-        //TODO: ApiContext should be build when reading .env files
-        val stations: List<Station> = getAllStations(ApiContext("http://127.0.0.1:3001", ""))
-        val routes: List<Route> = getAllRoutes(ApiContext("http://127.0.0.1:3001", ""))
+        val stations: List<Station> = getAllStations()
+        val routes: List<Route> = getAllRoutes()
 
         for (item in data.data) {
             val route = routes.firstOrNull { it.trainType == item.train_data.train_type && it.trainNumber.toString() == item.train_data.train_number }

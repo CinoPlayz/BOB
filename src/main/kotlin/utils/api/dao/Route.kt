@@ -8,12 +8,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import models.Route
 import models.RouteInsert
+import utils.context.appContextGlobal
 
 private val json = Json { ignoreUnknownKeys = true }
 
-fun getAllRoutes(apiContext: ApiContext): List<Route> {
+fun getAllRoutes(): List<Route> {
     var routes = mutableListOf<Route>()
-    val req = Fuel.get("${apiContext.url}/routes")
+    val req = Fuel.get("${appContextGlobal.url}/routes")
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
@@ -40,7 +41,7 @@ fun getAllRoutes(apiContext: ApiContext): List<Route> {
 }
 
 suspend fun insertRoute(route: RouteInsert): Boolean {
-    val url = "${apiContextGlobal.url}/routes"
+    val url = "${appContextGlobal.url}/routes"
     val body = Json.encodeToString(route)
 
     val (_, response, result) = Fuel.post(url)
@@ -48,7 +49,7 @@ suspend fun insertRoute(route: RouteInsert): Boolean {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${apiContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
