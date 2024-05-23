@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const StationModel = require('./stationModel')
 
 const routeSchema = new mongoose.Schema({
     trainType: {
@@ -9,7 +10,7 @@ const routeSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    vaildFrom: {
+    validFrom: {
         type: Date,
         required: true
     },
