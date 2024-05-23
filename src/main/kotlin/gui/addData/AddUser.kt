@@ -6,11 +6,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -98,23 +103,51 @@ fun InputUserData(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(end = 8.dp)
+            )
 
-        OutlinedTextField(
-            value = passwordRepeat,
-            onValueChange = { passwordRepeat = it },
-            label = { Text("Repeat Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
+            PasswordVisibilityToggleButton(
+                isPasswordVisible = isPasswordVisible,
+                onToggle = { isPasswordVisible = !isPasswordVisible },
+                modifier = Modifier
+                    .fillMaxHeight()
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = passwordRepeat,
+                onValueChange = { passwordRepeat = it },
+                label = { Text("Repeat Password") },
+                visualTransformation = if (isPasswordRepeatVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(end = 8.dp)
+            )
+
+            PasswordVisibilityToggleButton(
+                isPasswordVisible = isPasswordRepeatVisible,
+                onToggle = { isPasswordRepeatVisible = !isPasswordRepeatVisible },
+                modifier = Modifier
+                    .fillMaxHeight()
+            )
+        }
 
         Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
             Row(
@@ -193,6 +226,26 @@ fun InputUserData(
                 }
             }
         )
+    }
+}
+
+@Composable
+fun PasswordVisibilityToggleButton(
+    isPasswordVisible: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val icon: ImageVector = if (isPasswordVisible) {
+        Icons.Filled.VisibilityOff
+    } else {
+        Icons.Filled.Visibility
+    }
+
+    OutlinedButton(
+        onClick = { onToggle() },
+        modifier = modifier
+    ) {
+        Icon(icon, contentDescription = "Toggle password visibility")
     }
 }
 
