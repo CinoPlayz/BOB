@@ -8,7 +8,7 @@ import java.io.File
 
 data class ApiContext(val url: String, val token: String)
 
-// By utilizing lazy initialization, apiContextGlobal will be initialized only once, on its first usage.
+// Lazy initialization: apiContextGlobal will be initialized only once, on its first usage.
 val apiContextGlobal: ApiContext by lazy {
     runBlocking {
         readConfiguration() ?: throw IllegalStateException("Failed to initialize ApiContext")
