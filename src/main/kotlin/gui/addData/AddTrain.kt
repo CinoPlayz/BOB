@@ -174,7 +174,7 @@ fun InputTrainData(
                 .fillMaxWidth()
                 .padding(top = 4.dp)
         ) {
-            Text("Write data to database")
+            Text("Write train to database")
         }
     }
 
@@ -227,7 +227,7 @@ suspend fun writeTrainToDB(
     try {
         coordinates = Coordinates(latitude.toFloat(), longitude.toFloat())
     } catch (e: IllegalArgumentException) {
-        return "Please enter a valid coordinates."
+        return "Please enter valid coordinates."
     }
 
     val timeOfRequest = LocalDateTime.now()
@@ -256,11 +256,4 @@ suspend fun writeTrainToDB(
     } catch (e: Exception) {
         "Error writing data to the database: ${e.message}"
     }
-
-
-    //dbConnection.getDatabase("ZP").getCollection("trainlochistories").insertOne(trainLocHistoryInsert)
-
-    //onReset()
-
-    //return ("Data successfully writted to database.")
 }

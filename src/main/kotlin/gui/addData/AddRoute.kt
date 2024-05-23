@@ -349,7 +349,7 @@ fun InputRouteData(
                 .fillMaxWidth()
                 .padding(top = 4.dp)
         ) {
-            Text("Write data to database")
+            Text("Write route to database")
         }
     }
 
@@ -395,7 +395,7 @@ fun MiddleStopsInput(
             onClick = { onAddStop() },
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp)
         ) {
-            Text("Add Stop")
+            Text("Add Middle Stop")
         }
     }
 }
@@ -501,9 +501,6 @@ suspend fun writeRouteToDB(
             time = middleStop.arrivalTime
         )
     }
-
-    // Prepare `middle` to save to MongoDB as an array
-    //val middleArray: Array<RouteStop> = middle.toTypedArray()
 
     val routeInset = RouteInsert(
         trainType = trainType,
