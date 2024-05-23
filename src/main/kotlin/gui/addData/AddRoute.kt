@@ -161,7 +161,7 @@ fun InputRouteData(
                         onClick = { canSupportBikes = "Yes" }
                     )
                     //Spacer(modifier = Modifier.width(4.dp))
-                    Text("Yes", modifier = Modifier.clickable { canSupportBikes = "Yes" })
+                    Text("Yes"/*, modifier = Modifier.clickable { canSupportBikes = "Yes" }*/)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Row(
@@ -172,7 +172,7 @@ fun InputRouteData(
                         onClick = { canSupportBikes = "No" }
                     )
                     //Spacer(modifier = Modifier.width(4.dp))
-                    Text("No", modifier = Modifier.clickable { canSupportBikes = "No" })
+                    Text("No"/*, modifier = Modifier.clickable { canSupportBikes = "No" }*/)
                 }
             }
         }
@@ -325,14 +325,14 @@ fun InputRouteData(
         )
 
         Button(
-            onClick = {
-                coroutineScope.launch {
-                    val feedback = writeRouteToDB(
-                        trainNumber = trainNumber,
-                        trainType = trainType,
-                        canSupportBikes = canSupportBikes,
-                        drivesOnDays = drivesOnDays,
-                        validFrom = "$validFromYear-$validFromMonth-$validFromDay $validFromHour:$validFromMinute:$validFromSecond",
+                            onClick = {
+                                coroutineScope.launch {
+                                    val feedback = writeRouteToDB(
+                                        trainNumber = trainNumber,
+                                        trainType = trainType,
+                                        canSupportBikes = canSupportBikes,
+                                        drivesOnDays = drivesOnDays,
+                                        validFrom = "$validFromYear-$validFromMonth-$validFromDay $validFromHour:$validFromMinute:$validFromSecond",
                         validUntil = "$validUntilYear-$validUntilMonth-$validUntilDay $validUntilHour:$validUntilMinute:$validUntilSecond",
                         startStationName = startStationName,
                         startDepartureTime = startDepartureTime,
@@ -522,7 +522,7 @@ suspend fun writeRouteToDB(
     return try {
         dbConnection.getDatabase("ZP").getCollection("routes").insertOne(document)
         onReset()
-        "Data successfully written to the database."
+        "Route successfully written to the database."
     } catch (e: Exception) {
         "Error writing data to the database: ${e.message}"
     }

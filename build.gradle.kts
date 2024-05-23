@@ -22,6 +22,7 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     testImplementation(kotlin("test")) // test environment
+    implementation("org.mindrot:jbcrypt:0.4") // User password encrypt
     implementation("androidx.compose.material:material-icons-extended:1.6.7") // Google Fonts Icons
     //implementation("com.google.code.gson:gson:2.10.1") // JSON
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3") // JSON

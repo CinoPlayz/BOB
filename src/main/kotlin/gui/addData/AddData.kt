@@ -186,10 +186,6 @@ fun AddDataMenu(
     }
 }
 
-fun AddUser() {
-    TODO("Add user")
-}
-
 @Composable
 fun AddDataReset(
     modifier: Modifier = Modifier,

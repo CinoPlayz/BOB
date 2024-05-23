@@ -12,7 +12,7 @@ fun getAllStations(apiContext: ApiContext): List<Station> {
     val req = Fuel.get("${apiContext.url}/stations")
         .header("Accept-Language", "en")
         .header(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+            "UserInsert-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
         .responseString { result ->
             when (result) {
