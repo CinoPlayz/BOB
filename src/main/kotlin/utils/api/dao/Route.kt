@@ -16,7 +16,7 @@ fun getAllRoutes(apiContext: ApiContext): List<Route> {
     val req = Fuel.get("${apiContext.url}/routes")
         .header("Accept-Language", "en")
         .header(
-            "UserInsert-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
         .responseString { result ->
             when (result) {
@@ -46,7 +46,7 @@ suspend fun insertRoute(route: RouteInsert): Boolean {
     val (_, response, result) = Fuel.post(url)
         .header("Accept-Language", "en")
         .header(
-            "UserInsert-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
         .header(Headers.AUTHORIZATION, "Bearer ${apiContextGlobal.token}")
         .header(Headers.CONTENT_TYPE, "application/json")

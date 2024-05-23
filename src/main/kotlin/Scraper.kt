@@ -55,7 +55,7 @@ suspend fun isIpInBlackList(blackList: List<String>): Boolean {
     val res = Fuel.get("https://ipinfo.io/ip")
         .header("Accept-Language", "en")
         .header(
-            "UserInsert-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
         .responseString(Charset.defaultCharset())
 
@@ -138,7 +138,7 @@ suspend fun getDataAndProcess(
                 val request = if (source == SourceWebsite.Official) Fuel.post(requestURL!!, listOf("action" to "aktivni_vlaki")) else Fuel.get(requestURL!!)
 
                 val (_, response, resultGet) = request.header("Accept-Language", "en")
-                    .header("UserInsert-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
                     .allowRedirects(true)
                     .responseString()
 
