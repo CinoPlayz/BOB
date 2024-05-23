@@ -44,3 +44,4 @@ bin/
 ### Custom ###
 /config/blacklist.env
 /config/database.env
+/config/secrets.env

@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -19,6 +20,7 @@ import models.Coordinates
 import models.StationInsert
 import org.bson.Document
 import utils.DatabaseUtil
+import utils.api.dao.insertStation
 
 @Composable
 fun AddStation(
@@ -174,16 +176,13 @@ suspend fun writeStationToDB(
         coordinates = coordinates
     )
 
-    val dbConnection = DatabaseUtil.connectDB() ?: return "Failed to connect to the database."
-
-    val jsonString = Json.encodeToString(stationInsert)
-    val document = Document.parse(jsonString)
-
     return try {
-        dbConnection.getDatabase("ZP").getCollection("stations").insertOne(document)
+        coroutineScope {
+            insertStation(stationInsert)
+        }
         onReset()
-        "Data successfully written to the database."
+        "Station successfully written to the database."
     } catch (e: Exception) {
-        "Error writing data to the database: ${e.message}"
+        "Error writing station to the database. ${e.message}"
     }
 }

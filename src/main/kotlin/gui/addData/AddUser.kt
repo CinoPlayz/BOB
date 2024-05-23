@@ -17,14 +17,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import models.Token
 import models.UserInsert
 import org.bson.Document
 import org.mindrot.jbcrypt.BCrypt
 import utils.DatabaseUtil
+import utils.api.dao.insertStation
+import utils.api.dao.insertUser
 import java.time.LocalDateTime
 
 @Composable
@@ -291,16 +293,13 @@ suspend fun writeUserToDB(
         updatedAt = LocalDateTime.now(),
     )
 
-    val dbConnection = DatabaseUtil.connectDB() ?: return "Failed to connect to the database."
-
-    val jsonString = Json.encodeToString(userInsert)
-    val document = Document.parse(jsonString)
-
     return try {
-        dbConnection.getDatabase("ZP").getCollection("users").insertOne(document)
+        coroutineScope {
+            insertUser(userInsert)
+        }
         onReset()
         "User successfully written to the database."
     } catch (e: Exception) {
-        "Error writing data to the database: ${e.message}"
+        "Error writing user to the database. ${e.message}"
     }
 }

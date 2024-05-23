@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import gui.CustomDropdownMenu
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -17,6 +18,8 @@ import models.Coordinates
 import models.TrainLocHistoryInsert
 import org.bson.Document
 import utils.DatabaseUtil
+import utils.api.dao.insertStation
+import utils.api.dao.insertTrain
 import java.time.LocalDateTime
 
 @Composable
@@ -118,7 +121,7 @@ fun InputTrainData(
         OutlinedTextField(
             value = routeStartTime,
             onValueChange = { routeStartTime = it },
-            label = { Text("Route Start Time") },
+            label = { Text("Route Start Time (HH:mm)") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -244,16 +247,13 @@ suspend fun writeTrainToDB(
         coordinates = coordinates
     )
 
-    val dbConnection = DatabaseUtil.connectDB() ?: return "Failed to connect to the database."
-
-    val jsonString = Json.encodeToString(trainLocHistoryInsert)
-    val document = Document.parse(jsonString)
-
     return try {
-        dbConnection.getDatabase("ZP").getCollection("trainlochistories").insertOne(document)
+        coroutineScope {
+            insertTrain(trainLocHistoryInsert)
+        }
         onReset()
-        "Data successfully written to the database."
+        "Station successfully written to the database."
     } catch (e: Exception) {
-        "Error writing data to the database: ${e.message}"
+        "Error writing station to the database. ${e.message}"
     }
 }
