@@ -5,6 +5,8 @@ import Register from "./components/Register.jsx";
 import Header from "./components/Header.jsx";
 import Login from './components/Login.jsx';
 import Logout from "./components/Logout.jsx";
+import Map from "./components/Map.jsx";
+import Tmp from "./components/Tmp.jsx";
 
 import './App.css'
 
@@ -62,7 +64,8 @@ function App() {
             <Route path="/login" exact element={<Login />}></Route>
             <Route path="/register" element={<Register />}></Route>
             <Route path="/logout" element={<Logout />}></Route>
-
+            <Route path="/map" element={<Map />}></Route>
+            <Route path="/tmp" element={<Tmp />}></Route>
           </Routes>
         </div>
       </UserContext.Provider>

@@ -54,8 +54,18 @@ export default function Header(props) {
                     {context => (
                       context.token ?
                         <>
-                          <Link to='/tmp' className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Tmp</Link>
-
+                          <Link
+                            to="/map"
+                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/map')}`}
+                          >
+                            Map
+                          </Link>
+                          <Link
+                            to="/tmp"
+                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/map')}`}
+                          >
+                            Tmp
+                          </Link>
                         </>
                         :
                         <>
