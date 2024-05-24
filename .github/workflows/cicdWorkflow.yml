@@ -50,4 +50,4 @@ jobs:
           url: 'http://${{ secrets.AZURE_ADDRESS }}/hooks/redeploy-webhook'
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json", "X-Webhook-Token": "${{ secrets.WEBHOOK_TOKEN }}"}'
-          body: '{"image_name": "cinoplayz/bob-zpbackend:latest"}'
+          data: '{"image_name": "cinoplayz/bob-zpbackend:latest"}'
