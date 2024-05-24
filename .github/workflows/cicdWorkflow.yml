@@ -45,11 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Webhook to Azure Instance
-        uses: wei/http-request-action@v1
+        uses: fjogeleit/http-request-action@v1
         with:
-          url: http://${{ secrets.AZURE_ADDRESS }}/hooks/redeploy-webhook
-          method: POST
-          headers: |
-            Content-Type: application/json
-            X-Webhook-Token: ${{ secrets.WEBHOOK_TOKEN }}
+          url: 'http://${{ secrets.AZURE_ADDRESS }}/hooks/redeploy-webhook'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json", "X-Webhook-Token": "${{ secrets.WEBHOOK_TOKEN }}"}'
           body: '{"image_name": "cinoplayz/bob-zpbackend:latest"}'
