@@ -8,10 +8,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apartment
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Subway
-import androidx.compose.material.icons.filled.Train
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +24,7 @@ enum class ScraperMenuState(val customName: String) {
     OFFICIAL("SZ Official"),
     VLAKSI("Vlak.si"),
     STATIONS("Stations"),
+    ROUTES("Routes"),
     RESET("Reset")
 }
 
@@ -126,6 +124,31 @@ fun Scraper(
                         fontSize = fontSize.sp
                     )
                 }
+                //Stations
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { scraperMenuState.value = ScraperMenuState.ROUTES }
+                        .background(if (scraperMenuState.value == ScraperMenuState.ROUTES) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+
+                ) {
+                    Icon(
+                        Icons.Default.RailwayAlert,
+                        contentDescription = ScraperMenuState.ROUTES.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp))
+                    Text(
+                        text = ScraperMenuState.ROUTES.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
                 //Reset
                 Row(
                     modifier = Modifier
@@ -169,6 +192,7 @@ fun Scraper(
                 ScraperMenuState.OFFICIAL -> ScraperFetchData(SourceWebsite.Official)
                 ScraperMenuState.VLAKSI -> ScraperFetchData(SourceWebsite.Vlaksi)
                 ScraperMenuState.STATIONS -> ScraperFetchStations()
+                ScraperMenuState.ROUTES -> ScraperFetchRoutes()
                 ScraperMenuState.RESET -> ScraperReset()
             }
             // You can change the content of this box dynamically

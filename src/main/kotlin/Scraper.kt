@@ -8,8 +8,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import models.*
+import org.apache.pdfbox.Loader
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.text.PDFTextStripper
 import utils.context.appContextGlobal
 import java.net.InetAddress
+import java.net.URI
+import java.net.URL
 import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -183,7 +188,7 @@ suspend fun getStationsAndProcess(
                     is Result.Failure -> {
                         println("${getCurrentTime()} - Error occurred while getting stations: ${resultGet.error.message}")
 
-                        if (false) {
+                        if (appContextGlobal.requestDetailReport) {
                             println("More details: ${resultGet.error.response.body().asString("text/html")}")
                         }
 
@@ -196,7 +201,7 @@ suspend fun getStationsAndProcess(
                         if (!isStringJson(resultGet.value)) {
                             result = result.copy(error = "Data not in JSON format")
                         } else {
-                            result = result.copy(resultGet.value)
+                            result = result.copy(data = resultGet.value)
                             result = result.copy(timeOfRequest = getCurrentTime())
 
                             val doc: Document = Ksoup.parse(resultGet.value)
@@ -294,7 +299,7 @@ fun getStationsLocation(query: String): ResultStationsLocation{
             is Result.Failure -> {
                 println("${getCurrentTime()} - Error occurred while getting stations: ${resultGet.error.message}")
 
-                if (true) {
+                if (appContextGlobal.requestDetailReport) {
                     println("More details: ${resultGet.error.response.body().asString("text/html")}")
                 }
 
@@ -310,11 +315,11 @@ fun getStationsLocation(query: String): ResultStationsLocation{
                     result = result.copy(timeOfRequest =  getCurrentTime())
 
                     val json = Json { ignoreUnknownKeys = true }
-                    val getRoutes = json.decodeFromString<OpenStreetMap>(resultGet.value)
+                    val getStationsLocation = json.decodeFromString<OpenStreetMap>(resultGet.value)
 
                     val mapOfLocations = mutableMapOf<String, Coordinates>()
 
-                    getRoutes.elements.forEach {
+                    getStationsLocation.elements.forEach {
                         if(it.type == OpenStreetMapType.NODE){
                             val node = it as NodeSection
                             if(node.tags.nameSl != null){
@@ -345,6 +350,83 @@ fun getStationsLocation(query: String): ResultStationsLocation{
                     result = result.copy(mapOfLocations = mapOfLocations)
 
                 }
+            }
+        }
+    } catch (e: Exception) {
+        println("${getCurrentTime()} - Exception occurred while making the request: ${e.message}")
+        result = result.copy(error = "Exception occurred while making the request: ${e.message}")
+    }
+
+    return result
+}
+
+data class ResultRoute(val error: String = "", val data: String = "", val timeOfRequest: String = "", val listOfRoutes: List<RouteInsert> = listOf())
+
+fun getRoutesAndProcess(): ResultRoute{
+    var result = ResultRoute()
+    try {
+        val request = Fuel.get("https://potniski.sz.si/vozni-redi-po-relacijah-od-11-decembra-2022-do-9-decembra-2023/")
+
+        val (_, response, resultGet) = request.header("Accept-Language", "en")
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
+            .allowRedirects(true)
+            .responseString()
+
+        when (resultGet) {
+            is Result.Failure -> {
+                println("${getCurrentTime()} - Error occurred while getting stations: ${resultGet.error.message}")
+
+                if (appContextGlobal.requestDetailReport) {
+                    println("More details: ${resultGet.error.response.body().asString("text/html")}")
+                }
+
+                result = result.copy(error = "Error occurred while getting from Stations: ${resultGet.error.message}")
+            }
+            is Result.Success -> {
+                println("${getCurrentTime()} - Got Locations!")
+                result = result.copy(data = resultGet.value)
+                result = result.copy(timeOfRequest =  getCurrentTime())
+
+                val json = Json { ignoreUnknownKeys = true }
+                val doc: Document = Ksoup.parse(resultGet.value)
+                val fileLinksElements = doc.body().getElementsByClass("filename")
+
+                val pdfLinks = mutableListOf<String>()
+
+                fileLinksElements.forEach {
+                    if(it.tagName() == "a" && it.attribute("href") != null){
+                        pdfLinks.add(it.attribute("href")!!.value)
+                    }
+                }
+
+
+                println("Opening: ${pdfLinks[0]}")
+                val pdfInBytes = URI.create(pdfLinks[0]).toURL().readBytes()
+                val document: PDDocument = Loader.loadPDF(pdfInBytes)
+
+                val textStripper = PDFTextStripper().getText(document)
+
+                println(textStripper)
+
+                document.close()
+
+                /*pdfLinks.forEach {
+                    println("Opening: $it")
+                    val pdfInBytes = URI.create(it).toURL().readBytes()
+                    val document: PDDocument = Loader.loadPDF(pdfInBytes)
+
+                    val textStripper = PDFTextStripper().getText(document)
+
+                    println(textStripper)
+
+                    document.close()
+                }*/
+
+
+                //println("mapOfLocations: $mapOfLocations")
+                //result = result.copy(mapOfLocations = mapOfLocations)
+
+
             }
         }
     } catch (e: Exception) {
