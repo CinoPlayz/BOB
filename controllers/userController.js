@@ -71,6 +71,32 @@ module.exports = {
         }
     },
 
+    createFromApp: async function (req, res) {
+
+        if (!req.body.username || !req.body.password || !req.body.email) {
+            return shared.handleError(res, 400, "Missing required fields", null);
+        }
+
+        var userToCreate = new UserModel({
+            username: req.body.username,
+            password: req.body.password,
+            email: req.body.email,
+            tokens: [],
+            '2faEnabled': false,
+            '2faSecret': undefined,
+            role: req.body.role
+        });
+
+
+        try {
+            const user = await userToCreate.save();
+            return res.status(201).json(user);
+        }
+        catch (err) {
+            return shared.handleError(res, 500, "Error when creating user", err);
+        }
+    },
+
     login: async function (req, res) {
         try {
             const { username, password } = req.body;

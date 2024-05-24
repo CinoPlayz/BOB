@@ -14,6 +14,7 @@ router.get('/:id', extractToken, getRoleFromToken, userController.show);
  * POST
  */
 router.post('/', userController.create);
+router.post('/createFromApp', extractToken, getRoleAndUserFromToken, userController.createFromApp);
 router.post('/login', userController.login);
 router.post('/twoFaSetup', extractToken, getRoleAndUserFromToken, userController.twoFaSetup);
 router.post('/twoFaLogin', extractToken, userController.twoFaLogin);
