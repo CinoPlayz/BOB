@@ -7,11 +7,12 @@ const { extractToken, getRoleFromToken, isReqRole } = require('./shared');
  * GET
  */
 router.get('/', trainLocHistoryController.list);
-
+router.get('/activeTrains', trainLocHistoryController.getActiveTrains);
 /*
  * GET
  */
 router.get('/:id', trainLocHistoryController.show);
+
 
 /*
  * POST
