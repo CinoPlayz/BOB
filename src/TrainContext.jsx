@@ -10,9 +10,9 @@ export const TrainProvider = ({ children }) => {
         const lastFetch = localStorage.getItem('lastFetch');
         const cachedData = localStorage.getItem('cachedTrainData');
         const now = Date.now();
-        const twoMinutes = 2 * 60 * 1000;
+        const fiveMinutes = 5 * 60 * 1000;
 
-        if (lastFetch && now - lastFetch < twoMinutes && cachedData) {
+        if (lastFetch && now - lastFetch < fiveMinutes && cachedData) {
             console.log('Using cached data');
             setTrainData(JSON.parse(cachedData));
             setLastUpdate(Date.now());
@@ -34,7 +34,7 @@ export const TrainProvider = ({ children }) => {
 
     useEffect(() => {
         fetchTrainData();
-        const intervalId = setInterval(fetchTrainData, 2 * 60 * 1000); // Osvežitev vsake 2 minuti
+        const intervalId = setInterval(fetchTrainData, 5 * 60 * 1000); // Osvežitev vsake 5 minuti
 
         return () => clearInterval(intervalId);
     }, []);
