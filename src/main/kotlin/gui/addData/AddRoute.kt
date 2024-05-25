@@ -328,14 +328,14 @@ fun InputRouteData(
         )
 
         Button(
-                            onClick = {
-                                coroutineScope.launch {
-                                    val feedback = writeRouteToDB(
-                                        trainNumber = trainNumber,
-                                        trainType = trainType,
-                                        canSupportBikes = canSupportBikes,
-                                        drivesOnDays = drivesOnDays,
-                                        validFrom = "$validFromYear-$validFromMonth-$validFromDay $validFromHour:$validFromMinute:$validFromSecond",
+            onClick = {
+                coroutineScope.launch {
+                    val feedback = writeRouteToDB(
+                        trainNumber = trainNumber,
+                        trainType = trainType,
+                        canSupportBikes = canSupportBikes,
+                        drivesOnDays = drivesOnDays,
+                        validFrom = "$validFromYear-$validFromMonth-$validFromDay $validFromHour:$validFromMinute:$validFromSecond",
                         validUntil = "$validUntilYear-$validUntilMonth-$validUntilDay $validUntilHour:$validUntilMinute:$validUntilSecond",
                         startStationName = startStationName,
                         startDepartureTime = startDepartureTime,

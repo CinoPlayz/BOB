@@ -1,4 +1,4 @@
-package gui.addData
+package gui.manageData
 
 import TitleText
 import androidx.compose.foundation.*
@@ -14,18 +14,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-enum class AddDataMenuState(val customName: String) {
-    ADD_TRAIN("Add Train"),
-    ADD_ROUTE("Add Route"),
-    ADD_STATION("Add Station"),
-    ADD_USER("Add User"),
+enum class ManageDataMenuState(val customName: String) {
+    MANAGE_TRAINS("Trains"),
+    MANAGE_ROUTES("Routes"),
+    MANAGE_STATIONS("Stations"),
+    MANAGE_USERS("Users"),
     RESET("Reset")
 }
 
 @Composable
-fun AddDataMenu(
+fun ManageDataMenu(
     modifier: Modifier = Modifier,
-    addDataMenuState: MutableState<AddDataMenuState> = remember { mutableStateOf(AddDataMenuState.RESET) },
+    manageDataMenuState: MutableState<ManageDataMenuState> = remember { mutableStateOf(ManageDataMenuState.RESET) },
     buttonPadding: Int = 10,
     textOffset: Int = 25,
     iconSize: Int = 20,
@@ -47,22 +47,22 @@ fun AddDataMenu(
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { addDataMenuState.value = AddDataMenuState.ADD_TRAIN }
-                        .background(if (addDataMenuState.value == AddDataMenuState.ADD_TRAIN) Color.LightGray else Color.Transparent)
+                        //.clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_TRAINS }
+                        .background(if (manageDataMenuState.value == ManageDataMenuState.MANAGE_TRAINS) Color.LightGray else Color.Transparent)
                         .padding(vertical = buttonPadding.dp)
                         .align(Alignment.CenterVertically)
                         .wrapContentWidth(Alignment.CenterHorizontally) // align horizontally
                 ) {
                     Icon(
                         Icons.Default.Train,
-                        contentDescription = AddDataMenuState.ADD_TRAIN.name,
+                        contentDescription = ManageDataMenuState.MANAGE_TRAINS.name,
                         modifier = Modifier
                             .size(size = iconSize.dp)
                             .align(Alignment.CenterVertically)
                     )
                     Spacer(modifier = Modifier.width(iconTextSpace.dp)) // spacing between icon and text
                     Text(
-                        text = AddDataMenuState.ADD_TRAIN.customName,
+                        text = ManageDataMenuState.MANAGE_TRAINS.customName,
                         textAlign = TextAlign.Center,
                         fontSize = fontSize.sp
                     )
@@ -70,8 +70,8 @@ fun AddDataMenu(
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { addDataMenuState.value = AddDataMenuState.ADD_ROUTE }
-                        .background(if (addDataMenuState.value == AddDataMenuState.ADD_ROUTE) Color.LightGray else Color.Transparent)
+                        //.clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_ROUTES }
+                        .background(if (manageDataMenuState.value == ManageDataMenuState.MANAGE_ROUTES) Color.LightGray else Color.Transparent)
                         .padding(vertical = buttonPadding.dp)
                         .align(Alignment.CenterVertically)
                         .wrapContentWidth(Alignment.CenterHorizontally)
@@ -79,14 +79,14 @@ fun AddDataMenu(
                 ) {
                     Icon(
                         Icons.Default.Route,
-                        contentDescription = AddDataMenuState.ADD_ROUTE.name,
+                        contentDescription = ManageDataMenuState.MANAGE_ROUTES.name,
                         modifier = Modifier
                             .size(size = iconSize.dp)
                             .align(Alignment.CenterVertically)
                     )
                     Spacer(modifier = Modifier.width(iconTextSpace.dp))
                     Text(
-                        text = AddDataMenuState.ADD_ROUTE.customName,
+                        text = ManageDataMenuState.MANAGE_ROUTES.customName,
                         textAlign = TextAlign.Center,
                         fontSize = fontSize.sp
                     )
@@ -94,22 +94,22 @@ fun AddDataMenu(
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { addDataMenuState.value = AddDataMenuState.ADD_STATION }
-                        .background(if (addDataMenuState.value == AddDataMenuState.ADD_STATION) Color.LightGray else Color.Transparent)
+                        //.clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_STATIONS }
+                        .background(if (manageDataMenuState.value == ManageDataMenuState.MANAGE_STATIONS) Color.LightGray else Color.Transparent)
                         .padding(vertical = buttonPadding.dp)
                         .align(Alignment.CenterVertically)
                         .wrapContentWidth(Alignment.CenterHorizontally) // align horizontally
                 ) {
                     Icon(
                         Icons.Default.House,
-                        contentDescription = AddDataMenuState.ADD_STATION.name,
+                        contentDescription = ManageDataMenuState.MANAGE_STATIONS.name,
                         modifier = Modifier
                             .size(size = iconSize.dp)
                             .align(Alignment.CenterVertically)
                     )
                     Spacer(modifier = Modifier.width(iconTextSpace.dp)) // spacing between icon and text
                     Text(
-                        text = AddDataMenuState.ADD_STATION.customName,
+                        text = ManageDataMenuState.MANAGE_STATIONS.customName,
                         textAlign = TextAlign.Center,
                         fontSize = fontSize.sp
                     )
@@ -117,22 +117,22 @@ fun AddDataMenu(
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { addDataMenuState.value = AddDataMenuState.ADD_USER }
-                        .background(if (addDataMenuState.value == AddDataMenuState.ADD_USER) Color.LightGray else Color.Transparent)
+                        .clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_USERS }
+                        .background(if (manageDataMenuState.value == ManageDataMenuState.MANAGE_USERS) Color.LightGray else Color.Transparent)
                         .padding(vertical = buttonPadding.dp)
                         .align(Alignment.CenterVertically)
                         .wrapContentWidth(Alignment.CenterHorizontally) // align horizontally
                 ) {
                     Icon(
                         Icons.Default.Person,
-                        contentDescription = AddDataMenuState.ADD_USER.name,
+                        contentDescription = ManageDataMenuState.MANAGE_USERS.name,
                         modifier = Modifier
                             .size(size = iconSize.dp)
                             .align(Alignment.CenterVertically)
                     )
                     Spacer(modifier = Modifier.width(iconTextSpace.dp)) // spacing between icon and text
                     Text(
-                        text = AddDataMenuState.ADD_USER.customName,
+                        text = ManageDataMenuState.MANAGE_USERS.customName,
                         textAlign = TextAlign.Center,
                         fontSize = fontSize.sp
                     )
@@ -140,7 +140,7 @@ fun AddDataMenu(
                 Row(
                     modifier = Modifier
                         .width(50.dp)
-                        .clickable { addDataMenuState.value = AddDataMenuState.RESET }
+                        .clickable { manageDataMenuState.value = ManageDataMenuState.RESET }
                         .background(Color.Transparent)
                         .padding(vertical = buttonPadding.dp)
                         .align(Alignment.CenterVertically)
@@ -148,7 +148,7 @@ fun AddDataMenu(
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = AddDataMenuState.RESET.name,
+                        contentDescription = ManageDataMenuState.RESET.name,
                         modifier = Modifier
                             .size(size = iconSize.dp)
                             .align(Alignment.CenterVertically)
@@ -175,19 +175,19 @@ fun AddDataMenu(
                     bottom = 0.dp
                 )
         ) {
-            when (addDataMenuState.value) {
-                AddDataMenuState.ADD_TRAIN -> AddTrain()
-                AddDataMenuState.ADD_ROUTE -> AddRoute()
-                AddDataMenuState.ADD_STATION -> AddStation()
-                AddDataMenuState.ADD_USER -> AddUser()
-                AddDataMenuState.RESET -> AddDataReset()
+            when (manageDataMenuState.value) {
+                ManageDataMenuState.MANAGE_TRAINS -> TODO()
+                ManageDataMenuState.MANAGE_ROUTES -> TODO()
+                ManageDataMenuState.MANAGE_STATIONS -> TODO()
+                ManageDataMenuState.MANAGE_USERS -> ManageUsers()
+                ManageDataMenuState.RESET -> ManageDataReset()
             }
         }
     }
 }
 
 @Composable
-fun AddDataReset(
+fun ManageDataReset(
     modifier: Modifier = Modifier,
     titleFontSize: Int = 20,
     bodyFontSize: Int = 14
@@ -200,7 +200,7 @@ fun AddDataReset(
         verticalArrangement = Arrangement.Center
     ) {
         TitleText(
-            text = "Choose data to enter",
+            text = "Choose data to manage",
             fontSize = titleFontSize,
             //modifier = Modifier.padding(bottom = 16.dp, top = 10.dp)
         )

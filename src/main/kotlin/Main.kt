@@ -23,12 +23,13 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import gui.scraper.Scraper
 import gui.addData.AddDataMenu
+import gui.manageData.ManageDataMenu
 
 const val NAME = "BandOfBytes"
 
 enum class MenuState(val customName: String) {
     ADD_DATA("Add Data"),
-    ALL_TRAINS("//Trains//"),
+    MANAGE_DATA("Manage Data"),
     SCRAPER("Scraper"),
     PROCESSOR("//Data Processor//"),
     GENERATOR("//Generator//"),
@@ -103,21 +104,21 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    //.clickable { menuState.value = MenuState.ALL_TRAINS }
+                    .clickable { menuState.value = MenuState.MANAGE_DATA }
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.List,
-                    contentDescription = MenuState.ALL_TRAINS.name,
+                    contentDescription = MenuState.MANAGE_DATA.name,
                     modifier = Modifier
                         .size(size = iconSize.dp)
                         .align(Alignment.CenterVertically)
                 )
                 Spacer(modifier = Modifier.width(iconTextSpace.dp))
                 Text(
-                    text = MenuState.ALL_TRAINS.customName,
+                    text = MenuState.MANAGE_DATA.customName,
                     textAlign = TextAlign.Center,
                     fontSize = fontSize.sp,
                     modifier = Modifier.align(Alignment.CenterVertically)
@@ -245,7 +246,7 @@ fun Content(
         when (menuState.value) {
             MenuState.ABOUT -> AboutAppTab()
             MenuState.ADD_DATA -> AddDataMenu()
-            MenuState.ALL_TRAINS -> TODO()
+            MenuState.MANAGE_DATA -> ManageDataMenu()
             MenuState.SCRAPER -> Scraper(modifier)
             MenuState.PROCESSOR -> TODO()
             MenuState.GENERATOR -> TODO()

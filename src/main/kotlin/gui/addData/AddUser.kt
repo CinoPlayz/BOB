@@ -19,13 +19,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import models.UserInsert
-import org.bson.Document
-import org.mindrot.jbcrypt.BCrypt
-import utils.DatabaseUtil
-import utils.api.dao.insertStation
 import utils.api.dao.insertUser
 import java.time.LocalDateTime
 
@@ -278,13 +272,13 @@ suspend fun writeUserToDB(
         return ("Invalid email format.")
     }
 
-    val salt = BCrypt.gensalt(10) // ekvivalent ZPBackend
-    val passwordHash = BCrypt.hashpw(password, salt)
+    //val salt = BCrypt.gensalt(10) // ekvivalent ZPBackend
+    //val passwordHash = BCrypt.hashpw(password, salt)
 
     val userInsert = UserInsert(
         username = username,
         email = email,
-        password = passwordHash,
+        password = password,
         tokens = emptyList(),
         twoFactorAuthenticationEnabled = false,
         twoFactorAuthenticationSecret = null,

@@ -22,11 +22,13 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     testImplementation(kotlin("test")) // test environment
-    implementation("org.mindrot:jbcrypt:0.4") // User password encrypt
+    //implementation("org.mindrot:jbcrypt:0.4") // User password encrypt
     implementation("androidx.compose.material:material-icons-extended:1.6.7") // Google Fonts Icons
     //implementation("com.google.code.gson:gson:2.10.1") // JSON
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3") // JSON
     implementation("com.github.kittinunf.fuel:fuel:2.3.1") // Fuel library (HTTP)
+    implementation("com.github.kittinunf.fuel:fuel-coroutines:2.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1") // .env file support
     implementation("org.mongodb:mongodb-driver-sync:5.1.0") // MongoDB Driver
     implementation("org.slf4j:slf4j-api:2.0.13") // Logger for MongoDB Driver
