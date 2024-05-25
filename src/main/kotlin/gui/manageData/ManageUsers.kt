@@ -9,6 +9,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,12 +30,12 @@ import models.Token
 import models.TokenInsert
 import models.User
 import models.UserUpdate
+import utils.api.dao.deleteUser
 import utils.api.dao.getAllUsers
 import utils.api.dao.updateUser
 import java.time.DateTimeException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
 
 @Composable
 fun ManageUsers(
@@ -45,6 +46,65 @@ fun ManageUsers(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val isLoading = remember { mutableStateOf(false) }
+
+    fun updateUser(newUser: User) {
+        // Update the list of users by replacing the user with the same ID
+        users = users.map { if (it.id == newUser.id) newUser else it }
+    }
+
+    var userToDelete by remember { mutableStateOf<User?>(null) }
+    var feedbackMessage by remember { mutableStateOf<String?>(null) }
+
+    // Function to handle user deletion
+    fun deleteUser(user: User) {
+        // Set the user to delete
+        userToDelete = user
+    }
+
+    // Confirmation dialog for deleting a user
+    userToDelete?.let { user ->
+        AlertDialog(
+            onDismissRequest = {
+                // Reset userToDelete when dialog is dismissed
+                userToDelete = null
+            },
+            title = {
+                Text(text = "Delete User")
+            },
+            text = {
+                Text(text = "Are you sure you want to delete ${user.username}?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Call deleteUserFromDB when confirmed
+                        coroutineScope.launch {
+                            val feedback = deleteUserFromDB(user.id) {
+                                // If deletion is successful, remove the user from the list
+                                users = users.filterNot { it.id == user.id }
+                            }
+                            // Reset userToDelete after deletion
+                            userToDelete = null
+                            // Show feedback message if needed
+                            feedbackMessage = feedback
+                        }
+                    }
+                ) {
+                    Text(text = "Yes")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        // Dismiss the dialog
+                        userToDelete = null
+                    }
+                ) {
+                    Text(text = "No")
+                }
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -84,10 +144,12 @@ fun ManageUsers(
                     .padding(16.dp)
             ) {
                 items(users) { user ->
-                    UserItem(user = user) {
-                        // Update the users list internally within the ManageUsers composable
-                        users = users.map { if (it.id == user.id) user else it }
-                    }
+                    UserItem(
+                        user = user,
+                        onDeleteUser = { userToDelete -> deleteUser(userToDelete) },
+                        // onUpdateUser = { users = users.map { if (it.id == user.id) user else it } }
+                        onUpdateUser = { userToUpdate -> updateUser(userToUpdate) }
+                    )
                 }
                 /*items(users) { user ->
                     UserItem(user = user)
@@ -95,12 +157,28 @@ fun ManageUsers(
             }
         }
     }
+
+    feedbackMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { feedbackMessage = null }, // Reset feedback message on dismiss
+            //title = { Text("Feedback") },
+            text = { Text(message) },
+            confirmButton = {
+                Button(
+                    onClick = { feedbackMessage = null }, // Reset feedback message on confirm
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
 
 @Composable
 fun UserItem(
     user: User,
     modifier: Modifier = Modifier,
+    onDeleteUser: (User) -> Unit,
     onUpdateUser: (User) -> Unit // Function to update a single user
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -127,22 +205,28 @@ fun UserItem(
 
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 
+    // Update internal state when the user parameter changes
+    LaunchedEffect(user) {
+        username = user.username
+        email = user.email
+        role = user.role
+        tokens = user.tokens
+        twoFA = user.`2faEnabled`
+        twoFASecret = user.`2faSecret` ?: ""
+        createdAt = user.createdAt
+        updatedAt = user.updatedAt
+    }
+
     val onUpdateUserSuccess: (User) -> Unit = { updatedUser ->
-        // Update user with the updated user object
-        username = updatedUser.username
-        email = updatedUser.email
-        role = updatedUser.role
-        tokens = updatedUser.tokens
-        twoFA = updatedUser.`2faEnabled`
-        twoFASecret = updatedUser.`2faSecret` ?: ""
-        createdAt = updatedUser.createdAt
-        updatedAt = updatedUser.updatedAt
+        // Update the user within the ManageUsers composable
+        onUpdateUser(updatedUser)
 
         newTokens = emptyList()
         editMode = false
+    }
 
-        // Update the user within the ManageUsers composable
-        onUpdateUser(updatedUser)
+    val onDeleteUserSuccess: () -> Unit = {
+        editMode = false
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -603,12 +687,6 @@ fun UserItem(
 
                                 feedbackMessage = feedback
                             }
-                            // Save changes
-                            //user.tokens = tokens
-                            // Here you would save the changes to the user object and possibly update the state or make a network call
-                            //user.email = email
-                            //user.`2faEnabled` = twoFA
-                            //user.`2faSecret` = twoFASecret
                         } else {
                             editMode = true
                         }
@@ -630,6 +708,35 @@ fun UserItem(
                         Icon(Icons.Default.Cancel, contentDescription = "Cancel")
                     }
                 }
+
+                if (!editMode) {
+                    IconButton(
+                        onClick = {
+                            // Call onDeleteUser to initiate deletion
+                            onDeleteUser(user)
+                        }
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                }
+
+                /*if (!editMode) {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                val feedback = deleteUserFromDB(
+                                    id = user.id,
+                                    onSuccess = onDeleteUserSuccess
+                                )
+                                feedbackMessage = feedback
+                            }
+
+                            // editMode = false
+                        }
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                }*/
             }
         }
     }
@@ -647,6 +754,22 @@ fun UserItem(
                 }
             }
         )
+    }
+}
+
+suspend fun deleteUserFromDB(
+    id: String,
+    onSuccess: () -> Unit
+): String {
+
+    return try {
+        coroutineScope {
+            deleteUser(id)
+        }
+        onSuccess()
+        "User successfully deleted from the database."
+    } catch (e: Exception) {
+        "Error removing user from the database. ${e.message}"
     }
 }
 
