@@ -29,6 +29,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
 }
 
 //Function to decode URL encoding (database enteries)
-fun getDecodedData(string: String){
-    val decode = URLDecoder.decode(string, Charset.defaultCharset())
+fun getDecodedData(string: String) : String{
+    val decoded = URLDecoder.decode(string, Charset.defaultCharset())
+    return decoded.unescapeUnicode()
 }

@@ -1,11 +1,17 @@
 package models
 
+import kotlinx.serialization.Serializable
 import utils.api.dao.getAllRoutes
 import utils.api.dao.getAllStations
+import utils.parsing.LocalDateTimeSerializer
 import java.time.LocalDateTime
 
 //Can be used for both database conversion and in app request conversion
-data class VlakiSiRequest(val timeOfRequest: LocalDateTime, val data: VlakiSi) {
+@Serializable
+data class VlakiSiRequest(
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val timeOfRequest: LocalDateTime,
+    val data: VlakiSi) {
     fun toListTrainLocHistory(): List<TrainLocHistoryInsert> {
         val trainLocHistoryList = mutableListOf<TrainLocHistoryInsert>()
         for (item in data.data) {

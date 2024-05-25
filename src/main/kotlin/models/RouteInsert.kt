@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 @Serializable
 data class RouteInsert(
     val trainType: String,
-    val trainNumber: String,
+    val trainNumber: Int,
     @Serializable(with = LocalDateTimeSerializer::class)
     val validFrom: LocalDateTime,
     @Serializable(with = LocalDateTimeSerializer::class)

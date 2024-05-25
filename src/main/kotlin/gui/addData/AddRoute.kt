@@ -507,7 +507,7 @@ suspend fun writeRouteToDB(
 
     val routeInset = RouteInsert(
         trainType = trainType,
-        trainNumber = trainNumberInt.toString(),
+        trainNumber = trainNumberInt,
         validFrom = validFromDate,
         validUntil = validUntilDate,
         canSupportBikes = canSupportBikesBoolean.toString(),

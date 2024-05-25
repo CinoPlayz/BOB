@@ -124,7 +124,7 @@ fun Scraper(
                         fontSize = fontSize.sp
                     )
                 }
-                //Stations
+                //Routes
                 Row(
                     modifier = Modifier
                         .weight(1f)
