@@ -101,8 +101,24 @@ module.exports = {
             const data = response.data;
             res.status(200).json(data);
         } catch (err) {
-            console.error('Error fetching active trains:', err);
-            res.status(500).json({ message: 'Error fetching active trains', error: err.message });
+            return shared.handleError(res, 500, "Error fetching active trains", err);
         }
-    }
+    },
+
+
+     getTrainHistoryByDateRange: async function(req, res) {
+        const { startDate, endDate } = req.query;
+    
+        try {
+            const trainData = await TrainLocHistory.find({
+                timeOfRequest: {
+                    $gte: new Date(startDate),
+                    $lte: new Date(endDate)
+                }
+            });
+            res.status(200).json(trainData);
+        } catch (err) {
+            return shared.handleError(res, 500, "Error fetching train history data", err);
+        }
+    },
 };

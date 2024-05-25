@@ -8,6 +8,7 @@ const { extractToken, getRoleFromToken, isReqRole } = require('./shared');
  */
 router.get('/', trainLocHistoryController.list);
 router.get('/activeTrains', trainLocHistoryController.getActiveTrains);
+router.get('/trainLocByDate', trainLocHistoryController.getTrainHistoryByDateRange);
 /*
  * GET
  */
