@@ -1,13 +1,9 @@
-import { useEffect, useContext, useState,useRef   } from 'react';
-import { UserContext } from '../UserContext';
-import { Navigate } from 'react-router-dom';
+import { useEffect, useContext, useRef } from 'react';
+import TrainContext from '../TrainContext';
 import trainIcon from '../assets/train_icon.png';
-import trainData from '../trainData.json';
-
-
 function Map() {
+    const { trainData } = useContext(TrainContext);
     const mapRef = useRef(null);
-    const [trainData, setTrainData] = useState([]);
 
     useEffect(() => {
         if (!mapRef.current) {
@@ -18,36 +14,27 @@ function Map() {
             }).addTo(mapRef.current);
         }
 
-        const fetchTrainData = async () => {
-            try {
-                const response = await fetch('http://localhost:3001/trainLocHistories/activeTrains');
-                const data = await response.json();
-                setTrainData(data);
-                console.log('Podatki o vlakih:', data);
-            } catch (error) {
-                console.error('Napaka pri pridobivanju podatkov o vlakih:', error);
-            }
-        };
+        
+        if (mapRef.current) {// Clear existing markers
+            mapRef.current.eachLayer((layer) => {
+                if (layer instanceof L.Marker) {
+                    mapRef.current.removeLayer(layer);
+                }
+            });
+        }
 
-        fetchTrainData();
-        const interval = setInterval(fetchTrainData, 5 * 60 * 1000); // Osveževanje na 5 minut
-
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        if (mapRef.current && trainData.length > 0) {
+        if (trainData.length > 0) {
             trainData.forEach(train => {
                 const { St_vlaka, Koordinate, Postaja, Vrsta, Zamuda_cas } = train;
                 if (Koordinate) {
                     const [longitude, latitude] = Koordinate.split(',').map(Number);
-                    const marker = L.marker([latitude, longitude]).addTo(mapRef.current);
+                    const marker = L.marker([latitude, longitude], { icon: L.icon({ iconUrl: trainIcon, iconSize: [25, 38], iconAnchor: [12, 41] }) }).addTo(mapRef.current);
                     marker.bindPopup(`
-                    <div>
-                    <b>St_vlaka:</b> ${St_vlaka}<br>
-                    <b>Postaja:</b> ${Postaja}<br>
-                    <b>Zamuda:</b> ${Zamuda_cas} min
-                </div>
+                        <div>
+                            <b>St_vlaka:</b> ${St_vlaka}<br>
+                            <b>Postaja:</b> ${Postaja}<br>
+                            <b>Zamuda:</b> ${Zamuda_cas} min
+                        </div>
                     `);
                 }
             });

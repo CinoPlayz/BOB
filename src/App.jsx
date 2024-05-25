@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate  } from 'react-router-dom';
 import { UserContext } from "./UserContext.jsx";
+import { TrainProvider } from "./TrainContext.jsx";
 import Register from "./components/Register.jsx";
 import Header from "./components/Header.jsx";
 import Login from './components/Login.jsx';
@@ -57,17 +58,19 @@ function App() {
         setUserContext: updateUserData,
         login: login
       }}>
-
-        <Header title="Zelezniski promet" />
-        <div className="App pt-16">
-          <Routes>
-            <Route path="/login" exact element={<Login />}></Route>
-            <Route path="/register" element={<Register />}></Route>
-            <Route path="/logout" element={<Logout />}></Route>
-            <Route path="/map" element={<Map />}></Route>
-            <Route path="/tmp" element={<Tmp />}></Route>
-          </Routes>
-        </div>
+        <TrainProvider>
+          <Header title="Zelezniski promet" />
+          <div className="App pt-16">
+            <Routes>
+              <Route path="/login" exact element={<Login />}></Route>
+              <Route path="/register" element={<Register />}></Route>
+              <Route path="/logout" element={<Logout />}></Route>
+              <Route path="/map" element={<Map />}></Route>
+              <Route path="/tmp" element={<Tmp />}></Route>
+              <Route path="*" element={<div>404 - Page Not Found</div>} />
+            </Routes>
+          </div>
+        </TrainProvider>
       </UserContext.Provider>
     </BrowserRouter>
   )
