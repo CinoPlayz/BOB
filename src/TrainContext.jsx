@@ -32,6 +32,18 @@ export const TrainProvider = ({ children }) => {
         }
     };
 
+
+    const fetchTrainDataByDateRange = async (startDate, endDate) => {
+        try {
+            const response = await fetch(`http://localhost:3001/trainLocHistories/trainLocByDate?startDate=${startDate}&endDate=${endDate}`); 
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Napaka pri pridobivanju podatkov o vlakih:', error);
+            return [];
+        }
+    };
+
     useEffect(() => {
         fetchTrainData();
         const intervalId = setInterval(fetchTrainData, 5 * 60 * 1000); // Osvežitev vsake 5 minuti
@@ -40,7 +52,7 @@ export const TrainProvider = ({ children }) => {
     }, []);
 
     return (
-        <TrainContext.Provider value={{ trainData, lastUpdate }}>
+        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange }}>
             {children}
         </TrainContext.Provider>
     );

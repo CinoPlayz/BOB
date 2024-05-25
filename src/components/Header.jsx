@@ -44,12 +44,14 @@ export default function Header(props) {
                   />
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8 h-full items-center">
+                  {/* 
                   <Link
                     to="/"
                     className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/')}`}
                   >
                     Home
                   </Link>
+                  */}
                   <UserContext.Consumer>
                     {context => (
                       context.token ?
@@ -61,10 +63,10 @@ export default function Header(props) {
                             Map
                           </Link>
                           <Link
-                            to="/tmp"
-                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/map')}`}
+                            to="/historyMap"
+                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/historyMap')}`}
                           >
-                            Tmp
+                            History
                           </Link>
                         </>
                         :
