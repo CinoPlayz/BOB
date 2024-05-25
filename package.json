@@ -15,9 +15,12 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-bearer-token": "^2.4.0",
+    "fs": "^0.0.1-security",
     "http-proxy-middleware": "^3.0.0",
     "mongoose": "^8.3.3",
     "morgan": "^1.10.0",
-    "otpauth": "^9.2.4"
+    "node-cron": "^3.0.3",
+    "otpauth": "^9.2.4",
+    "puppeteer": "^22.10.0"
   }
 }

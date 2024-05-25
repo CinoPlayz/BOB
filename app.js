@@ -2,7 +2,9 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var mongoose = require('mongoose');
-var cors = require('cors')
+var cors = require('cors');
+const cron = require('node-cron');
+const { exec } = require('child_process');
 
 //Reading mongoDB URI from args or env variable
 var args = process.argv.slice(2);
@@ -42,6 +44,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors(corsOptions));
+
+
+// Cron job za posodobitev piškotkov 
+cron.schedule('*/10 * * * *', () => {
+    //console.log('Začenjam posodobitev piškotkov...');
+    exec('node updateCookies.js', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+    });
+});
+
 
 var indexRouter = require('./routes/index');
 var testRouter = require('./routes/testRoutes');

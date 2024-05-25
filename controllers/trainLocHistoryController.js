@@ -1,6 +1,8 @@
 var TrainLocHistory = require('../models/trainLocHistoryModel.js');
 var shared = require('./shared.js');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
 
@@ -78,16 +80,21 @@ module.exports = {
 
     getActiveTrains: async function (req, res) {
         try {
+            const cookiesPath = path.join(__dirname, '..', 'cookies.json');
+            const cookiesData = fs.readFileSync(cookiesPath, 'utf-8');
+            const cookies = JSON.parse(cookiesData);
+            console.log('Using cookies:', cookiesData);
+            const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
             const response = await axios.post('https://potniski.sz.si/wp-admin/admin-ajax.php', new URLSearchParams({
                 action: 'aktivni_vlaki'
             }), {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
-                    'User-Agent': 'PostmanRuntime/7.39.0', 
+                    'User-Agent': 'PostmanRuntime/7.39.0',
                     'Accept': '*/*',
                     'Accept-Encoding': 'gzip, deflate, br',
                     'Connection': 'keep-alive',
-                    'Cookie': '__cf_bm=32DRWKuC8N0Ot.ASxUigIluu7JeP1VVMGqzJAG6cotQ-1716571394-1.0.1.1-P6QgTlZmCU5L4Il2eFFHdHHe62q8OnXdAzlslyrJvv5AtkchvYGEvrqd3AbM_0oZKDmFxbYRvmEa2rL8x5OFxw'
+                    'Cookie': cookieHeader
                 }
             });
     
@@ -95,7 +102,7 @@ module.exports = {
             res.status(200).json(data);
         } catch (err) {
             console.error('Error fetching active trains:', err);
-            return shared.handleError(res, 500, "Error fetching active trains", err);
+            res.status(500).json({ message: 'Error fetching active trains', error: err.message });
         }
     }
 };
