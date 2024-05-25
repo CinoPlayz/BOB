@@ -232,6 +232,76 @@ module.exports = {
             userFound.username = req.body.username ? req.body.username : userFound.username;
             userFound.password = req.body.password ? req.body.password : userFound.password;
             userFound.email = req.body.email ? req.body.email : userFound.email;
+
+            const userUpdated = await userFound.save();
+
+            return res.json(userUpdated);
+        }
+        catch (err) {
+            return shared.handleError(res, 500, "Error when updating user", err);
+        }
+    },
+
+    updateFromApp: async function (req, res) {
+        var id = req.params.id;
+        // console.log(req.body)
+
+        try {
+            const userFound = await UserModel.findOne({ _id: id });
+
+            if (!userFound) {
+                return shared.handleError(res, 404, "No such user", null);
+            }
+
+            if (req.body.username !== undefined && req.body.username.trim() !== "") {
+                userFound.username = req.body.username.trim();
+            }
+
+            if (req.body.email !== undefined && req.body.email.trim() !== "") {
+                userFound.email = req.body.email.trim();
+            }
+
+            if (req.body.password !== undefined && req.body.password.trim() !== "") {
+                userFound.password = req.body.password.trim();
+            }
+
+            if (req.body.role !== undefined && req.body.role.trim() !== "") {
+                userFound.role = req.body.role.trim();
+            }
+
+            // If 2faEnabled == false && 2faSecret == empty --> disable 2fa
+            if ((!req.body['2faSecret'] || req.body['2faSecret'].trim() === "" || req.body['2faSecret'] === undefined) && !req.body['2faEnabled']) {
+                userFound['2faEnabled'] = false;
+                delete userFound['2faSecret'];
+            }
+
+
+            // If 2faEnabled == true && 2faSecret != empty --> enable 2fa
+            if ((req.body['2faSecret'] || req.body['2faSecret'].trim() !== "" || req.body['2faSecret'] !== undefined) && req.body['2faEnabled']) {
+                userFound['2faSecret'] = req.body['2faSecret'].trim();
+            }
+
+            // Update tokens if provided in request body
+            if (req.body.tokens !== undefined) {
+                if (Array.isArray(req.body.tokens) && req.body.tokens.length > 0) {
+                    userFound.tokens = req.body.tokens;
+                } else {
+                    userFound.tokens = [];
+                }
+            } else { // if tokens undefine, delete all tokens
+                userFound.tokens = [];
+            }
+
+            // Add new tokens to existing tokens
+            if (req.body.newTokens !== undefined) {
+                if (Array.isArray(req.body.newTokens) && req.body.newTokens.length > 0) {
+                    if (!userFound.tokens) {
+                        userFound.tokens = [];
+                    }
+                    userFound.tokens = userFound.tokens.concat(req.body.newTokens);
+                }
+            }
+
             const userUpdated = await userFound.save();
 
             return res.json(userUpdated);
@@ -288,7 +358,7 @@ module.exports = {
             const user = req.user
 
             const index = user.tokens.indexOf(req.token);
-            if (index > -1){
+            if (index > -1) {
                 user.tokens.splice(index, 1)
             }
 
