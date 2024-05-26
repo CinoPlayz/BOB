@@ -12,7 +12,6 @@ import models.*
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
-import utils.api.dao.getAllStations
 import utils.context.appContextGlobal
 import java.net.InetAddress
 import java.net.URI
@@ -300,6 +299,26 @@ suspend fun getStationsAndProcess(
                                 }
                             }
 
+
+                            //Edge cases
+                            val listOfEdgeCases = listOf(
+                                StationInsert(
+                                    name = "Beljak/Villach HBF (A)",
+                                    officialStationNumber = "None",
+                                    coordinates = Coordinates(
+                                        46.618248f, 13.848689f
+                                    )
+                                ),
+                                StationInsert(
+                                    name = "Hromec (HR)",
+                                    officialStationNumber = "None2",
+                                    coordinates = Coordinates(
+                                        46.20698f, 15.807944f
+                                    )
+                                )
+                            )
+                            stations.addAll(listOfEdgeCases)
+
                             result = result.copy(listOfStations = stations)
 
                         }
@@ -417,10 +436,11 @@ data class ResultRoute(
     val error: String = "",
     val data: String = "",
     val timeOfRequest: String = "",
-    val listOfRoutes: List<RouteInsert> = listOf()
+    val listOfRoutes: List<RouteInsert> = listOf(),
+    val listOfFailedRoutes: List<Pair<String, String>> = listOf()
 )
 
-fun getRoutesAndProcess(): ResultRoute {
+fun getRoutesAndProcess(resultState: MutableState<ResultRoute>) {
 
     /*val fileString = File("SZ.AktivniVlakiOdVlaksi66.json").readText(Charset.defaultCharset())
 
@@ -483,102 +503,201 @@ fun getRoutesAndProcess(): ResultRoute {
                     }
                 }
 
-
-                println("Opening: ${pdfLinks[0]}")
-                val pdfInBytes = URI.create(pdfLinks[0]).toURL().readBytes()
-                val document: PDDocument = Loader.loadPDF(pdfInBytes)
-
-                val text = PDFTextStripper().getText(document)
-                println(text)
-                document.close()
-
-                val listOfTrainsOnRoute = mutableListOf<Pair<String, String>>()
-                val listOfTypes = mutableListOf<String>()
-                val listOfNumbers = mutableListOf<String>()
-                var validFrom = LocalDateTime.now()
-                var vaildUntil = LocalDateTime.now()
-                val iteratorByLine = text.lineSequence().iterator()
-                while (iteratorByLine.hasNext()) {
-                    val line = iteratorByLine.next()
-
-                    if (line.contains("Vrsta vlaka")) {
-                        val typesAllString = line.split(" ")
-                        typesAllString.forEach {
-                            if (it != "Vrsta" && it != "vlaka" && it != "vlaka:") {
-                                listOfTypes.add(it)
-                            }
-                        }
-                    }
-
-                    if (line.contains("Št. vlaka")) {
-                        val typesAllString = line.split(" ")
-                        typesAllString.forEach {
-                            if (it != "Št." && it != "vlaka" && it != "vlaka:") {
-                                listOfNumbers.add(it)
-                            }
-                        }
-                    }
-
-                    if (line.contains("Velja od 10. 12. 2023 do 14. 12. 2024")) {
-                        validFrom = LocalDateTime.of(2023, 12, 10, 0, 0, 0)
-                        vaildUntil = LocalDateTime.of(2024, 12, 14, 0, 0, 0)
-                    }
-                }
-
-                if (listOfTypes.count() == listOfNumbers.count()) {
-                    listOfTypes.forEachIndexed { index, s ->
-                        listOfTrainsOnRoute.add(Pair(s, listOfNumbers[index]))
-                    }
-                } else {
-                    println("Count of types and numbers doesn't match!!")
-                    println(listOfNumbers)
-                    println(listOfTypes)
-                }
-
-                println(listOfTrainsOnRoute)
-
                 val routes = mutableListOf<RouteInsert>()
+                val routesFailed = mutableListOf<Pair<String, String>>()
 
-                val stations = getAllStations()
-
-                listOfTrainsOnRoute.forEach {
-                    val resultRouteDetails = getRouteDetails(
-                        cookies = cookies,
-                        trainType = it.first,
-                        trainNumber = it.second,
-                        validFrom = validFrom,
-                        validUntil = vaildUntil,
-                        stations = stations
-                    )
-
-                    if(resultRouteDetails.error != ""){
-                        println("Cannot insert because of error")
-                    }
-                    else {
-                        if(resultRouteDetails.routeInsert != null){
-                            routes.add(resultRouteDetails.routeInsert)
-                        }
-                    }
-                }
-
-                println(routes)
-
-                /*pdfLinks.forEach {
-                    println("Opening: $it")
-                    val pdfInBytes = URI.create(it).toURL().readBytes()
+                pdfLinks.forEach { pdfLinkString ->
+                    println("\nOpening: $pdfLinkString")
+                    val pdfInBytes = URI.create(pdfLinkString).toURL().readBytes()
                     val document: PDDocument = Loader.loadPDF(pdfInBytes)
 
-                    val textStripper = PDFTextStripper().getText(document)
-
-                    println(textStripper)
-
+                    val text = PDFTextStripper().getText(document)
                     document.close()
-                }*/
+
+                    val listOfTrainsOnRoute = mutableListOf<Pair<String, String>>()
+                    val listOfTypes = mutableListOf<String>()
+                    val listOfNumbers = mutableListOf<String>()
+                    var validFrom = LocalDateTime.now()
+                    var vaildUntil = LocalDateTime.now()
+                    val iteratorByLine = text.lineSequence().iterator()
+                    while (iteratorByLine.hasNext()) {
+                        val line = iteratorByLine.next()
+
+                        if (line.contains("Vrsta vlaka")) {
+                            val typesAllString = line.split(" ")
+                            typesAllString.forEach { typeString ->
+                                if (typeString != "Vrsta" && typeString != "vlaka" && typeString != "vlaka:") {
+                                    listOfTypes.add(typeString)
+                                }
+                            }
+                        }
+
+                        if (line.contains("Št. vlaka")) {
+                            val numbersAllString = line.split(" ")
+                            numbersAllString.forEach { numberString ->
+                                if (numberString != "Št." && numberString != "vlaka" && numberString != "vlaka:") {
+                                    listOfNumbers.add(numberString)
+                                }
+                            }
+                        }
+
+                        if (line.contains("Velja od 10. 12. 2023 do 14. 12. 2024")) {
+                            validFrom = LocalDateTime.of(2023, 12, 10, 0, 0, 0)
+                            vaildUntil = LocalDateTime.of(2024, 12, 14, 0, 0, 0)
+                        }
+                    }
+
+                    if (listOfTypes.count() == listOfNumbers.count()) {
+                        listOfTypes.forEachIndexed { index, type ->
+                            listOfTrainsOnRoute.add(Pair(type, listOfNumbers[index]))
+                        }
+                    } else {
+                        println("Count of types and numbers doesn't match!!")
+                        println(listOfNumbers)
+                        println(listOfTypes)
+                    }
+
+                    listOfTrainsOnRoute.forEach {
+                        val resultRouteDetails = getRouteDetails(
+                            cookies = cookies,
+                            trainType = it.first,
+                            trainNumber = it.second,
+                            validFrom = validFrom,
+                            validUntil = vaildUntil
+                        )
+
+                        if (resultRouteDetails.error != "") {
+                            println("Cannot insert because of error (${it.first} ${it.second})")
+                            routesFailed.add(it)
+                        } else {
+                            if (resultRouteDetails.routeInsert != null) {
+                                routes.add(resultRouteDetails.routeInsert)
+                            }
+                        }
+                    }
+
+                }
+
+                val routesDistinct = routes.distinctBy { it.trainNumber }
+                //println(routesDistinct)
+
+                result = result.copy(listOfRoutes = routesDistinct)
+                result = result.copy(listOfFailedRoutes = routesFailed)
+
+            }
+        }
+    } catch (e: Exception) {
+        println("${getCurrentTime()} - Exception occurred while making the request: ${e.message}")
+        result = result.copy(error = "Exception occurred while making the request: ${e.message}")
+    }
+
+    resultState.value = result
+}
 
 
-                //println("mapOfLocations: $mapOfLocations")
-                //result = result.copy(mapOfLocations = mapOfLocations)
+data class ResultRouteDetails(
+    val error: String = "",
+    val data: String = "",
+    val timeOfRequest: String = "",
+    val routeInsert: RouteInsert? = null
+)
 
+
+fun getRouteDetails(
+    cookies: String,
+    trainType: String,
+    trainNumber: String,
+    validFrom: LocalDateTime,
+    validUntil: LocalDateTime
+): ResultRouteDetails {
+    var result = ResultRouteDetails()
+    try {
+        val requestTrainDetails = Fuel.post(
+            "https://potniski.sz.si/wp-admin/admin-ajax.php",
+            listOf("action" to "train_details", "data[train]" to trainNumber)
+        ).header(Headers.COOKIE to cookies)
+
+        val (_, responseTrainDetails, resultTrainDetails) = requestTrainDetails.header("Accept-Language", "en")
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
+            .allowRedirects(true)
+            .responseString()
+
+        when (resultTrainDetails) {
+            is Result.Failure -> {
+                println("${getCurrentTime()} - Error occurred while getting route details: ${resultTrainDetails.error.message}")
+
+                if (appContextGlobal.requestDetailReport) {
+                    println("More details: ${resultTrainDetails.error.response.body().asString("text/html")}")
+                }
+
+                result =
+                    result.copy(error = "Error occurred while getting from route details: ${resultTrainDetails.error.message}")
+            }
+
+            is Result.Success -> {
+                println("${getCurrentTime()} - Got Route Details ($trainType $trainNumber)!")
+                result = result.copy(data = resultTrainDetails.value)
+                result = result.copy(timeOfRequest = getCurrentTime())
+
+                val returnedHtml = json.decodeFromString<String>(resultTrainDetails.value)
+                var htmlStringParsed = returnedHtml.replace("\n", "")
+                htmlStringParsed = htmlStringParsed.replace("\\", "")
+
+                val tableBody = Ksoup.parseBodyFragment(htmlStringParsed).getElementsByTag("tbody")
+
+                val tableRows = tableBody[0].getElementsByTag("tr")
+
+                val routeStops = mutableListOf<RouteStop>()
+                tableRows.forEach { it ->
+                    val tableData = it.getElementsByTag("td")
+                    val station = tableData.first()?.text() ?: ""
+                    var time = tableData[2].text()
+                    if (time == "") {
+                        time = tableData[1].text()
+                    }
+                    routeStops.add(RouteStop(station, time))
+                }
+
+                val drivesOnString = Ksoup.parseBodyFragment(htmlStringParsed).getElementsByClass("mb-1").first()
+                    ?.getElementsByTag("span")?.first()?.text() ?: ""
+
+                var drivesOn = listOf(0, 1, 2, 3, 4, 5, 6, 7)
+
+                if (drivesOnString.contains("Ne vozi ob sobotah, nedeljah in praznikih-dela prostih dneh v RS")) {
+                    drivesOn = listOf(1, 2, 3, 4, 5)
+                } else if (drivesOnString.contains("Vozi ob torkih, petkih in nedeljah")) {
+                    drivesOn = listOf(2, 5, 0)
+                } else if (drivesOnString.contains("Ne vozi ob nedeljah in praznikih-dela prostih dneh v RS")) {
+                    drivesOn = listOf(1, 2, 3, 4, 5, 6)
+                } else if (drivesOnString.contains("Ne vozi ob sobotah")) {
+                    drivesOn = listOf(0, 1, 2, 3, 4, 5, 7)
+                }
+
+                //Only happens once (special edge case)
+                if (routeStops.isEmpty()) {
+                    routeStops.add(RouteStop("Zidani Most", "11:56"))
+                    routeStops.add(RouteStop("Ljubljana", "12:43"))
+                }
+
+                val routeStopsMiddle = mutableListOf<RouteStop>()
+                routeStops.forEachIndexed { index, routeStop ->
+                    if (index != 0 && index != (routeStops.size - 1)) {
+                        routeStopsMiddle.add(routeStop)
+                    }
+                }
+
+                val routeInsert = RouteInsert(
+                    trainType = trainType,
+                    trainNumber = trainNumber.toInt(),
+                    validFrom = validFrom,
+                    validUntil = validUntil,
+                    canSupportBikes = !cannotSupportBikes.contains(trainNumber),
+                    drivesOn = drivesOn,
+                    start = routeStops.first(),
+                    middle = routeStopsMiddle,
+                    end = routeStops.last()
+                )
+                result = result.copy(routeInsert = routeInsert)
 
             }
         }
@@ -839,119 +958,6 @@ val cannotSupportBikes = listOf(
     "4517",
     "4502"
 )
-
-data class ResultRouteDetails(
-    val error: String = "",
-    val data: String = "",
-    val timeOfRequest: String = "",
-    val routeInsert: RouteInsert? = null
-)
-
-
-fun getRouteDetails(
-    cookies: String,
-    trainType: String,
-    trainNumber: String,
-    validFrom: LocalDateTime,
-    validUntil: LocalDateTime,
-    stations: List<Station>
-): ResultRouteDetails {
-    var result = ResultRouteDetails()
-    try {
-        val requestTrainDetails = Fuel.post(
-            "https://potniski.sz.si/wp-admin/admin-ajax.php",
-            listOf("action" to "train_details", "data[train]" to trainNumber)
-        ).header(Headers.COOKIE to cookies)
-
-        val (_, responseTrainDetails, resultTrainDetails) = requestTrainDetails.header("Accept-Language", "en")
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
-            .allowRedirects(true)
-            .responseString()
-
-        when (resultTrainDetails) {
-            is Result.Failure -> {
-                println("${getCurrentTime()} - Error occurred while getting route details: ${resultTrainDetails.error.message}")
-
-                if (appContextGlobal.requestDetailReport) {
-                    println("More details: ${resultTrainDetails.error.response.body().asString("text/html")}")
-                }
-
-                result =
-                    result.copy(error = "Error occurred while getting from route details: ${resultTrainDetails.error.message}")
-            }
-
-            is Result.Success -> {
-                println("${getCurrentTime()} - Got Route Details ($trainType $trainNumber)!")
-                result = result.copy(data = resultTrainDetails.value)
-                result = result.copy(timeOfRequest = getCurrentTime())
-
-                val returnedHtml = json.decodeFromString<String>(resultTrainDetails.value)
-                var htmlStringParsed = returnedHtml.replace("\n", "")
-                htmlStringParsed = htmlStringParsed.replace("\\", "")
-
-                val tableBody = Ksoup.parseBodyFragment(htmlStringParsed).getElementsByTag("tbody")
-
-                val tableRows = tableBody[0].getElementsByTag("tr")
-
-                val routeStops = mutableListOf<RouteStop>()
-                tableRows.forEach { it ->
-                    val tableData = it.getElementsByTag("td")
-                    var stationId = ""
-                    stations.forEach {
-                        if (it.name == (tableData.first()?.text() ?: "")) {
-                            stationId = it.id
-                        }
-                    }
-
-
-                    routeStops.add(RouteStop(stationId, tableData[2].text()))
-
-                }
-
-                val drivesOnString = Ksoup.parseBodyFragment(htmlStringParsed).getElementsByClass("mb-1").first()
-                    ?.getElementsByTag("span")?.first()?.text() ?: ""
-
-                var drivesOn = listOf(0, 1, 2, 3, 4, 5, 6, 7)
-
-                if (drivesOnString.contains("Ne vozi ob sobotah, nedeljah in praznikih-dela prostih dneh v RS")) {
-                    drivesOn = listOf(1, 2, 3, 4, 5)
-                } else if (drivesOnString.contains("Vozi ob torkih, petkih in nedeljah")) {
-                    drivesOn = listOf(2, 5, 0)
-                } else if (drivesOnString.contains("Ne vozi ob nedeljah in praznikih-dela prostih dneh v RS")) {
-                    drivesOn = listOf(1, 2, 3, 4, 5, 6)
-                } else if (drivesOnString.contains("Ne vozi ob sobotah")) {
-                    drivesOn = listOf(0, 1, 2, 3, 4, 5, 7)
-                }
-
-                val routeStopsMiddle = mutableListOf<RouteStop>()
-                routeStops.forEachIndexed { index, routeStop ->
-                    if (index != 0 && index != (routeStops.size - 1)) {
-                        routeStopsMiddle.add(routeStop)
-                    }
-                }
-
-                val routeInsert = RouteInsert(
-                    trainType = trainType,
-                    trainNumber = trainNumber.toInt(),
-                    validFrom = validFrom,
-                    validUntil = validUntil,
-                    canSupportBikes = !cannotSupportBikes.contains(trainNumber),
-                    drivesOn = drivesOn,
-                    start = routeStops[0],
-                    middle = routeStopsMiddle,
-                    end = routeStops[1]
-                )
-                result = result.copy(routeInsert = routeInsert)
-
-            }
-        }
-    } catch (e: Exception) {
-        println("${getCurrentTime()} - Exception occurred while making the request: ${e.message}")
-        result = result.copy(error = "Exception occurred while making the request: ${e.message}")
-    }
-
-    return result
-}
 
 /*fun main() {
     runBlocking {

@@ -61,6 +61,7 @@ suspend fun insertRoute(route: RouteInsert): Boolean {
         }
 
         is Result.Failure -> {
+            println(response.body().toString())
             throw IllegalStateException("Error Code: ${response.statusCode}")
         }
     }

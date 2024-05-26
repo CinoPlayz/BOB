@@ -1,10 +1,11 @@
 package gui.scraper
 
-import ResultStations
 import ResultData
 import ResultRoute
+import ResultStations
 import SourceWebsite
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -23,6 +24,7 @@ import getRoutesAndProcess
 import getStationsAndProcess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import utils.api.dao.insertRoute
 
 @Composable
 fun ScraperFetchData(
@@ -89,6 +91,9 @@ fun ScraperFetchStations(
         try {
             // Coroutine call - data fetch
             withContext(Dispatchers.IO) { getStationsAndProcess(resultStateStations) }
+            /*withContext(Dispatchers.IO) { resultStateStations.value.listOfStations.forEach {
+                insertStation(it)
+            }}*/
 
         } catch (e: Exception) {
             println("An error occurred: ${e.message}")
@@ -127,7 +132,7 @@ fun ScraperFetchRoutes(
     modifier: Modifier = Modifier
 ) {
     // State to hold the result of the operation
-    val resultStateStations = remember { mutableStateOf<ResultRoute>(ResultRoute()) }
+    val resultStateRoutes = remember { mutableStateOf<ResultRoute>(ResultRoute()) }
 
     // State to hold the loading status
     val isLoading = remember { mutableStateOf(false) }
@@ -137,7 +142,17 @@ fun ScraperFetchRoutes(
         isLoading.value = true // Set loading to true before fetching data
         try {
             // Coroutine call - data fetch
-            withContext(Dispatchers.IO) { getRoutesAndProcess() }
+            withContext(Dispatchers.IO) { getRoutesAndProcess(resultStateRoutes) }
+            withContext(Dispatchers.IO) {
+                resultStateRoutes.value.listOfRoutes.forEach {
+                    try {
+                        insertRoute(it)
+                    } catch (e: Exception){
+                        println("Cannot insert: ${it.trainType} ${it.trainNumber}")
+                    }
+                }
+
+            }
 
         } catch (e: Exception) {
             println("An error occurred: ${e.message}")
@@ -158,15 +173,19 @@ fun ScraperFetchRoutes(
         }
     } else {
         // Display data
-        Box(
+        Column(
             modifier = Modifier
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()) // Box with enabled scroll
         ) {
-            Text("Result: ${resultStateStations.value.listOfRoutes}")
+            Text("Failed to get: ${resultStateRoutes.value.listOfFailedRoutes}")
+            Text("Result: ${resultStateRoutes.value.listOfRoutes}")
+
+            /*lazy {
+                resultStateRoutes.value.listOfRoutes.forEach {
+                    //insertRoute(it)
+                }
+            }*/
         }
-        /*resultState.value?.let { result ->
-            Text("Result: $result", modifier = Modifier.padding(16.dp))
-        }*/
     }
 }
