@@ -144,6 +144,7 @@ fun ScraperFetchRoutes(
             // Coroutine call - data fetch
             withContext(Dispatchers.IO) { getRoutesAndProcess(resultStateRoutes) }
             withContext(Dispatchers.IO) {
+                println("Inserting routes...")
                 resultStateRoutes.value.listOfRoutes.forEach {
                     try {
                         insertRoute(it)
@@ -151,6 +152,7 @@ fun ScraperFetchRoutes(
                         println("Cannot insert: ${it.trainType} ${it.trainNumber}")
                     }
                 }
+                println("Done inserting routes")
 
             }
 

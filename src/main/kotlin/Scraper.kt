@@ -7,12 +7,16 @@ import com.github.kittinunf.fuel.core.Headers
 import com.github.kittinunf.result.Result
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import models.*
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
+import utils.api.dao.insertDelay
 import utils.context.appContextGlobal
+import utils.parsing.getDecodedData
+import java.io.File
 import java.net.InetAddress
 import java.net.URI
 import java.nio.charset.Charset
@@ -441,30 +445,6 @@ data class ResultRoute(
 )
 
 fun getRoutesAndProcess(resultState: MutableState<ResultRoute>) {
-
-    /*val fileString = File("SZ.AktivniVlakiOdVlaksi66.json").readText(Charset.defaultCharset())
-
-
-    val json = Json { ignoreUnknownKeys = true }
-    val data = json.decodeFromString<List<VlakiSiRequestDefault>>(fileString)
-
-    val trainLocation = mutableListOf<TrainLocHistoryInsert>()
-    data.forEach {
-        val urlDecodedData = getDecodedData(it.data)
-        val dataVlakSi = json.decodeFromString<VlakiSi>(urlDecodedData)
-        val convertedRequest = VlakiSiRequest(it.timeOfRequest.date, dataVlakSi)
-        val listTrain = convertedRequest.toListTrainLocHistory()
-        listTrain.forEach {
-            trainLocation.add(it)
-        }
-    }
-
-    File("output.json").writeText(json.encodeToString(trainLocation))
-
-    trainLocation.forEach {
-        insertTrainLocHistory(it)
-    }*/
-
     var result = ResultRoute()
     try {
         val request = Fuel.get("https://potniski.sz.si/vozni-redi-po-relacijah-od-11-decembra-2022-do-9-decembra-2023/")

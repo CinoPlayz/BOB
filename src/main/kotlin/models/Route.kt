@@ -12,7 +12,7 @@ data class Route(
     val trainType: String,
     val trainNumber: Int,
     @Serializable(with = LocalDateTimeSerializer::class)
-    val vaildFrom: LocalDateTime,
+    val validFrom: LocalDateTime,
     @Serializable(with = LocalDateTimeSerializer::class)
     val validUntil: LocalDateTime,
     val canSupportBikes: Boolean,
