@@ -3,6 +3,7 @@ import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Document
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.fuel.core.Headers
 import com.github.kittinunf.result.Result
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -11,6 +12,7 @@ import models.*
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
+import utils.api.dao.getAllStations
 import utils.context.appContextGlobal
 import java.net.InetAddress
 import java.net.URI
@@ -454,21 +456,22 @@ fun getRoutesAndProcess(): ResultRoute {
 
         when (resultGet) {
             is Result.Failure -> {
-                println("${getCurrentTime()} - Error occurred while getting stations: ${resultGet.error.message}")
+                println("${getCurrentTime()} - Error occurred while getting routes: ${resultGet.error.message}")
 
                 if (appContextGlobal.requestDetailReport) {
                     println("More details: ${resultGet.error.response.body().asString("text/html")}")
                 }
 
-                result = result.copy(error = "Error occurred while getting from Stations: ${resultGet.error.message}")
+                result = result.copy(error = "Error occurred while getting from routes: ${resultGet.error.message}")
             }
 
             is Result.Success -> {
-                println("${getCurrentTime()} - Got Locations!")
+                println("${getCurrentTime()} - Got Routes PDFs!")
                 result = result.copy(data = resultGet.value)
                 result = result.copy(timeOfRequest = getCurrentTime())
 
-                val json = Json { ignoreUnknownKeys = true }
+                val cookies = response.headers["Set-Cookie"].first()
+
                 val doc: Document = Ksoup.parse(resultGet.value)
                 val fileLinksElements = doc.body().getElementsByClass("filename")
 
@@ -536,6 +539,29 @@ fun getRoutesAndProcess(): ResultRoute {
 
                 val routes = mutableListOf<RouteInsert>()
 
+                val stations = getAllStations()
+
+                listOfTrainsOnRoute.forEach {
+                    val resultRouteDetails = getRouteDetails(
+                        cookies = cookies,
+                        trainType = it.first,
+                        trainNumber = it.second,
+                        validFrom = validFrom,
+                        validUntil = vaildUntil,
+                        stations = stations
+                    )
+
+                    if(resultRouteDetails.error != ""){
+                        println("Cannot insert because of error")
+                    }
+                    else {
+                        if(resultRouteDetails.routeInsert != null){
+                            routes.add(resultRouteDetails.routeInsert)
+                        }
+                    }
+                }
+
+                println(routes)
 
                 /*pdfLinks.forEach {
                     println("Opening: $it")
@@ -563,83 +589,6 @@ fun getRoutesAndProcess(): ResultRoute {
 
     return result
 }
-
-val supportsBikes = listOf(
-    "2006",
-    "2251",
-    "2201",
-    "2253",
-    "2441",
-    "606",
-    "2255",
-    "2205",
-    "1606",
-    "1608",
-    "2207",
-    "2259",
-    "247",
-    "2261",
-    "156",
-    "2265",
-    "2010",
-    "2219",
-    "629",
-    "2221",
-    "211",
-    "2273",
-    "150",
-    "2227",
-    "2275",
-    "2229",
-    "635",
-    "502",
-    "2277",
-    "2233",
-    "2281",
-    "215",
-    "2237",
-    "2283",
-    "1604",
-    "604",
-    "2007",
-    "2200",
-    "1605",
-    "605",
-    "2001",
-    "214",
-    "2210",
-    "503",
-    "2214",
-    "2256",
-    "2260",
-    "2262",
-    "151",
-    "2224",
-    "210",
-    "246",
-    "155",
-    "2270",
-    "2228",
-    "2272",
-    "617",
-    "157",
-    "2274",
-    "2232",
-    "1607",
-    "2276",
-    "2278",
-    "2236",
-    "2280",
-    "2301",
-    "2251",
-    "2391",
-    "2253",
-    "2255",
-    "2393",
-    "2803",
-    "2259",
-    ""
-)
 
 val cannotSupportBikes = listOf(
     "311",
@@ -727,7 +676,169 @@ val cannotSupportBikes = listOf(
     "2413",
     "213",
     "2425",
-    )
+    "4517",
+    "603",
+    "3217",
+    "4502",
+    "602",
+    "603",
+    "3217",
+    "26725",
+    "26025",
+    "2602",
+    "26365",
+    "26765",
+    "26505",
+    "2705",
+    "2717",
+    "2707",
+    "2752",
+    "2680",
+    "26825",
+    "26015",
+    "2621",
+    "2653",
+    "2633",
+    "2702",
+    "2671",
+    "26195",
+    "27515",
+    "2706",
+    "26755",
+    "26635",
+    "2718",
+    "2615",
+    "26775",
+    "2679",
+    "1618",
+    "26795",
+    "3164",
+    "3120",
+    "3182",
+    "3165",
+    "3141",
+    "3179",
+    "1247",
+    "1246",
+    "1152",
+    "2900",
+    "4432",
+    "2523",
+    "2992",
+    "2800",
+    "643",
+    "311",
+    "512",
+    "30",
+    "2982",
+    "2525",
+    "3709",
+    "2802",
+    "2902",
+    "4434",
+    "14",
+    "158",
+    "2004",
+    "4436",
+    "2519",
+    "2914",
+    "36",
+    "4456",
+    "518",
+    "2008",
+    "1640",
+    "2505",
+    "20",
+    "2920",
+    "2922",
+    "2924",
+    "2926",
+    "526",
+    "2002",
+    "607",
+    "2801",
+    "2901",
+    "2993",
+    "11",
+    "3616",
+    "3712",
+    "2903",
+    "2981",
+    "2500",
+    "4435",
+    "2803",
+    "31",
+    "35",
+    "517",
+    "2807",
+    "2518",
+    "2991",
+    "2520",
+    "1641",
+    "1615",
+    "2937",
+    "1643",
+    "159",
+    "523",
+    "2927",
+    "4455",
+    "2931",
+    "1153",
+    "310",
+    "2500",
+    "2504",
+    "2526",
+    "2518",
+    "2520",
+    "1640",
+    "1246",
+    "2523",
+    "643",
+    "2525",
+    "2519",
+    "2505",
+    "1641",
+    "1643",
+    "9557",
+    "2516",
+    "2506",
+    "2504",
+    "1640",
+    "9561",
+    "2510",
+    "1246",
+    "643",
+    "9550",
+    "2517",
+    "2519",
+    "2507",
+    "2505",
+    "2515",
+    "1641",
+    "1643",
+    "9568",
+    "3701",
+    "3712",
+    "3512",
+    "44201",
+    "44202",
+    "44203",
+    "2750",
+    "7707",
+    "27521",
+    "27522",
+    "27513",
+    "27913",
+    "44211",
+    "44212",
+    "44213",
+    "7706",
+    "27531",
+    "27532",
+    "27533",
+    "4517",
+    "4502"
+)
 
 data class ResultRouteDetails(
     val error: String = "",
@@ -738,17 +849,19 @@ data class ResultRouteDetails(
 
 
 fun getRouteDetails(
+    cookies: String,
     trainType: String,
     trainNumber: String,
     validFrom: LocalDateTime,
-    validUntil: LocalDateTime
+    validUntil: LocalDateTime,
+    stations: List<Station>
 ): ResultRouteDetails {
     var result = ResultRouteDetails()
     try {
         val requestTrainDetails = Fuel.post(
-            "https://overpass-api.de/api/interpreter",
+            "https://potniski.sz.si/wp-admin/admin-ajax.php",
             listOf("action" to "train_details", "data[train]" to trainNumber)
-        )
+        ).header(Headers.COOKIE to cookies)
 
         val (_, responseTrainDetails, resultTrainDetails) = requestTrainDetails.header("Accept-Language", "en")
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
@@ -757,18 +870,18 @@ fun getRouteDetails(
 
         when (resultTrainDetails) {
             is Result.Failure -> {
-                println("${getCurrentTime()} - Error occurred while getting stations: ${resultTrainDetails.error.message}")
+                println("${getCurrentTime()} - Error occurred while getting route details: ${resultTrainDetails.error.message}")
 
                 if (appContextGlobal.requestDetailReport) {
                     println("More details: ${resultTrainDetails.error.response.body().asString("text/html")}")
                 }
 
                 result =
-                    result.copy(error = "Error occurred while getting from Stations: ${resultTrainDetails.error.message}")
+                    result.copy(error = "Error occurred while getting from route details: ${resultTrainDetails.error.message}")
             }
 
             is Result.Success -> {
-                println("${getCurrentTime()} - Got Locations!")
+                println("${getCurrentTime()} - Got Route Details ($trainType $trainNumber)!")
                 result = result.copy(data = resultTrainDetails.value)
                 result = result.copy(timeOfRequest = getCurrentTime())
 
@@ -780,14 +893,55 @@ fun getRouteDetails(
 
                 val tableRows = tableBody[0].getElementsByTag("tr")
 
-                tableRows.forEach {
+                val routeStops = mutableListOf<RouteStop>()
+                tableRows.forEach { it ->
                     val tableData = it.getElementsByTag("td")
+                    var stationId = ""
+                    stations.forEach {
+                        if (it.name == (tableData.first()?.text() ?: "")) {
+                            stationId = it.id
+                        }
+                    }
 
+
+                    routeStops.add(RouteStop(stationId, tableData[2].text()))
 
                 }
 
-                //val routeInsert = RouteInsert(trainType = trainType, trainNumber = trainNumber, validFrom = validFrom, validUntil = validUntil)
-                //result = result.copy(routeInsert = routeInsert)
+                val drivesOnString = Ksoup.parseBodyFragment(htmlStringParsed).getElementsByClass("mb-1").first()
+                    ?.getElementsByTag("span")?.first()?.text() ?: ""
+
+                var drivesOn = listOf(0, 1, 2, 3, 4, 5, 6, 7)
+
+                if (drivesOnString.contains("Ne vozi ob sobotah, nedeljah in praznikih-dela prostih dneh v RS")) {
+                    drivesOn = listOf(1, 2, 3, 4, 5)
+                } else if (drivesOnString.contains("Vozi ob torkih, petkih in nedeljah")) {
+                    drivesOn = listOf(2, 5, 0)
+                } else if (drivesOnString.contains("Ne vozi ob nedeljah in praznikih-dela prostih dneh v RS")) {
+                    drivesOn = listOf(1, 2, 3, 4, 5, 6)
+                } else if (drivesOnString.contains("Ne vozi ob sobotah")) {
+                    drivesOn = listOf(0, 1, 2, 3, 4, 5, 7)
+                }
+
+                val routeStopsMiddle = mutableListOf<RouteStop>()
+                routeStops.forEachIndexed { index, routeStop ->
+                    if (index != 0 && index != (routeStops.size - 1)) {
+                        routeStopsMiddle.add(routeStop)
+                    }
+                }
+
+                val routeInsert = RouteInsert(
+                    trainType = trainType,
+                    trainNumber = trainNumber.toInt(),
+                    validFrom = validFrom,
+                    validUntil = validUntil,
+                    canSupportBikes = !cannotSupportBikes.contains(trainNumber),
+                    drivesOn = drivesOn,
+                    start = routeStops[0],
+                    middle = routeStopsMiddle,
+                    end = routeStops[1]
+                )
+                result = result.copy(routeInsert = routeInsert)
 
             }
         }

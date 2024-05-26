@@ -473,7 +473,7 @@ suspend fun writeRouteToDB(
         return ("Valid From and/or Valid Until timestamps format error.")
     }
 
-    val canSupportBikesBoolean = if (canSupportBikes == "Yes") 1 else 0
+    val canSupportBikesBoolean = canSupportBikes == "Yes"
 
     val drivesOn: List<Int> = drivesOnDays
         .filter { it.value } // Filter only checked
@@ -510,7 +510,7 @@ suspend fun writeRouteToDB(
         trainNumber = trainNumberInt,
         validFrom = validFromDate,
         validUntil = validUntilDate,
-        canSupportBikes = canSupportBikesBoolean.toString(),
+        canSupportBikes = canSupportBikesBoolean,
         drivesOn = drivesOn,
         start = startRouteStop,
         end = stopRouteStop,

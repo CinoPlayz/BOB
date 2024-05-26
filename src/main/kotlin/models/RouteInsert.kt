@@ -12,7 +12,7 @@ data class RouteInsert(
     val validFrom: LocalDateTime,
     @Serializable(with = LocalDateTimeSerializer::class)
     val validUntil: LocalDateTime,
-    val canSupportBikes: String,
+    val canSupportBikes: Boolean,
     val drivesOn: List<Int>,
     val start: RouteStop,
     val end: RouteStop,
