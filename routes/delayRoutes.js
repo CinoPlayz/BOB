@@ -6,6 +6,9 @@ const { extractToken, getRoleFromToken, isReqRole } = require('./shared');
 // GET all
 router.get('/', delayController.list);
 
+// GET all
+router.get('/stats', delayController.listJoined);
+
 // GET by ID
 router.get('/:id', delayController.show);
 

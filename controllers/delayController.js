@@ -13,6 +13,16 @@ module.exports = {
         }
     },
 
+    // Get all delays joined (GET)
+    listJoined: async function (req, res) {
+        try {
+            const delays = await DelayModel.find().populate('route').populate('currentStation');
+            return res.json(delays);
+        } catch (err) {
+            return shared.handleError(res, 500, "Error when getting all delays", err);
+        }
+    },
+
     // Get one delay by ID (GET)
     show: async function (req, res) {
         const id = req.params.id;
