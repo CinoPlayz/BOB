@@ -68,6 +68,12 @@ export default function Header(props) {
                           >
                             History
                           </Link>
+                          <Link
+                            to="/stats"
+                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/stats')}`}
+                          >
+                            Stats
+                          </Link>
                         </>
                         :
                         <>

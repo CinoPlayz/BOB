@@ -8,6 +8,7 @@ import Login from './components/Login.jsx';
 import Logout from "./components/Logout.jsx";
 import Map from "./components/Map.jsx";
 import HistoryMap from "./components/HistoryMap.jsx";
+import Stats from "./components/Stats.jsx";
 
 import './App.css'
 
@@ -67,6 +68,7 @@ function App() {
               <Route path="/logout" element={<Logout />}></Route>
               <Route path="/map" element={<Map />}></Route>
               <Route path="/historyMap" element={<HistoryMap />}></Route>
+              <Route path="/stats" element={<Stats />}></Route>
               <Route path="*" element={<div>404 - Page Not Found</div>} />
             </Routes>
           </div>
