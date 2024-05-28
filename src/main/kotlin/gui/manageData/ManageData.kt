@@ -48,7 +48,7 @@ fun ManageDataMenu(
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        //.clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_TRAINS }
+                        .clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_TRAINS }
                         .background(if (manageDataMenuState.value == ManageDataMenuState.MANAGE_TRAINS) Color.LightGray else Color.Transparent)
                         .padding(vertical = buttonPadding.dp)
                         .align(Alignment.CenterVertically)
