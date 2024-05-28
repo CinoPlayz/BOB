@@ -35,7 +35,7 @@ function Login() {
 
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <form className="space-y-6" onSubmit={handleLogin}>
-                    {userContext.token ? <Navigate replace to="/" /> : ""}
+                    {userContext.token ? <Navigate replace to="/map" /> : ""}
                     <div>
                         <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900 font-bold">
                             Username

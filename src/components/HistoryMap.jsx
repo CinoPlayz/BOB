@@ -110,14 +110,14 @@ function HistoryMap() {
             <button
                 style={{
                     position: 'absolute',
-                    top: '10px',
+                    top: '80px',
                     right: '10px',
                     zIndex: 1000,
                     backgroundColor: 'white',
                     borderRadius: '50%',
                     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
                     padding: '10px',
-                    marginTop: '4%'
+                    zIndex: '10'
                 }}
                 onClick={() => setFiltersVisible(!filtersVisible)}
             >
@@ -126,15 +126,13 @@ function HistoryMap() {
             {filtersVisible && (
                 <div style={{
                     position: 'absolute',
-                    top: '10px',
-                    right: '70px',
-                    zIndex: 1000,
+                    top: '130px',
+                    right: '10px',
+                    zIndex: 10,
                     backgroundColor: 'white',
                     padding: '10px',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                    marginTop: '4%',
-                    zIndex: '10'
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
                 }}>
                     <label style={{ paddingRight: '10px' }}>
                         Start Date:

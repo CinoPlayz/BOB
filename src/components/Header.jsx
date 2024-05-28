@@ -1,5 +1,4 @@
-
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
@@ -13,13 +12,19 @@ function classNames(...classes) {
 
 export default function Header(props) {
   const location = useLocation();
+  const [open, setOpen] = useState(false);
 
   const isActive = (path) => {
     return location.pathname === path ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700';
   };
 
+  const handleLinkClick = () => {
+    setOpen(false);
+    navigate(path);
+  };
+
   return (
-    <Disclosure as="nav" className="bg-white shadow fixed w-full top-0 z-50">
+    <Disclosure as="nav" className="bg-white shadow fixed w-full top-0 z-50" open={open} onChange={setOpen}>
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
@@ -44,14 +49,6 @@ export default function Header(props) {
                   />
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8 h-full items-center">
-                  {/* 
-                  <Link
-                    to="/"
-                    className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/')}`}
-                  >
-                    Home
-                  </Link>
-                  */}
                   <UserContext.Consumer>
                     {context => (
                       context.token ?
@@ -59,12 +56,14 @@ export default function Header(props) {
                           <Link
                             to="/map"
                             className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/map')}`}
+                            onClick={handleLinkClick}
                           >
                             Map
                           </Link>
                           <Link
                             to="/historyMap"
                             className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/historyMap')}`}
+                            onClick={handleLinkClick}
                           >
                             History
                           </Link>
@@ -77,6 +76,7 @@ export default function Header(props) {
                         </>
                         :
                         <>
+                          
                           <Link
                             to="/login"
                             className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/login')}`}
@@ -89,7 +89,6 @@ export default function Header(props) {
                           >
                             Register
                           </Link>
-
                         </>
 
                     )}
@@ -111,7 +110,7 @@ export default function Header(props) {
                         </button>
 
                         {/* Profile dropdown */}
-                        <Menu as="div" className="relative ml-3 z-50" >
+                        <Menu as="div" className="relative ml-3 z-50">
                           <div>
                             <MenuButton className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                               <span className="absolute -inset-1.5" />
@@ -133,7 +132,6 @@ export default function Header(props) {
                             leaveFrom="transform opacity-100 scale-100"
                             leaveTo="transform opacity-0 scale-95"
                           >
-
                             <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                               <MenuItem>
                                 {({ active }) => (
@@ -177,27 +175,54 @@ export default function Header(props) {
 
           <DisclosurePanel className="sm:hidden">
             <div className="space-y-1 pb-4 pt-2">
-              <DisclosureButton
-                as={Link}
-                to="/"
-                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/')}`}
-              >
-                Home
-              </DisclosureButton>
-              <DisclosureButton
-                as={Link}
-                to="/login"
-                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/login')}`}
-              >
-                Login
-              </DisclosureButton>
-              <DisclosureButton
-                as={Link}
-                to="/register"
-                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/register')}`}
-              >
-                Register
-              </DisclosureButton>
+              <UserContext.Consumer>
+                {context => (
+                  context.token ?
+                    <>
+                      <Link
+                        to="/map"
+                        className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/map')}`}
+                        onClick={() => handleLinkClick('/map')}
+                      >
+                        Map
+                      </Link>
+                      <Link
+                        to="/historyMap"
+                        className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/historyMap')}`}
+                        onClick={() => handleLinkClick('/historyMap')}
+                      >
+                        History
+                      </Link>
+                    </>
+                    :
+                    <>
+                      <DisclosureButton
+                        as={Link}
+                        to="/"
+                        className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/')}`}
+                        onClick={() => handleLinkClick('/')}
+                      >
+                        Home
+                      </DisclosureButton>
+                      <DisclosureButton
+                        as={Link}
+                        to="/login"
+                        className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/login')}`}
+                        onClick={() => handleLinkClick('/login')}
+                      >
+                        Login
+                      </DisclosureButton>
+                      <DisclosureButton
+                        as={Link}
+                        to="/register"
+                        className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/register')}`}
+                        onClick={() => handleLinkClick('/register')}
+                      >
+                        Register
+                      </DisclosureButton>
+                    </>
+                )}
+              </UserContext.Consumer>
             </div>
           </DisclosurePanel>
         </>
