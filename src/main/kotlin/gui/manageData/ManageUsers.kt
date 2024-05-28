@@ -1,8 +1,10 @@
 package gui.manageData
 
+import TitleText
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -45,8 +47,9 @@ fun ManageUsers(
     var users by remember { mutableStateOf<List<User>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val isLoading = remember { mutableStateOf(false) }
+    val isLoading = remember { mutableStateOf(true) }
 
+    // Update user in user-list after successful update in database
     fun updateUser(newUser: User) {
         // Update the list of users by replacing the user with the same ID
         users = users.map { if (it.id == newUser.id) newUser else it }
@@ -111,6 +114,7 @@ fun ManageUsers(
             isLoading.value = true
             try {
                 users = withContext(Dispatchers.IO) { getAllUsers() }
+                // users = emptyList() // testing
                 // users = getAllUsers()
             } catch (e: Exception) {
                 errorMessage = "Error: ${e.message}"
@@ -139,9 +143,30 @@ fun ManageUsers(
                 Text("Failed to load users: $errorMessage")
             }
         } else {
+            val state = rememberLazyListState()
+
+            if (users.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        TitleText(
+                            text = "*** NO USERS ***",
+                            fontSize = 20
+                        )
+                    }
+                }
+            }
+
             LazyColumn(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(16.dp),
+                state = state
             ) {
                 items(users) { user ->
                     UserItem(
@@ -222,10 +247,6 @@ fun UserItem(
         onUpdateUser(updatedUser)
 
         newTokens = emptyList()
-        editMode = false
-    }
-
-    val onDeleteUserSuccess: () -> Unit = {
         editMode = false
     }
 
