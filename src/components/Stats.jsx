@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import TrainContext from '../TrainContext';
-import { VictoryBar } from 'victory';
+import { VictoryBar, VictoryChart, VictoryAxis } from 'victory';
 
 function Stats() {
     const { fetchStats } = useContext(TrainContext);
@@ -49,11 +49,10 @@ function Stats() {
             //console.log(values, keys);
         });
 
-        if(delayByFilter != []){
+        if(delayByFilter.length != 0){
             setDataByFilter(delayByFilter);
         }
 
-        //console.log(delayByFilter);
         
 
         console.log("Delay: ")
@@ -72,7 +71,15 @@ function Stats() {
                     dataByFilter.map(data => <li key={data.keys}>{data.averageDelayByFilter}</li>)
                 }
             </ul>
-            <VictoryBar data={dataByFilter} x="keys"  y="averageDelayByFilter" />
+            <VictoryChart domainPadding={20}>
+                <VictoryAxis tickValues={dataByFilter.map(data => data.keys)}>
+
+                </VictoryAxis>
+                <VictoryAxis dependentAxis>
+                <VictoryBar data={dataByFilter} x="keys"  y="averageDelayByFilter" />
+                </VictoryAxis>
+            </VictoryChart>
+           
         </div>
     );
 }
