@@ -2,7 +2,6 @@ package gui.manageData
 
 import TitleText
 import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -226,7 +225,6 @@ fun StationItem(
 
     val onUpdateStationSuccess: (Station) -> Unit = { updatedStation ->
         onUpdateStation(updatedStation)
-
         editMode = false
     }
 

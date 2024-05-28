@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 enum class ManageDataMenuState(val customName: String) {
     MANAGE_TRAINS("Trains"),
     MANAGE_ROUTES("Routes"),
+    MANAGE_DELAYS("Delays"),
     MANAGE_STATIONS("Stations"),
     MANAGE_USERS("Users"),
     RESET("Reset")
@@ -87,6 +88,29 @@ fun ManageDataMenu(
                     Spacer(modifier = Modifier.width(iconTextSpace.dp))
                     Text(
                         text = ManageDataMenuState.MANAGE_ROUTES.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_DELAYS }
+                        .background(if (manageDataMenuState.value == ManageDataMenuState.MANAGE_DELAYS) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally) // align horizontally
+                ) {
+                    Icon(
+                        Icons.Default.Timer,
+                        contentDescription = ManageDataMenuState.MANAGE_DELAYS.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp)) // spacing between icon and text
+                    Text(
+                        text = ManageDataMenuState.MANAGE_DELAYS.customName,
                         textAlign = TextAlign.Center,
                         fontSize = fontSize.sp
                     )
@@ -178,6 +202,7 @@ fun ManageDataMenu(
             when (manageDataMenuState.value) {
                 ManageDataMenuState.MANAGE_TRAINS -> TODO()
                 ManageDataMenuState.MANAGE_ROUTES -> TODO()
+                ManageDataMenuState.MANAGE_DELAYS -> ManageDelays()
                 ManageDataMenuState.MANAGE_STATIONS -> ManageStations()
                 ManageDataMenuState.MANAGE_USERS -> ManageUsers()
                 ManageDataMenuState.RESET -> ManageDataReset()

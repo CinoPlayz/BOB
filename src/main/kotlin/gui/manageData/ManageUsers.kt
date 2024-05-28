@@ -723,6 +723,16 @@ fun UserItem(
                 if (editMode) {
                     IconButton(
                         onClick = {
+                            // Reset input fields to initial values
+                            username = user.username
+                            email = user.email
+                            role = user.role
+                            tokens = user.tokens
+                            twoFA = user.`2faEnabled`
+                            twoFASecret = user.`2faSecret` ?: ""
+                            createdAt = user.createdAt
+                            updatedAt = user.updatedAt
+                            newTokens = emptyList()
                             editMode = false
                         }
                     ) {
