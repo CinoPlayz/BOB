@@ -60,7 +60,9 @@ fun InputTrainData(
     var latitude by remember { mutableStateOf("") }
     var longitude by remember { mutableStateOf("") }
 
-    val trainTypes = listOf("LP", "ICS")
+    val trainTypes = listOf(
+        "AVT", "BUS", "EC", "EN", "IC", "ICS",
+        "LP", "LPV", "LRG", "MO", "MV", "RG")
 
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 

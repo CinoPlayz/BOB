@@ -72,7 +72,9 @@ fun InputRouteData(
 
     var middleStops by remember { mutableStateOf(listOf<MiddleStop>()) }
 
-    val trainTypes = listOf("LP", "ICS")
+    val trainTypes = listOf(
+        "AVT", "BUS", "EC", "EN", "IC", "ICS",
+        "LP", "LPV", "LRG", "MO", "MV", "RG")
 
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 
