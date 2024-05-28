@@ -116,8 +116,7 @@ function HistoryMap() {
                     backgroundColor: 'white',
                     borderRadius: '50%',
                     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                    padding: '10px',
-                    zIndex: '10'
+                    padding: '10px'
                 }}
                 onClick={() => setFiltersVisible(!filtersVisible)}
             >

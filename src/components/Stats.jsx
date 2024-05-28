@@ -18,6 +18,8 @@ function Stats() {
     const [zoomDomain, setZoomDomain] = useState({ x: [1.645427709190672, 9.049852400548696], y: [0, 25.1] });
     const [selectedDomain, setSelectedDomain] = useState({});
     const [orderBy, setOrderBy] = useState(orderByOptions[0]);
+    const [isSorted, setIsSorted] = useState(false);
+    const [previousOrderBy, setPreviousOrderBy] = useState(1);
 
 
 
@@ -34,6 +36,21 @@ function Stats() {
             }
         });
         return map;
+    }
+
+    function getRangeByDelay(delay){
+        if(delay <= 5){
+            return "0-5";
+        }
+        else if(delay <= 15){
+            return "6-15";
+        }
+        else if (delay <= 30){
+            return "16-30";
+        }
+        else {
+            return "31+";
+        }
     }
 
 
@@ -68,8 +85,10 @@ function Stats() {
             setDataByFilter(delayByFilter);
         }
 
+        
 
-        const groupedByDelay = groupBy(delayByFilter, stat => Math.round(stat.averageDelayByFilter));
+
+        const groupedByDelay = groupBy(delayByFilter, stat => getRangeByDelay(Math.round(stat.averageDelayByFilter)));
         let delayByFilterPie = []
         let countOfByFilterPie = 0;
 
@@ -88,7 +107,7 @@ function Stats() {
 
             let averageDelay = Math.round(values[0].averageDelayByFilter)
 
-            delayByFilterPie.push({ index: countOfByFilterPie, trainNames: trainNames, averageDelayByFilter: averageDelay, countOfTrainsByDelay: countOfTrainsByDelay, label: "Zamuda: " + averageDelay + "\nSt: " + countOfTrainsByDelay })
+            delayByFilterPie.push({ index: countOfByFilterPie, trainNames: trainNames, averageDelayByFilter: averageDelay, countOfTrainsByDelay: countOfTrainsByDelay, label: "Zamuda: " + keys + "min\nSt: " + countOfTrainsByDelay })
         });
 
         if (delayByFilterPie.length != 0) {
@@ -104,33 +123,63 @@ function Stats() {
         getStats()
     }, []);
 
+    function sortForDelay(orderDelay){
+        if(!isSorted){
+            orderDelay.sort(function(a,b) {
+                return a.averageDelayByFilter - b.averageDelayByFilter;
+            });
+            setIsSorted(true);
+        }
+    }
+
+    function changeOrder(orderDelay, previousOrderedBy){
+        let countOfByFilter = 0;  
+        orderDelay.map((element) => {element.index = countOfByFilter; countOfByFilter += 1});
+        setPreviousOrderBy(previousOrderedBy);
+    }
+
     useEffect(() => {
         let orderDelay = dataByFilter.slice(0);
         let orderDelayPie = dataByFilterPie.slice(0);
 
-        switch (orderBy.id){
-            case 2 : {
-                orderDelay.sort(function(a,b) {
-                    return a.averageDelayByFilter - b.averageDelayByFilter;
-                });
-                orderDelayPie.sort(function(a,b) {
-                    return a.averageDelayByFilter - b.averageDelayByFilter;
-                });
-            }
-            case 3: {
-                orderDelay.sort(function(a,b) {
-                    return b.averageDelayByFilter - a.averageDelayByFilter;
-                });
-                orderDelayPie.sort(function(a,b) {
-                    return b.averageDelayByFilter - a.averageDelayByFilter;
-                });
-            }
-            default: {
+        /*if(!isSorted){
+            console.log("here");
+            orderDelay.sort(function(a,b) {
+                return a.averageDelayByFilter - b.averageDelayByFilter;
+            });
+            setIsSorted(true);
+        }*/
 
-            }
+        switch (orderBy.id){
+            case 2 :     
+                
+                sortForDelay(orderDelay);
+                console.log(previousOrderBy);
+                if(previousOrderBy == 3){                    
+                    orderDelay.reverse();
+                    changeOrder(orderDelay , 2);
+                }     
+                
+                if(previousOrderBy == 1){
+                    changeOrder(orderDelay, 2);
+                    
+                }
+
+                
+            break;
+            case 3: 
+                sortForDelay(orderDelay);
+                console.log(previousOrderBy);
+                if(previousOrderBy == 2 || previousOrderBy == 1){
+                    orderDelay.reverse();
+                    changeOrder(orderDelay, 3);
+                } 
+                break;
+            default: 
+            break;
         }
 
-        setDataByFilter(orderDelay);        
+        setDataByFilter(orderDelay); 
         setDataByFilterPie(orderDelayPie);
         
 
