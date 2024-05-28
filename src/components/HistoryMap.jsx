@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import TrainContext from '../TrainContext';
 import trainIcon from '../assets/train_icon.png';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlay, faPause, faFilter, faSearch  } from '@fortawesome/free-solid-svg-icons';
 
 function HistoryMap() {
     const { fetchTrainDataByDateRange } = useContext(TrainContext);
@@ -10,6 +12,7 @@ function HistoryMap() {
     const [isPaused, setIsPaused] = useState(false);
     const [speed, setSpeed] = useState(1);
     const [currentDateTime, setCurrentDateTime] = useState(null);
+    const [filtersVisible, setFiltersVisible] = useState(false);
     const mapRef = useRef(null);
     const timerRef = useRef(null);
     const currentGroupIndexRef = useRef(0);
@@ -104,46 +107,65 @@ function HistoryMap() {
 
     return (
         <div>
-            <div style={{
-                position: 'absolute',
-                top: '10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 1000,
-                backgroundColor: 'white',
-                padding: '10px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                marginTop: '4%',
-            }}>
-                <label>
-                    Start Date:
-                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                </label>
-                <label>
-                    End Date:
-                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                </label>
-                <button onClick={handleSearch}>Search</button>
-                <div>
-                    <label>
-                        Animation Speed:
-                        <select value={speed} onChange={(e) => setSpeed(parseInt(e.target.value))}>
-                            <option value={1}>1x</option>
-                            <option value={2}>2x</option>
-                            <option value={3}>3x</option>
-                            <option value={4}>4x</option>
-                            <option value={5}>5x</option>
-                        </select>
+            <button
+                style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    zIndex: 1000,
+                    backgroundColor: 'white',
+                    borderRadius: '50%',
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                    padding: '10px',
+                    marginTop: '4%'
+                }}
+                onClick={() => setFiltersVisible(!filtersVisible)}
+            >
+                <FontAwesomeIcon icon={faFilter} />
+            </button>
+            {filtersVisible && (
+                <div style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '70px',
+                    zIndex: 1000,
+                    backgroundColor: 'white',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                    marginTop: '4%',
+                    zIndex: '10'
+                }}>
+                    <label style={{ paddingRight: '10px' }}>
+                        Start Date:
+                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ paddingLeft: '5px' }} />
                     </label>
-               
-                <button onClick={handlePauseResume} style={{paddingLeft: '10px'}}>
-                {isPaused ? '▶️' : '⏸️'}
-                </button>
+                    <label>
+                        End Date:
+                        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ paddingRight: '10px' }} />
+                    </label>
+                    <button onClick={handleSearch}>
+                    <FontAwesomeIcon icon={faSearch} />
+                    </button>
+                    <div>
+                        <label style={{ paddingRight: '2px' }}>
+                            Animation Speed:
+                            <select value={speed} onChange={(e) => setSpeed(parseInt(e.target.value))} style={{ paddingLeft: '5px' }}>
+                                <option value={1}>1x</option>
+                                <option value={2}>2x</option>
+                                <option value={3}>3x</option>
+                                <option value={4}>4x</option>
+                                <option value={5}>5x</option>
+                            </select>
+                        </label>
+                        <button onClick={handlePauseResume} style={{ paddingLeft: '10px' }}>
+                        <FontAwesomeIcon icon={isPaused ? faPlay : faPause} />
+                        </button>
+                    </div>
+                    {currentDateTime && <div>Current Time: {currentDateTime.toLocaleString()}</div>}
                 </div>
-                {currentDateTime && <div>Current Time: {currentDateTime.toLocaleString()}</div>}
-            </div>
-            <div id="map" style={{ height: '100vh', width: '100vw' }}></div>
+            )}
+            <div id="map" style={{ height: '100vh', width: '100vw', zIndex: 0 }}></div>
         </div>
     );
 }

@@ -41,7 +41,7 @@ function Map() {
         }
     }, [trainData]);
 
-    return <div id="map" style={{ height: '100vh', width: '100vw' }}></div>;
+    return <div id="map" style={{ height: '100vh', width: '100vw', zIndex: 0 }}></div>;
 }
 
 export default Map;

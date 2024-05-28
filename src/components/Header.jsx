@@ -19,7 +19,7 @@ export default function Header(props) {
   };
 
   return (
-    <Disclosure as="nav" className="bg-white shadow fixed w-full top-0 z-10">
+    <Disclosure as="nav" className="bg-white shadow fixed w-full top-0 z-50">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
@@ -111,7 +111,7 @@ export default function Header(props) {
                         </button>
 
                         {/* Profile dropdown */}
-                        <Menu as="div" className="relative ml-3">
+                        <Menu as="div" className="relative ml-3 z-50" >
                           <div>
                             <MenuButton className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                               <span className="absolute -inset-1.5" />
