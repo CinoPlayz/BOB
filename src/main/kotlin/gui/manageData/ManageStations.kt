@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -215,6 +216,10 @@ fun StationItem(
         name = station.name
         officialStationNumber = station.officialStationNumber
         coordinates = station.coordinates
+        longitude = station.coordinates.lng
+        latitude = station.coordinates.lat
+        longitudeText = TextFieldValue(station.coordinates.lng.toString())
+        latitudeText = TextFieldValue(station.coordinates.lat.toString())
         createdAt = station.createdAt
         updatedAt = station.updatedAt
     }
@@ -246,19 +251,62 @@ fun StationItem(
                 verticalArrangement = Arrangement.Center
             ) {
                 if (editMode) {
-                    TODO()
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Station Name") },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = officialStationNumber,
+                        onValueChange = { officialStationNumber = it },
+                        label = { Text("Official Station Number") },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = latitudeText,
+                        onValueChange = {
+                            latitudeText = it
+                            latitude = it.text.toFloatOrNull()
+                        },
+                        label = { Text("Latitude") },
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f),
+                        singleLine = true,
+                        isError = latitude == null
+                    )
+                    OutlinedTextField(
+                        value = longitudeText,
+                        onValueChange = {
+                            longitudeText = it
+                            longitude = it.text.toFloatOrNull() // ?: 0f // to float or null
+                        },
+                        label = { Text("Longitude") },
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f),
+                        singleLine = true,
+                        isError = longitude == null
+                    )
                 } else {
-                    Text("Station Name: $name", fontWeight = FontWeight.Bold)
-                    Text("Official Station Number: $officialStationNumber")
+                    Text("Station Name: ${station.name}", fontWeight = FontWeight.Bold)
+                    Text("Official Station Number: ${station.officialStationNumber}")
                     Text("Coordinates:")
                     Text(
-                        text = "Longitude: $longitude",
+                        text = "Latitude: ${station.coordinates.lat}",
                         modifier = Modifier.padding(start = 16.dp)
                     )
                     Text(
-                        text = "Latitude: $latitude",
+                        text = "Longitude: ${station.coordinates.lng}",
                         modifier = Modifier.padding(start = 16.dp)
                     )
+                    Text("Station Created On: ${station.createdAt.format(formatter)}", fontSize = 12.sp)
+                    Text("Station Last Updated On: ${station.updatedAt.format(formatter)}", fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -298,6 +346,14 @@ fun StationItem(
                 if (editMode) {
                     IconButton(
                         onClick = {
+                            // Revert changes in input fields
+                            name = station.name
+                            officialStationNumber = station.officialStationNumber
+                            coordinates = station.coordinates
+                            longitude = station.coordinates.lng
+                            latitude = station.coordinates.lat
+                            longitudeText = TextFieldValue(station.coordinates.lng.toString())
+                            latitudeText = TextFieldValue(station.coordinates.lat.toString())
                             editMode = false
                         }
                     ) {
@@ -360,11 +416,17 @@ suspend fun updateStationInDB(
 ): String {
 
     if (name.isEmpty() ||
-        officialStationNumber.isEmpty() ||
-        latitude!!.isNaN() ||
-        longitude!!.isNaN()
+        officialStationNumber.isEmpty()
     ) {
-        return ("Please fill in all fields.")
+        return ("Please check Name and Official Staion Number fields.")
+    }
+
+    if (latitude == null ||longitude == null) {
+        return ("Please check Latitude and Longitude fields.")
+    }
+
+    if (officialStationNumber.toIntOrNull() == null) {
+        return ("Official Station Number must be an integer.")
     }
 
     val newCoordinates = Coordinates(

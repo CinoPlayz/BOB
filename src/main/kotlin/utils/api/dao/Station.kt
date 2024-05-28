@@ -79,7 +79,7 @@ suspend fun insertStation(station: StationInsert): Boolean {
 
 suspend fun updateStation(station: StationUpdate): Station {
     val id = station.id
-    val url = "${appContextGlobal.url}/stations/${id}/updateFromApp"
+    val url = "${appContextGlobal.url}/stations/${id}"
     val body = Json.encodeToString(station)
 
     val (_, response, result) = Fuel.put(url)
