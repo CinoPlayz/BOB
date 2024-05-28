@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import TrainContext from '../TrainContext';
-import { VictoryBar, VictoryChart, VictoryAxis, VictoryContainer, VictoryZoomContainer, VictoryBrushContainer, Background } from 'victory';
+import { VictoryBar, VictoryChart, VictoryAxis, VictoryContainer, VictoryZoomContainer, VictoryBrushContainer, Background, VictoryTheme, VictoryTooltip } from 'victory';
 
 function Stats() {
     const { fetchStats } = useContext(TrainContext);
     const [statsData, setStatsData] = useState([]);
-    const [mostDelays, setMostDelays] = useState([]);
     const [dataByFilter, setDataByFilter] = useState([{ index: 0, keys: "T", averageDelayByFilter: 1 }]);
-    const [zoomDomain, setZoomDomain] = useState({});
+    const [zoomDomain, setZoomDomain] = useState({x: [ 1.645427709190672, 9.049852400548696 ], y: [ 0, 25.1 ]});
     const [selectedDomain, setSelectedDomain] = useState({});
+    const [orderBy, setOrderBy] = useState("unordered");
 
 
     function groupBy(list, keyGetter) {
@@ -28,18 +28,16 @@ function Stats() {
 
 
     const getStats = async () => {
-        const data = await fetchStats();
-        setStatsData(data);
+        const statsData = await fetchStats();
+        setStatsData(statsData);
 
-        const grouped = groupBy(statsData, stat => stat.route.trainNumber);
+        const groupedByTrainNumber = groupBy(statsData, stat => stat.route.trainNumber);
 
         let delayByFilter = []
-        let delayLabelByFilter = []
 
-        //console.log(Array.from(grouped));
+        //console.log(Array.from(groupedByTrainNumber));
         let countOfByFilter = 1;
-        let countOfMoreDelay = 0;
-        grouped.forEach((values, keys) => {
+        groupedByTrainNumber.forEach((values, keys) => {
             countOfByFilter += 1;
             let sum = 0;
             let count = 0;
@@ -50,25 +48,14 @@ function Stats() {
 
             let averageDelayByFilter = sum / count;
 
-            if(averageDelayByFilter > 0){
-                countOfMoreDelay += 1;
-            }
-            delayByFilter.push({index: countOfByFilter, keys, averageDelayByFilter })
-            delayLabelByFilter.push(keys)
-            //console.log(values, keys);
+            let trainName = values[0].route.trainType + " " + values[0].route.trainNumber
+
+            delayByFilter.push({ index: countOfByFilter, keys: trainName, averageDelayByFilter })
         });
 
         if (delayByFilter.length != 0) {
             setDataByFilter(delayByFilter);
         }
-
-
-
-        console.log("Delay: ")
-        console.log(delayByFilter);
-
-        console.log(countOfMoreDelay);
-
     };
 
     useEffect(() => {
@@ -82,24 +69,12 @@ function Stats() {
                     dataByFilter.map(data => <li key={data.keys}>{data.averageDelayByFilter}</li>)
                 }
             </ul>
-            <VictoryChart containerComponent={
-                <VictoryZoomContainer zoomDomain={
-                    { x: [5, 35], y: [0, 25] }
-                }
-                    zoomDimension="x" />
-            }>
-                <VictoryAxis tickValues={dataByFilter.map(data => data.keys)} tickFormat={dataByFilter.map(data => data.keys)}>
-
-                </VictoryAxis>
-                <VictoryAxis dependentAxis>
-                </VictoryAxis>
-                <VictoryBar data={dataByFilter} x="keys" y="averageDelayByFilter" />
-            </VictoryChart>
 
             <div>
                 <VictoryChart
                     width={550}
                     height={300}
+                    theme={VictoryTheme.material}
 
                     containerComponent={
                         <VictoryZoomContainer responsive={false}
@@ -121,8 +96,11 @@ function Stats() {
                         style={{
                             data: { stroke: "tomato" }
                         }}
+                        barWidth={8}
                         data={dataByFilter}
                         x="index" y="averageDelayByFilter"
+                        labels={dataByFilter.map(data => Math.round(data.averageDelayByFilter))}
+                        labelComponent={<VictoryTooltip/>}
                     />
 
                 </VictoryChart>
@@ -160,7 +138,7 @@ function Stats() {
                         }}
                         tickFormat={(x) => null}
                     />
-                    
+
                     <VictoryBar
                         style={{
                             data: { stroke: "transparent", fill: 'transparent' }
