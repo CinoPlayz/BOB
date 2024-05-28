@@ -303,8 +303,8 @@ fun StationItem(
                         text = "Longitude: ${station.coordinates.lng}",
                         modifier = Modifier.padding(start = 16.dp)
                     )
-                    Text("Station Created On: ${station.createdAt.format(formatter)}", fontSize = 12.sp)
-                    Text("Station Last Updated On: ${station.updatedAt.format(formatter)}", fontSize = 12.sp)
+                    Text("Station Created On: ${station.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
+                    Text("Station Last Updated On: ${station.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }

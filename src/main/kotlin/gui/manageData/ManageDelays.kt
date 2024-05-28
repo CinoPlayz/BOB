@@ -10,7 +10,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,11 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.Delay
-import models.Route
-import models.Station
-import models.User
+import models.*
 import utils.api.dao.*
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -205,18 +203,18 @@ fun DelayItem(
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     var editMode by remember { mutableStateOf(false) }
 
-    var requestYear by remember { mutableStateOf("${delay.timeOfRequest.year}") }
-    var requestMonth by remember { mutableStateOf("${delay.timeOfRequest.monthValue}") }
-    var requestDay by remember { mutableStateOf("${delay.timeOfRequest.dayOfMonth}") }
-    var requestHour by remember { mutableStateOf("${delay.timeOfRequest.hour}") }
-    var requestMinute by remember { mutableStateOf("${delay.timeOfRequest.minute}") }
-    var requestSecond by remember { mutableStateOf("${delay.timeOfRequest.second}") }
+    var requestYear by remember { mutableStateOf("${delay.timeOfRequest?.year}") }
+    var requestMonth by remember { mutableStateOf("${delay.timeOfRequest?.monthValue}") }
+    var requestDay by remember { mutableStateOf("${delay.timeOfRequest?.dayOfMonth}") }
+    var requestHour by remember { mutableStateOf("${delay.timeOfRequest?.hour}") }
+    var requestMinute by remember { mutableStateOf("${delay.timeOfRequest?.minute}") }
+    var requestSecond by remember { mutableStateOf("${delay.timeOfRequest?.second}") }
     var dateTimeError by remember { mutableStateOf(false) }
 
     var selectedRoute by remember { mutableStateOf(delay.route) } // id
-    var selectedCurrentStation by remember { mutableStateOf(delay.currentStation) } //id
+    var selectedCurrentStation by remember { mutableStateOf(delay.currentStation) } // id
 
-    var delayMinutes by remember { mutableStateOf(delay.delay) }
+    var delayMinutes by remember { mutableStateOf<Int?>(delay.delay) }
 
     var createdAt by remember { mutableStateOf(delay.createdAt) }
     var updatedAt by remember { mutableStateOf(delay.updatedAt) }
@@ -224,12 +222,12 @@ fun DelayItem(
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(delay) {
-        requestYear = delay.timeOfRequest.year.toString()
-        requestMonth = delay.timeOfRequest.monthValue.toString()
-        requestDay = delay.timeOfRequest.dayOfMonth.toString()
-        requestHour = delay.timeOfRequest.hour.toString()
-        requestMinute = delay.timeOfRequest.minute.toString()
-        requestSecond = delay.timeOfRequest.second.toString()
+        requestYear = delay.timeOfRequest?.year.toString()
+        requestMonth = delay.timeOfRequest?.monthValue.toString()
+        requestDay = delay.timeOfRequest?.dayOfMonth.toString()
+        requestHour = delay.timeOfRequest?.hour.toString()
+        requestMinute = delay.timeOfRequest?.minute.toString()
+        requestSecond = delay.timeOfRequest?.second.toString()
         selectedRoute = delay.route
         selectedCurrentStation = delay.currentStation
         delayMinutes = delay.delay
@@ -241,6 +239,26 @@ fun DelayItem(
         onUpdateDelay(updatedDelay)
 
         editMode = false
+    }
+
+    fun updateDateTimeError() {
+        try {
+            val newYear = requestYear.toIntOrNull()
+            val newMonth = requestMonth.toIntOrNull()
+            val newDay = requestDay.toIntOrNull()
+            val newHour = requestHour.toIntOrNull()
+            val newMinute = requestMinute.toIntOrNull()
+            val newSecond = requestSecond.toIntOrNull()
+
+            if (newYear != null && newMonth != null && newDay != null && newHour != null && newMinute != null && newSecond != null) {
+                LocalDateTime.of(newYear, newMonth, newDay, newHour, newMinute, newSecond)
+                dateTimeError = false
+            } else {
+                dateTimeError = true
+            }
+        } catch (e: Exception) {
+            dateTimeError = true
+        }
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -264,20 +282,183 @@ fun DelayItem(
                 verticalArrangement = Arrangement.Center
             ) {
                 if (editMode) {
-                    TODO()
+                    Text("Time of Request")
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = requestYear,
+                            onValueChange = { newYearString ->
+                                requestYear = newYearString.take(4) // Limit input to 4 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("YYYY") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text("-", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestMonth,
+                            onValueChange = { newMonthString ->
+                                requestMonth = newMonthString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("MM") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text("-", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestDay,
+                            onValueChange = { newDayString ->
+                                requestDay = newDayString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("DD") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(" ", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestHour,
+                            onValueChange = { newHourString ->
+                                requestHour = newHourString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("HH") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestMinute,
+                            onValueChange = { newMinuteString ->
+                                requestMinute = newMinuteString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("MM") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestSecond,
+                            onValueChange = { newSecondString ->
+                                requestSecond = newSecondString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("SS") },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    RoutesDropdownMenu(
+                        label = "Route Number",
+                        options = allRoutes,
+                        originalSelection = selectedRoute,
+                        onSelectionChange = { selectedNewRoute ->
+                            selectedRoute = selectedNewRoute
+                        }
+                    )
+                    StationsDropdownMenu(
+                        label = "Current Station",
+                        options = allStations,
+                        originalSelection = selectedCurrentStation,
+                        onSelectionChange = { selectedNewStation ->
+                            selectedCurrentStation = selectedNewStation
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value = delayMinutes?.toString() ?: "",
+                        onValueChange = { newValue ->
+                            delayMinutes = newValue.toIntOrNull() // null - used for check when updating
+                        },
+                        label = { Text("Train Delay (minutes)") },
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f),
+                        singleLine = true
+                    )
+
                 } else {
-                    Text("Time of Request: ${delay.timeOfRequest.format(formatter)}")
+                    Text("Time of Request: ${delay.timeOfRequest?.format(formatter)}")
                     Text("Route Number: ${allRoutes.find { it.second == selectedRoute }?.first}")
                     Text("Current Station: ${allStations.find { it.second == selectedCurrentStation }?.first}")
                     Text("Train delay (minutes): ${delay.delay}")
-                    Text("Delay Created On: ${delay.createdAt.format(formatter)}", fontSize = 12.sp)
-                    Text("Delay Last Updated On: ${delay.updatedAt.format(formatter)}", fontSize = 12.sp)
+                    Text("Delay Created On: ${delay.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
+                    Text("Delay Last Updated On: ${delay.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
 
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // Buttons
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(
+                    onClick = {
+                        if (editMode) {
+                            coroutineScope.launch {
+                                val feedback = updateDelayInDB(
+                                    delay = delay,
+                                    requestYear = requestYear,
+                                    requestMonth = requestMonth,
+                                    requestDay = requestDay,
+                                    requestHour = requestHour,
+                                    requestMinute = requestMinute,
+                                    requestSecond = requestSecond,
+                                    stationId = selectedCurrentStation,
+                                    routeId = selectedRoute,
+                                    delayMinutes = delayMinutes,
+                                    onSuccess = onUpdateDelaySuccess
+                                )
+
+                                feedbackMessage = feedback
+                            }
+                        } else {
+                            editMode = true
+                        }
+                    },
+                ) {
+                    if (editMode) {
+                        Icon(Icons.Default.Check, contentDescription = "Save")
+                    } else {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    }
+                }
+
+                if (editMode) {
+                    IconButton(
+                        onClick = {
+                            // Reset input fields to initial values
+                            requestYear = delay.timeOfRequest?.year.toString()
+                            requestMonth = delay.timeOfRequest?.monthValue.toString()
+                            requestDay = delay.timeOfRequest?.dayOfMonth.toString()
+                            requestHour = delay.timeOfRequest?.hour.toString()
+                            requestMinute = delay.timeOfRequest?.minute.toString()
+                            requestSecond = delay.timeOfRequest?.second.toString()
+                            selectedRoute = delay.route
+                            selectedCurrentStation = delay.currentStation
+                            delayMinutes = delay.delay
+                            createdAt = delay.createdAt
+                            updatedAt = delay.updatedAt
+                            editMode = false
+                        }
+                    ) {
+                        Icon(Icons.Default.Cancel, contentDescription = "Cancel")
+                    }
+                }
+
+                if (!editMode) {
+                    IconButton(
+                        onClick = {
+                            onDeleteDelay(delay)
+                        }
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                }
+            }
         }
     }
 
@@ -314,9 +495,55 @@ suspend fun deleteDelayFromDB(
 }
 
 suspend fun updateDelayInDB(
-    number:String
-) {
-    TODO()
+    delay: Delay,
+    requestYear: String,
+    requestMonth: String,
+    requestDay: String,
+    requestHour: String,
+    requestMinute: String,
+    requestSecond: String,
+    stationId: String,
+    routeId: String,
+    delayMinutes: Int?,
+    onSuccess: (Delay) -> Unit
+): String {
+    var newRequestTimeStamp: LocalDateTime
+    try {
+        newRequestTimeStamp = LocalDateTime.of(
+            requestYear.toInt(),
+            requestMonth.toInt(),
+            requestDay.toInt(),
+            requestHour.toInt(),
+            requestMinute.toInt(),
+            requestSecond.toInt()
+        )
+        newRequestTimeStamp = newRequestTimeStamp.plusHours(2)
+    } catch (e: IllegalArgumentException) {
+        return ("Time of Request Format Invalid.")
+    }
+
+    if (delayMinutes == null) {
+        return ("Train Delay Format Invalid.")
+    }
+
+    val delayUpdate = DelayUpdate(
+        id = delay.id,
+        timeOfRequest = newRequestTimeStamp,
+        route = routeId,
+        currentStation = stationId,
+        delay = delayMinutes
+    )
+
+    return try {
+        var updatedDelay: Delay
+        coroutineScope {
+            updatedDelay = updateDelay(delayUpdate)
+        }
+        onSuccess(updatedDelay)
+        "Delay successfully updated in the database."
+    } catch (e: Exception) {
+        "Error updating delay in the database. ${e.message}"
+    }
 }
 
 // Function to transform list of stations into list of pairs
@@ -385,9 +612,10 @@ fun RoutesDropdownMenu(
     label: String,
     options: List<Pair<Int, String>>, // trainNumber, id
     originalSelection: String = "",
-    onSelectionChange: (String) -> Unit,
+    onSelectionChange: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val sortedOptions = remember(options) { options.sortedBy { it.first } } // sorted dropdown
     var selectedOption by remember { mutableStateOf(originalSelection) }
     var selectedName by remember(originalSelection) {
         mutableStateOf(options.find { it.second == originalSelection }?.first?.toString() ?: "")
@@ -399,6 +627,7 @@ fun RoutesDropdownMenu(
             onValueChange = { }, // Disable text editing
             readOnly = true,
             label = { Text(label) },
+
             trailingIcon = {
                 IconButton(
                     onClick = { expanded = !expanded },
@@ -408,19 +637,20 @@ fun RoutesDropdownMenu(
             },
             modifier = Modifier
         )
-
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier
         ) {
-            options.forEach { option ->
-                DropdownMenuItem(onClick = {
-                    selectedOption = option.second
-                    selectedName = option.first.toString()
-                    onSelectionChange(option.second)
-                    expanded = false
-                }) {
+            sortedOptions.forEach { option ->
+                DropdownMenuItem(
+                    onClick = {
+                        selectedOption = option.second
+                        selectedName = option.first.toString()
+                        onSelectionChange(option.second)
+                        expanded = false
+                    },
+                ) {
                     Text(text = option.first.toString())
                 }
             }

@@ -20,13 +20,8 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import models.RouteInsert
-import org.bson.Document
-import utils.DatabaseUtil
 import utils.api.dao.insertRoute
-import utils.api.dao.insertStation
 import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
 

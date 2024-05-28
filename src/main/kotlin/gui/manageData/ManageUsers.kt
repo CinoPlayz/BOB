@@ -677,8 +677,8 @@ fun UserItem(
                     Text("Role: $role")
                     Text("Active Login Tokens: ${tokens?.size}")
                     Text("2FA Enabled: ${if (twoFA) "Yes" else "No"}")
-                    Text("User Created On: ${user.createdAt.format(formatter)}", fontSize = 12.sp)
-                    Text("User Last Updated On: ${user.updatedAt.format(formatter)}", fontSize = 12.sp)
+                    Text("User Created On: ${user.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
+                    Text("User Last Updated On: ${user.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }

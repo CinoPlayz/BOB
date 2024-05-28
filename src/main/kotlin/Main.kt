@@ -23,6 +23,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import gui.scraper.Scraper
 import gui.addData.AddDataMenu
+import gui.addData.AddDataMenuState
 import gui.manageData.ManageDataMenu
 
 const val NAME = "BandOfBytes"
@@ -79,7 +80,7 @@ fun Menu(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { menuState.value = MenuState.ADD_DATA }
-                    .background(color = Color.Transparent)
+                    .background(if (menuState.value == MenuState.ADD_DATA) Color.LightGray else Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     //.wrapContentWidth(Alignment.CenterHorizontally)
                     .offset(x = textOffset.dp)
@@ -105,6 +106,7 @@ fun Menu(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { menuState.value = MenuState.MANAGE_DATA }
+                    .background(if (menuState.value == MenuState.MANAGE_DATA) Color.LightGray else Color.Transparent)
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
@@ -128,7 +130,7 @@ fun Menu(
                 modifier = Modifier
                     .fillMaxWidth()
                     //.clickable { menuState.value = MenuState.PROCESSOR }
-                    .background(color = Color.Transparent)
+                    .background(if (menuState.value == MenuState.PROCESSOR) Color.LightGray else Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
             ) {
@@ -152,7 +154,7 @@ fun Menu(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { menuState.value = MenuState.SCRAPER }
-                    .background(color = Color.Transparent)
+                    .background(if (menuState.value == MenuState.SCRAPER) Color.LightGray else Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
             ) {
@@ -176,7 +178,7 @@ fun Menu(
                 modifier = Modifier
                     .fillMaxWidth()
                     //.clickable { menuState.value = MenuState.GENERATOR }
-                    .background(color = Color.Transparent)
+                    .background(if (menuState.value == MenuState.GENERATOR) Color.LightGray else Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
             ) {

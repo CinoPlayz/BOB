@@ -15,10 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 enum class AddDataMenuState(val customName: String) {
-    ADD_TRAIN("Add Train"),
-    ADD_ROUTE("Add Route"),
-    ADD_STATION("Add Station"),
-    ADD_USER("Add User"),
+    ADD_TRAIN("Train"),
+    ADD_ROUTE("Route"),
+    ADD_DELAY("Delay"),
+    ADD_STATION("Station"),
+    ADD_USER("User"),
     RESET("Reset")
 }
 
@@ -87,6 +88,29 @@ fun AddDataMenu(
                     Spacer(modifier = Modifier.width(iconTextSpace.dp))
                     Text(
                         text = AddDataMenuState.ADD_ROUTE.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { addDataMenuState.value = AddDataMenuState.ADD_DELAY }
+                        .background(if (addDataMenuState.value == AddDataMenuState.ADD_DELAY) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally) // align horizontally
+                ) {
+                    Icon(
+                        Icons.Default.Timer,
+                        contentDescription = AddDataMenuState.ADD_DELAY.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp)) // spacing between icon and text
+                    Text(
+                        text = AddDataMenuState.ADD_DELAY.customName,
                         textAlign = TextAlign.Center,
                         fontSize = fontSize.sp
                     )
@@ -178,6 +202,7 @@ fun AddDataMenu(
             when (addDataMenuState.value) {
                 AddDataMenuState.ADD_TRAIN -> AddTrain()
                 AddDataMenuState.ADD_ROUTE -> AddRoute()
+                AddDataMenuState.ADD_DELAY -> AddDelay()
                 AddDataMenuState.ADD_STATION -> AddStation()
                 AddDataMenuState.ADD_USER -> AddUser()
                 AddDataMenuState.RESET -> AddDataReset()
