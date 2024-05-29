@@ -13,6 +13,7 @@ router.get('/:id', routeController.show);
 router.post('/', extractToken, getRoleFromToken, isReqRole("admin"), routeController.create);
 
 // PUT (update)
+router.put('/:id/updateFromApp', extractToken, getRoleFromToken, isReqRole("admin"), routeController.updateFromApp);
 router.put('/:id', extractToken, getRoleFromToken, isReqRole("admin"), routeController.update);
 
 // DELETE (remove)

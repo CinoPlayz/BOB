@@ -109,6 +109,86 @@ module.exports = {
         }
     },
 
+    updateFromApp: async function (req, res) {
+        var id = req.params.id;
+        // console.log(req.body)
+
+        try {
+            const routeFound = await RouteModel.findOne({ _id: id });
+
+            if (!routeFound) {
+                return shared.handleError(res, 404, "No such route", null);
+            }
+
+            if (req.body.trainType !== undefined && req.body.trainType.trim() !== "") {
+                routeFound.trainType = req.body.trainType.trim();
+            }
+
+            if (req.body.trainNumber !== undefined && !isNaN(req.body.trainNumber)) {
+                routeFound.trainNumber = parseInt(req.body.trainNumber, 10);
+            }
+
+            if (req.body.validFrom !== undefined && req.body.validFrom.trim() !== "") {
+                routeFound.validFrom = req.body.validFrom.trim();
+            }
+
+             if (req.body.validUntil !== undefined && req.body.validUntil.trim() !== "") {
+                routeFound.validUntil = req.body.validUntil.trim();
+            }
+
+            if (req.body.canSupportBikes !== undefined) {
+                routeFound.canSupportBikes = req.body.canSupportBikes === 'true' || req.body.canSupportBikes === true;
+            }
+
+            if (req.body.drivesOn !== undefined && Array.isArray(req.body.drivesOn)) {
+                routeFound.drivesOn = req.body.drivesOn;
+            } else {
+                routeFound.drivesOn = [];
+            }
+
+            if (req.body.start !== undefined && req.body.start.station && req.body.start.time) {
+                routeFound.start = {
+                    station: req.body.start.station,
+                    time: req.body.start.time.trim()
+                };
+            }
+
+            if (req.body.end !== undefined && req.body.end.station && req.body.end.time) {
+                routeFound.end = {
+                    station: req.body.end.station,
+                    time: req.body.end.time.trim()
+                };
+            }
+
+            // Update middle stations if provided in request body
+            if (req.body.middle !== undefined) {
+                if (Array.isArray(req.body.middle) && req.body.middle.length > 0) {
+                    routeFound.middle = req.body.middle;
+                } else {
+                    routeFound.middle = [];
+                }
+            } else {
+                routeFound.middle = [];
+            }
+
+            // Add new middle stations to existing middle stations
+            if (req.body.newMiddle !== undefined) {
+                if (Array.isArray(req.body.newMiddle) && req.body.newMiddle.length > 0) {
+                    if (!routeFound.middle) {
+                        routeFound.middle = [];
+                    }
+                    routeFound.middle = routeFound.middle.concat(req.body.newMiddle);
+                }
+            }
+
+            const routeUpdated = await routeFound.save();
+
+            return res.json(routeUpdated);
+        } catch (err) {
+            return shared.handleError(res, 500, "Error when updating route", err);
+        }
+    },
+
     // Delete route by ID (DELETE)
     remove: async function (req, res) {
         const id = req.params.id;
