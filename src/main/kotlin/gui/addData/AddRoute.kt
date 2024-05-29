@@ -475,7 +475,8 @@ suspend fun writeRouteToDB(
     val drivesOn: List<Int> = drivesOnDays
         .filter { it.value } // Filter only checked
         .keys
-        .mapNotNull { daysOfWeekMap[it] } // Map day to index
+        .mapNotNull { day -> daysOfWeek.indexOf(day).takeIf { it != -1 } }
+        // .mapNotNull { daysOfWeekMap[it] } // Map day to index
         .sorted() // Sort low -> high
 
     val timeRegex = Regex("""^(?:[01]\d|2[0-3]):[0-5]\d$""")

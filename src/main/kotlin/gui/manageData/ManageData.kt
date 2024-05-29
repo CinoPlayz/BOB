@@ -71,7 +71,7 @@ fun ManageDataMenu(
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        //.clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_ROUTES }
+                        .clickable { manageDataMenuState.value = ManageDataMenuState.MANAGE_ROUTES }
                         .background(if (manageDataMenuState.value == ManageDataMenuState.MANAGE_ROUTES) Color.LightGray else Color.Transparent)
                         .padding(vertical = buttonPadding.dp)
                         .align(Alignment.CenterVertically)
@@ -201,7 +201,7 @@ fun ManageDataMenu(
         ) {
             when (manageDataMenuState.value) {
                 ManageDataMenuState.MANAGE_TRAINS -> ManageTrains()
-                ManageDataMenuState.MANAGE_ROUTES -> TODO()
+                ManageDataMenuState.MANAGE_ROUTES -> ManageRoutes()
                 ManageDataMenuState.MANAGE_DELAYS -> ManageDelays()
                 ManageDataMenuState.MANAGE_STATIONS -> ManageStations()
                 ManageDataMenuState.MANAGE_USERS -> ManageUsers()

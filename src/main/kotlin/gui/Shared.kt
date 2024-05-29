@@ -17,7 +17,8 @@ val daysOfWeek = listOf(
 )
 
 // Create a map from the daysOfWeek list
-val daysOfWeekMap = daysOfWeek.mapIndexed { index, day -> day to index }.toMap()
+val daysOfWeekMap: Map<Int, String> = daysOfWeek.mapIndexed { index, day -> index to day }.toMap()
+// val daysOfWeekMap = daysOfWeek.mapIndexed { index, day -> day to index }.toMap()
 
 // Function to transform list of stations into list of pairs
 fun List<Station>.toNameIDPairs(): List<Pair<String, String>> {
@@ -32,6 +33,7 @@ fun StationsDropdownMenu(
     options: List<Pair<String, String>>, // name, id
     originalSelection: String = "",
     onSelectionChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf(originalSelection) }
@@ -145,4 +147,15 @@ fun parseTime(timeStr: String): Triple<String, String, String> {
 
 fun addLeadingZero(value: String): String {
     return if (value.length == 1) "0$value" else value
+}
+
+fun parseShortTime(timeStr: String): Pair<String, String> {
+    // Split the input string by the colon separator
+    val parts = timeStr.split(":")
+
+    // Assign the split parts to hours, minutes, and seconds
+    val hours = parts[0]
+    val minutes = parts[1]
+
+    return Pair(hours, minutes)
 }

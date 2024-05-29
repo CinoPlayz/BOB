@@ -66,3 +66,27 @@ suspend fun insertRoute(route: RouteInsert): Boolean {
         }
     }
 }
+
+suspend fun deleteRoute(id: String): Boolean {
+    val url = "${appContextGlobal.url}/routes/${id}"
+
+    val (_, response, result) = Fuel.delete(url)
+        .header("Accept-Language", "en")
+        .header(
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+        )
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.CONTENT_TYPE, "application/json")
+        .responseString()
+
+    return when (result) {
+        is Result.Failure -> {
+            throw IllegalStateException("Error Code: ${response.statusCode}")
+        }
+
+        is Result.Success -> {
+            val statusCode = response.statusCode
+            statusCode in 200..299 // Check for successful status code (204)
+        }
+    }
+}

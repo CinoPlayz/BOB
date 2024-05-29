@@ -672,7 +672,6 @@ suspend fun deleteTrainFromDB(
     id: String,
     onSuccess: () -> Unit
 ): String {
-
     return try {
         coroutineScope {
             deleteTrainLocHistory(id)
