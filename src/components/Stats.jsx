@@ -3,6 +3,7 @@ import TrainContext from '../TrainContext';
 import { Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
 import StatsDelay from './StatsDelay';
+import StatsRoute from './StatsRoute';
 
 const showSelectedOptions = [{ id: 1, name: "Delays" }, { id: 2, name: "Train info" }, { id: 3, name: "Delays By Route" }]
 
@@ -11,16 +12,17 @@ function classNames(...classes) {
 }
 
 function Stats() {
-    const { fetchStats } = useContext(TrainContext);
+    const { fetchDelayStats, fetchRouteStats } = useContext(TrainContext);
     const [showSelected, setShowSelected] = useState(showSelectedOptions[0]);
-    const [statsData, setStatsData] = useState([{route: {trainType: "Loading", trainNumber: "Loading"}}]);
-
-
-
+    const [statsDelay, setstatsDelay] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
+    const [statsRoute, setStatsRoute] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
 
     const getStats = async () => {
-        const statsDataFetch = await fetchStats();
-        setStatsData(statsDataFetch);
+        const statsDelayFetch = await fetchDelayStats();
+        setstatsDelay(statsDelayFetch);
+
+        const statsRouteFetch = await fetchRouteStats();
+        setStatsRoute(statsRouteFetch);
     };
 
     useEffect(() => {
@@ -83,11 +85,10 @@ function Stats() {
                 )}
             </Listbox>
 
-            {
-                showSelected.id == 1 && <StatsDelay statsData={statsData}/>
-            }
+            {showSelected.id == 1 && <StatsDelay statsDelay={statsDelay} />}
+            {showSelected.id == 2 && <StatsRoute statsRoute={statsRoute} />}
 
-            
+
         </div>
 
 

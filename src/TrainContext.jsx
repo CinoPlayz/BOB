@@ -44,9 +44,20 @@ export const TrainProvider = ({ children }) => {
         }
     };
 
-    const fetchStats = async () => {
+    const fetchDelayStats = async () => {
         try {
             const response = await fetch(`http://localhost:3001/delays/stats`); 
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error while getting stats:', error);
+            return [];
+        }
+    };
+
+    const fetchRouteStats = async () => {
+        try {
+            const response = await fetch(`http://localhost:3001/routes`); 
             const data = await response.json();
             return data;
         } catch (error) {
@@ -63,7 +74,7 @@ export const TrainProvider = ({ children }) => {
     }, []);
 
     return (
-        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchStats }}>
+        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchDelayStats, fetchRouteStats }}>
             {children}
         </TrainContext.Provider>
     );

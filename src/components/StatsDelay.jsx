@@ -12,7 +12,7 @@ function classNames(...classes) {
 }
 
 
-function StatsDelay({statsData}) {
+function StatsDelay({statsDelay}) {
     const [dataByFilterTrainNumber, setDataByFilterTrainNumber] = useState([{ index: 0, trainName: "T", averageDelayByTrainNumber: 1 }]);
     const [dataByFilterDelayRange, setDataByFilterDelayRange] = useState([{ index: 0, trainNames: [], averageDelayByTrainNumber: 1 }]);
     const [dataByFilterType, setDataByFilterType] = useState([{ index: 0, trainType: [], averageDelayByTrainNumber: 1 }]);
@@ -55,9 +55,9 @@ function StatsDelay({statsData}) {
 
 
 
-    const getStats = async (statsData) => {
+    const getStats = async (statsDelay) => {
         //Group By Train Number
-        const groupedByTrainNumber = groupBy(statsData, stat => stat.route.trainNumber);
+        const groupedByTrainNumber = groupBy(statsDelay, stat => stat.route.trainNumber);
         //console.log(Array.from(groupedByTrainNumber));
         let delayByTrainNumber = [];
         let countOfByTrainNumber = 1;
@@ -111,7 +111,7 @@ function StatsDelay({statsData}) {
 
 
         //Group by Type
-        let groupedByType = groupBy(statsData, stat => stat.route.trainType);
+        let groupedByType = groupBy(statsDelay, stat => stat.route.trainType);
         let delayByType = []
         let countOfByType = 0;
 
@@ -137,8 +137,8 @@ function StatsDelay({statsData}) {
     };
 
     useEffect(() => {
-        getStats(statsData)
-    }, [statsData]);
+        getStats(statsDelay)
+    }, [statsDelay]);
 
     function sortForDelay(orderDelay) {
         if (!isSorted) {
