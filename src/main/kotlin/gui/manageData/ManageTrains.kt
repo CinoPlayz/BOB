@@ -723,7 +723,6 @@ suspend fun updateTrainInDB(
         return ("Train Delay Format Invalid.")
     }
 
-
     if (trainType.isEmpty() ||
         trainNumber.isEmpty() ||
         routeFrom.isEmpty() ||

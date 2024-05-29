@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.*
+import gui.addData.MiddleStopsInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ import models.*
 import utils.api.dao.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 @Composable
 fun ManageRoutes(
@@ -210,6 +212,9 @@ fun RouteItem(
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     var editMode by remember { mutableStateOf(false) }
 
+    val allStationsRemoveItem = listOf("Remove" to "0")
+    val allStationsRemove = allStationsRemoveItem + allStations
+
     var trainType by remember { mutableStateOf(route.trainType) }
     var trainNumber by remember { mutableStateOf<Int?>(route.trainNumber) }
     var trainNumberText by remember { mutableStateOf(trainNumber?.toString() ?: "") }
@@ -252,7 +257,7 @@ fun RouteItem(
     var endTimeError by remember { mutableStateOf(false) }
 
     var middles by remember { mutableStateOf(route.middle) } // middle stations
-    var newMiddles by remember { mutableStateOf(listOf<RouteStop>()) }
+    var newMiddles by remember { mutableStateOf(listOf<RouteStopInsert>()) }
 
     var createdAt by remember { mutableStateOf(route.createdAt) }
     var updatedAt by remember { mutableStateOf(route.updatedAt) }
@@ -655,7 +660,7 @@ fun RouteItem(
                                 hourEndStation = newRouteStartTimeHour.take(2)
                                 updateTimeErrorEnd()
                             },
-                            isError = startTimeError,
+                            isError = endTimeError,
                             label = { Text("Departure Time (HH)") },
                             modifier = Modifier.weight(1f),
                         )
@@ -666,12 +671,107 @@ fun RouteItem(
                                 minuteEndStation = newRouteStartTimeMinute.take(2)
                                 updateTimeErrorEnd()
                             },
-                            isError = startTimeError,
+                            isError = endTimeError,
                             label = { Text("Departure Time (MM)") },
                             modifier = Modifier.weight(1f),
                         )
                     }
                     Spacer(modifier = Modifier.height(height = 16.dp))
+
+                    if (middles != null) {
+                        Column {
+                            middles!!.forEachIndexed { index, middle ->
+
+                                var selectedMiddleStation by remember { mutableStateOf(middle.station) } // id
+                                var hourMiddleStation by remember { mutableStateOf("") } // HH:mm
+                                var minuteMiddleStation by remember { mutableStateOf("") }
+                                var middleTimeError by remember { mutableStateOf(false) }
+
+                                LaunchedEffect(middle) {
+                                    val (hourMiddleStationParsed, minuteMiddleStationParsed) = parseShortTime(middle.time)
+                                    hourMiddleStation = hourMiddleStationParsed
+                                    minuteMiddleStation = minuteMiddleStationParsed
+                                }
+
+                                fun updateTimeErrorMiddle() {
+                                    try {
+                                        val newHour = hourMiddleStation.toIntOrNull()
+                                        val newMinute = minuteMiddleStation.toIntOrNull()
+
+                                        middleTimeError = when {
+                                            newHour == null || newHour !in 0..23 -> true
+                                            newMinute == null || newMinute !in 0..59 -> true
+                                            else -> false
+                                        }
+                                    } catch (e: Exception) {
+                                        middleTimeError = true
+                                    }
+                                }
+
+                                Text("Middle Station ${index + 1}:", fontWeight = FontWeight.Bold)
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    StationsDropdownMenu(
+                                        label = "Middle Station Name",
+                                        options = allStationsRemove,
+                                        originalSelection = selectedMiddleStation,
+                                        onSelectionChange = { selectedNewStation ->
+                                            selectedMiddleStation = selectedNewStation
+                                            // middle.copy(station = selectedNewStation)
+                                            middles = middles!!.toMutableList().apply {
+                                                this[index] = middle.copy(station = selectedNewStation)
+                                            }
+                                        }
+                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.8f)
+                                            .padding(bottom = 8.dp)
+                                    ) {
+                                        OutlinedTextField(
+                                            value = hourMiddleStation,
+                                            onValueChange = { newRouteStartTimeHour ->
+                                                hourMiddleStation = newRouteStartTimeHour.take(2)
+                                                updateTimeErrorMiddle()
+                                                // middle.copy(time = "$hourMiddleStation:$minuteMiddleStation")
+                                                middles = middles!!.toMutableList().apply {
+                                                    this[index] = middle.copy(time = "$hourMiddleStation:$minuteMiddleStation")
+                                                }
+
+                                            },
+                                            isError = middleTimeError,
+                                            label = { Text("Departure Time (HH)") },
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+                                        OutlinedTextField(
+                                            value = minuteMiddleStation,
+                                            onValueChange = { newRouteStartTimeMinute ->
+                                                minuteMiddleStation = newRouteStartTimeMinute.take(2)
+                                                updateTimeErrorMiddle()
+                                                middles = middles!!.toMutableList().apply {
+                                                    this[index] = middle.copy(time = "$hourMiddleStation:$minuteMiddleStation")
+                                                }
+                                            },
+                                            isError = middleTimeError,
+                                            label = { Text("Departure Time (MM)") },
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    MiddleStationsInput(
+                        newMiddles = newMiddles,
+                        allStations = allStationsRemove,
+                        onAddMiddle = { newMiddles = newMiddles + RouteStopInsert() },
+                        onUpdateMiddle = { index, updatedMiddle ->
+                            newMiddles = newMiddles.toMutableList().apply {
+                                this[index] = updatedMiddle
+                            }
+                        }
+                    )
 
                 } else {
                     Text("Route Number: ${route.trainNumber}", fontWeight = FontWeight.Bold)
@@ -699,8 +799,13 @@ fun RouteItem(
                         text = "Arrival Time: ${route.end.time}",
                         modifier = Modifier.padding(start = 16.dp)
                     )
-
-                    // TODO(middles)
+                    Text("Middle Stations:")
+                    middles.forEachIndexed { index, middle ->
+                        Text(
+                            text = "${index + 1}: ${allStations.find { it.second == middle.station }?.first} (${middle.time})",
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
 
                     Text("Route Created On: ${route.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
                     Text("Route Last Updated On: ${route.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
@@ -870,8 +975,237 @@ suspend fun updateRouteInDB(
     hourEndStation: String,
     minuteEndStation: String,
     middles: List<RouteStop>,
-    newMiddles: List<RouteStop>,
+    newMiddles: List<RouteStopInsert>,
     onSuccess: (Route) -> Unit
 ): String {
-    TODO()
+    if (trainNumber == null || trainNumber == 0) {
+        return ("Route Number invalid.")
+    }
+
+    if (validFromYear.isEmpty() || validFromMonth.isEmpty() || validFromDay.isEmpty() || validFromHour.isEmpty() || validFromMinute.isEmpty() || validFromSecond.isEmpty()) {
+        return ("Valid From format invalid.")
+    }
+
+    if (validUntilYear.isEmpty() || validUntilMonth.isEmpty() || validUntilDay.isEmpty() || validUntilHour.isEmpty() || validUntilMinute.isEmpty() || validUntilSecond.isEmpty()) {
+        return ("Valid Until format invalid.")
+    }
+
+    val validFromDateTime: LocalDateTime
+    val validUntilDateTime: LocalDateTime
+
+    try {
+        validFromDateTime = LocalDateTime.of(validFromYear.toInt(), validFromMonth.toInt(), validFromDay.toInt(), validFromHour.toInt(), validFromMinute.toInt(), validFromSecond.toInt())
+    } catch (e: DateTimeParseException) {
+        return ("Valid From format invalid.")
+    }
+
+    try {
+        validUntilDateTime = LocalDateTime.of(validUntilYear.toInt(), validUntilMonth.toInt(), validUntilDay.toInt(), validUntilHour.toInt(), validUntilMinute.toInt(), validUntilSecond.toInt())
+    } catch (e: DateTimeParseException) {
+        return ("Valid Until format invalid.")
+    }
+
+    val drivesOn: List<Int> = drivesOnDays
+        .filter { it.value } // Filter only checked
+        .keys
+        .mapNotNull { day -> daysOfWeek.indexOf(day).takeIf { it != -1 } }
+        .sorted() // Sort low -> high
+
+
+    val hourStart = hourStartStation.toIntOrNull()
+    val minuteStart = minuteStartStation.toIntOrNull()
+    if (hourStart == null || hourStart !in 0..23) {
+        return "Invalid Route Departure Time: $hourStartStation"
+    }
+    if (minuteStart == null || minuteStart !in 0..59) {
+        return "Invalid Route Departure Time: $minuteStartStation"
+    }
+
+    val hourEnd = hourEndStation.toIntOrNull()
+    val minuteEnd = minuteEndStation.toIntOrNull()
+    if (hourEnd == null || hourEnd !in 0..23) {
+        return "Invalid Route Arrival Time: $hourStartStation"
+    }
+    if (minuteEnd == null || minuteEnd !in 0..59) {
+        return "Invalid Route Arrival Time: $minuteStartStation"
+    }
+
+    val start = RouteStop(
+        station = selectedStartStation,
+        time = "${addLeadingZero(hourStart.toString())}:${addLeadingZero(minuteStart.toString())}"
+    )
+
+    val end = RouteStop(
+        station = selectedEndStation,
+        time = "${addLeadingZero(hourEnd.toString())}:${addLeadingZero(minuteEnd.toString())}"
+    )
+
+    /*
+    * Filter Existing Middle Stations
+    * */
+    val filteredMiddles = middles.filter { it.station != "0" } // exclude with station set to Remove
+
+    // Check if times are in the format HH:mm and within the range
+    val invalidTimes = filteredMiddles.filter { stop ->
+        val parts = stop.time.split(":")
+        val hours = parts.getOrNull(0)?.toIntOrNull()
+        val minutes = parts.getOrNull(1)?.toIntOrNull()
+
+        // Add leading zeros if necessary
+        val formattedTime = "${hours?.toString()?.padStart(2, '0')}:${minutes?.toString()?.padStart(2, '0')}"
+
+        !formattedTime.matches(Regex("""\d{2}:\d{2}""")) ||
+                hours !in 0..23 ||
+                minutes !in 0..59
+    }
+
+    // If there are any invalid times, return error
+    if (invalidTimes.isNotEmpty()) {
+        //val invalidTimeStops = invalidTimes.joinToString(", ") { it.station }
+        return "Invalid time format in Middle Stations."
+    }
+
+    /*
+    * Filter New Middle Stations
+    * */
+    val filteredNewMiddles = newMiddles.filter { it.station != "0" }
+
+    val invalidTimesNew = filteredNewMiddles.filter { stop ->
+        val parts = stop.time.split(":")
+        val hours = parts.getOrNull(0)?.toIntOrNull()
+        val minutes = parts.getOrNull(1)?.toIntOrNull()
+
+        val formattedTime = "${hours?.toString()?.padStart(2, '0')}:${minutes?.toString()?.padStart(2, '0')}"
+
+        !formattedTime.matches(Regex("""\d{2}:\d{2}""")) ||
+                hours !in 0..23 ||
+                minutes !in 0..59
+    }
+
+    if (invalidTimesNew.isNotEmpty()) {
+        return "Invalid time format in New Middle Stations."
+    }
+
+    val routeUpdate = RouteUpdate(
+        id = route.id,
+        trainType = trainType,
+        trainNumber = trainNumber,
+        validFrom = validFromDateTime,
+        validUntil = validUntilDateTime,
+        canSupportBikes = canSupportBikes,
+        drivesOn = drivesOn,
+        start = start,
+        end = end,
+        middle = filteredMiddles,
+        newMiddle = filteredNewMiddles
+    )
+
+    return try {
+        var updatedRoute: Route
+        coroutineScope {
+            updatedRoute = updateRoute(routeUpdate)
+        }
+        onSuccess(updatedRoute)
+        "Route successfully updated in the database."
+    } catch (e: Exception) {
+        "Error updating route in the database. ${e.message}"
+    }
+}
+
+@Composable
+fun MiddleStationsInput(
+    newMiddles: List<RouteStopInsert>,
+    allStations: List<Pair<String, String>>,
+    onAddMiddle: () -> Unit,
+    onUpdateMiddle: (Int, RouteStopInsert) -> Unit
+) {
+    Column(modifier = Modifier) {
+        newMiddles.forEachIndexed { index, middle ->
+            MiddleStationInput(
+                middle = middle,
+                allStations = allStations,
+                onMiddleChange = { updatedMiddle -> onUpdateMiddle(index, updatedMiddle) }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        Button(
+            onClick = { onAddMiddle() },
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp)
+        ) {
+            Text("Add New Middle Station")
+        }
+    }
+}
+
+@Composable
+fun MiddleStationInput(
+    middle: RouteStopInsert,
+    allStations: List<Pair<String, String>>,
+    onMiddleChange: (RouteStopInsert) -> Unit
+) {
+    var selectedMiddleStation by remember { mutableStateOf(middle.station) } // id
+    var hourMiddleStation by remember { mutableStateOf("") } // HH:mm
+    var minuteMiddleStation by remember { mutableStateOf("") }
+    var middleTimeError by remember { mutableStateOf(false) }
+
+    fun updateTimeErrorMiddle() {
+        try {
+            val newHour = hourMiddleStation.toIntOrNull()
+            val newMinute = minuteMiddleStation.toIntOrNull()
+
+            middleTimeError = when {
+                newHour == null || newHour !in 0..23 -> true
+                newMinute == null || newMinute !in 0..59 -> true
+                else -> false
+            }
+        } catch (e: Exception) {
+            middleTimeError = true
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        StationsDropdownMenu(
+            label = "New Middle Station Name",
+            options = allStations,
+            originalSelection = selectedMiddleStation,
+            onSelectionChange = { selectedNewStation ->
+                selectedMiddleStation = selectedNewStation
+                onMiddleChange(middle.copy(station = selectedNewStation))
+            }
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(bottom = 8.dp)
+        ) {
+            OutlinedTextField(
+                value = hourMiddleStation,
+                onValueChange = { newRouteStartTimeHour ->
+                    hourMiddleStation = newRouteStartTimeHour.take(2)
+                    updateTimeErrorMiddle()
+                    val formattedHour = addLeadingZero(hourMiddleStation)
+                    val formattedMinute = addLeadingZero(minuteMiddleStation)
+                    onMiddleChange(middle.copy(time = "$formattedHour:$formattedMinute"))
+                },
+                isError = middleTimeError,
+                label = { Text("Departure Time (HH)") },
+                modifier = Modifier.weight(1f),
+            )
+            Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+            OutlinedTextField(
+                value = minuteMiddleStation,
+                onValueChange = { newRouteStartTimeMinute ->
+                    minuteMiddleStation = newRouteStartTimeMinute.take(2)
+                    updateTimeErrorMiddle()
+                    val formattedHour = addLeadingZero(hourMiddleStation)
+                    val formattedMinute = addLeadingZero(minuteMiddleStation)
+                    onMiddleChange(middle.copy(time = "$formattedHour:$formattedMinute"))
+                },
+                isError = middleTimeError,
+                label = { Text("Departure Time (MM)") },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
 }
