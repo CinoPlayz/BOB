@@ -106,8 +106,7 @@ suspend fun getDataAndProcess(
         launch {
             var result = ResultData()
 
-            val requestURL: String =
-                if (source == SourceWebsite.Official) appContextGlobal.officialUrl else appContextGlobal.vlakSiUrl
+            val requestURL: String = if (source == SourceWebsite.Official) appContextGlobal.officialUrl else appContextGlobal.vlakSiUrl
             val requestDetailedReport = appContextGlobal.requestDetailReport
             val blackList = appContextGlobal.blacklist
 
@@ -146,9 +145,7 @@ suspend fun getDataAndProcess(
                             println("More details: ${resultGet.error.response.body().asString("text/html")}")
                         }
 
-                        result =
-                            result.copy(error = "Error occurred while getting from $source: ${resultGet.error.message}")
-
+                        result = result.copy(error = "Error occurred while getting from $source: ${resultGet.error.message}")
                     }
 
                     is Result.Success -> {
@@ -166,8 +163,7 @@ suspend fun getDataAndProcess(
                                     val listOfficial = json.decodeFromString<List<Official>>(resultGet.value)
                                     val requestOfficial = OfficialRequest(LocalDateTime.now(), listOfficial)
 
-                                    result =
-                                        result.copy(listOfTrainLocHistory = requestOfficial.toListTrainLocHistory())
+                                    result = result.copy(listOfTrainLocHistory = requestOfficial.toListTrainLocHistory())
                                     result = result.copy(listOfDelay = requestOfficial.toListDelay())
                                 }
 

@@ -189,9 +189,9 @@ fun Scraper(
                 )
         ) {
             when (scraperMenuState.value) {
-                ScraperMenuState.OFFICIAL -> ScraperFetchData(SourceWebsite.Official)
-                ScraperMenuState.VLAKSI -> ScraperFetchData(SourceWebsite.Vlaksi)
-                ScraperMenuState.STATIONS -> ScraperFetchStations()
+                ScraperMenuState.OFFICIAL -> ScraperDataOfficial(SourceWebsite.Official)
+                ScraperMenuState.VLAKSI -> ScraperFetchDataVlakSI(SourceWebsite.Vlaksi)
+                ScraperMenuState.STATIONS -> ScraperStations()
                 ScraperMenuState.ROUTES -> ScraperFetchRoutes()
                 ScraperMenuState.RESET -> ScraperReset()
             }
