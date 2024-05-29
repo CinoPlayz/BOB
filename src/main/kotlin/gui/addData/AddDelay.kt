@@ -9,10 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import gui.manageData.RoutesDropdownMenu
-import gui.manageData.StationsDropdownMenu
-import gui.manageData.toNameIDPairs
-import gui.manageData.toNumberIDPairs
+import gui.RoutesDropdownMenu
+import gui.StationsDropdownMenu
+import gui.toNameIDPairs
+import gui.toNumberIDPairs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch

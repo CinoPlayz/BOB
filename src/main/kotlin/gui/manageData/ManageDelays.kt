@@ -17,6 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import gui.RoutesDropdownMenu
+import gui.StationsDropdownMenu
+import gui.toNameIDPairs
+import gui.toNumberIDPairs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -543,117 +547,5 @@ suspend fun updateDelayInDB(
         "Delay successfully updated in the database."
     } catch (e: Exception) {
         "Error updating delay in the database. ${e.message}"
-    }
-}
-
-// Function to transform list of stations into list of pairs
-fun List<Station>.toNameIDPairs(): List<Pair<String, String>> {
-    return this.map { station ->
-        station.name to station.id
-    }
-}
-
-@Composable
-fun StationsDropdownMenu(
-    label: String,
-    options: List<Pair<String, String>>, // name, id
-    originalSelection: String = "",
-    onSelectionChange: (String) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedOption by remember { mutableStateOf(originalSelection) }
-    var selectedName by remember(originalSelection) {
-        mutableStateOf(options.find { it.second == originalSelection }?.first ?: "")
-    }
-
-    Box(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = selectedName,
-            onValueChange = { }, // Disable text editing
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = {
-                IconButton(
-                    onClick = { expanded = !expanded },
-                ) {
-                    Icon(Icons.Default.ArrowDownward, contentDescription = "Dropdown Menu")
-                }
-            },
-            modifier = Modifier
-        )
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(onClick = {
-                    selectedOption = option.second
-                    selectedName = option.first
-                    onSelectionChange(option.second)
-                    expanded = false
-                }) {
-                    Text(text = option.first)
-                }
-            }
-        }
-    }
-}
-
-fun List<Route>.toNumberIDPairs(): List<Pair<Int, String>> {
-    return this.map { route ->
-        route.trainNumber to route.id
-    }
-}
-
-@Composable
-fun RoutesDropdownMenu(
-    label: String,
-    options: List<Pair<Int, String>>, // trainNumber, id
-    originalSelection: String = "",
-    onSelectionChange: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val sortedOptions = remember(options) { options.sortedBy { it.first } } // sorted dropdown
-    var selectedOption by remember { mutableStateOf(originalSelection) }
-    var selectedName by remember(originalSelection) {
-        mutableStateOf(options.find { it.second == originalSelection }?.first?.toString() ?: "")
-    }
-
-    Box(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = selectedName,
-            onValueChange = { }, // Disable text editing
-            readOnly = true,
-            label = { Text(label) },
-
-            trailingIcon = {
-                IconButton(
-                    onClick = { expanded = !expanded },
-                ) {
-                    Icon(Icons.Default.ArrowDownward, contentDescription = "Dropdown Menu")
-                }
-            },
-            modifier = Modifier
-        )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-        ) {
-            sortedOptions.forEach { option ->
-                DropdownMenuItem(
-                    onClick = {
-                        selectedOption = option.second
-                        selectedName = option.first.toString()
-                        onSelectionChange(option.second)
-                        expanded = false
-                    },
-                ) {
-                    Text(text = option.first.toString())
-                }
-            }
-        }
     }
 }

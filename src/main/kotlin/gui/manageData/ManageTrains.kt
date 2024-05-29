@@ -21,6 +21,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import gui.CustomDropdownMenu
+import gui.CustomDropdownMenuInt
+import gui.addLeadingZero
+import gui.parseTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -37,6 +41,11 @@ fun ManageTrains(
     val coroutineScope = rememberCoroutineScope()
 
     var trains by remember { mutableStateOf<List<TrainLocHistory>>(emptyList()) }
+    var allStations by remember { mutableStateOf<List<Station>>(emptyList()) } // for routeFrom/routeTo list
+    var allStationsNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var allRoutes by remember { mutableStateOf<List<Route>>(emptyList()) } // for route list
+    var allRoutesNumbers by remember { mutableStateOf<List<Int>>(emptyList()) }
+
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val trainTypes = listOf(
@@ -99,6 +108,10 @@ fun ManageTrains(
         coroutineScope.launch {
             isLoading.value = true
             try {
+                allStations = withContext(Dispatchers.IO) { getAllStations() }
+                allRoutes = withContext(Dispatchers.IO) { getAllRoutes() }
+                allStationsNames = allStations.map { it.name }
+                allRoutesNumbers = allRoutes.map { it.trainNumber }
                 trains = withContext(Dispatchers.IO) { getAllTrainLocHistories() }
             } catch (e: Exception) {
                 errorMessage = "Error: ${e.message}"
@@ -160,6 +173,8 @@ fun ManageTrains(
                         TrainItem(
                             train = train,
                             trainTypes = trainTypes,
+                            allStations = allStationsNames,
+                            allRoutes = allRoutesNumbers,
                             onDeleteTrain = { trainToDelete -> deleteTrain(trainToDelete) },
                             onUpdateTrain = { trainToUpdate -> updateTrain(trainToUpdate) }
                         )
@@ -195,6 +210,8 @@ fun ManageTrains(
 fun TrainItem(
     train: TrainLocHistory,
     trainTypes: List<String>,
+    allStations: List<String>, // name
+    allRoutes: List<Int>, // trainNumber
     modifier: Modifier = Modifier,
     onDeleteTrain: (TrainLocHistory) -> Unit,
     onUpdateTrain: (TrainLocHistory) -> Unit
@@ -214,7 +231,13 @@ fun TrainItem(
     var trainNumber by remember { mutableStateOf(train.trainNumber) }
     var routeFrom by remember { mutableStateOf(train.routeFrom) }
     var routeTo by remember { mutableStateOf(train.routeTo) }
+
     var routeStartTime by remember { mutableStateOf(train.routeStartTime) }
+    var routeStartTimeHour by remember { mutableStateOf("") }
+    var routeStartTimeMinute by remember { mutableStateOf("") }
+    var routeStartTimeSecond by remember { mutableStateOf("") }
+    var timeError by remember { mutableStateOf(false) }
+
     var nextStation by remember { mutableStateOf(train.nextStation) }
 
     var delayMinutes by remember { mutableStateOf<Int?>(train.delay) }
@@ -242,6 +265,10 @@ fun TrainItem(
         routeFrom = train.routeFrom
         routeTo = train.routeTo
         routeStartTime = train.routeStartTime
+        val (hours, minutes, seconds) = parseTime(routeStartTime)
+        routeStartTimeHour = hours
+        routeStartTimeMinute = minutes
+        routeStartTimeSecond = seconds
         nextStation = train.nextStation
         delayMinutes = train.delay
         coordinates = train.coordinates
@@ -278,6 +305,23 @@ fun TrainItem(
         }
     }
 
+    fun updateTimeError() {
+        try {
+            val newHour = routeStartTimeHour.toIntOrNull()
+            val newMinute = routeStartTimeMinute.toIntOrNull()
+            val newSecond = routeStartTimeSecond.toIntOrNull()
+
+            timeError = when {
+                newHour == null || newHour !in 0..23 -> true
+                newMinute == null || newMinute !in 0..59 -> true
+                newSecond == null || newSecond !in 0..59 -> true
+                else -> false
+            }
+        } catch (e: Exception) {
+            timeError = true
+        }
+    }
+
     val coroutineScope = rememberCoroutineScope()
 
     Surface(
@@ -300,7 +344,10 @@ fun TrainItem(
             ) {
                 if (editMode) {
                     Text("Time of Request")
-                    Row(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
                         OutlinedTextField(
                             value = requestYear,
                             onValueChange = { newYearString ->
@@ -367,6 +414,127 @@ fun TrainItem(
                             modifier = Modifier.weight(1f),
                         )
                     }
+                    CustomDropdownMenu(
+                        label = "Choose train type",
+                        options = trainTypes,
+                        initialSelection = trainType,
+                        onSelectionChange = { selectedTrainType ->
+                            trainType = selectedTrainType
+                        }
+                    )
+
+                    CustomDropdownMenuInt(
+                        label = "Choose Train Number",
+                        options = allRoutes,
+                        initialSelection = trainNumber.toInt(),
+                        onSelectionChange = { selectedTrainNumber ->
+                            trainNumber = selectedTrainNumber.toString()
+                        }
+                    )
+
+                    CustomDropdownMenu(
+                        label = "Choose Departure Station",
+                        options = allStations,
+                        initialSelection = routeFrom,
+                        onSelectionChange = { selectedRouteFrom ->
+                            routeFrom = selectedRouteFrom
+                        }
+                    )
+
+                    CustomDropdownMenu(
+                        label = "Choose Destination Station",
+                        options = allStations,
+                        initialSelection = routeTo,
+                        onSelectionChange = { selectedRouteTo ->
+                            routeTo = selectedRouteTo
+                        }
+                    )
+
+                    Text("Route Departure Time")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = routeStartTimeHour,
+                            onValueChange = { newRouteStartTimeHour ->
+                                routeStartTimeHour = newRouteStartTimeHour.take(2)
+                                updateTimeError()
+                            },
+                            isError = timeError,
+                            label = { Text("HH") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = routeStartTimeMinute,
+                            onValueChange = { newRouteStartTimeMinute ->
+                                routeStartTimeMinute = newRouteStartTimeMinute.take(2)
+                                updateTimeError()
+                            },
+                            isError = timeError,
+                            label = { Text("MM") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = routeStartTimeSecond,
+                            onValueChange = { newRouteStartTimeSecond ->
+                                routeStartTimeSecond = newRouteStartTimeSecond.take(2)
+                                updateTimeError()
+                            },
+                            isError = timeError,
+                            label = { Text("SS") },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+
+                    CustomDropdownMenu(
+                        label = "Choose Upcoming Station",
+                        options = allStations,
+                        initialSelection = nextStation,
+                        onSelectionChange = { selectedNextStation ->
+                            nextStation = selectedNextStation
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value = delayMinutes?.toString() ?: "",
+                        onValueChange = { newValue ->
+                            delayMinutes = newValue.toIntOrNull() // null - used for check when updating
+                        },
+                        label = { Text("Train Delay (minutes)") },
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = latitudeText,
+                        onValueChange = {
+                            latitudeText = it
+                            latitude = it.text.toFloatOrNull()
+                        },
+                        label = { Text("Current Train Coordinates - Latitude") },
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f),
+                        singleLine = true,
+                        isError = latitude == null
+                    )
+                    OutlinedTextField(
+                        value = longitudeText,
+                        onValueChange = {
+                            longitudeText = it
+                            longitude = it.text.toFloatOrNull() // ?: 0f // to float or null
+                        },
+                        label = { Text("Current Train Coordinates - Longitude") },
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f),
+                        singleLine = true,
+                        isError = longitude == null
+                    )
+
                 } else {
                     Text("Time of Request: ${train.timeOfRequest?.format(formatter)}")
                     Text("Train Type: ${train.trainType}")
@@ -374,7 +542,7 @@ fun TrainItem(
                     Text("Departure Station: ${train.routeFrom}")
                     Text("Destination Station: ${train.routeTo}")
                     Text("Route Departure Time: ${train.routeStartTime}")
-                    Text("Upcomming Station: ${train.nextStation}")
+                    Text("Upcoming Station: ${train.nextStation}")
                     Text("Train Delay (minutes): ${train.delay}")
                     Text("Current Train Coordinates:")
                     Text(
@@ -385,9 +553,8 @@ fun TrainItem(
                         text = "Longitude: ${train.coordinates.lng}",
                         modifier = Modifier.padding(start = 16.dp)
                     )
-                    Text("Delay Created On: ${train.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
-                    Text("Delay Last Updated On: ${train.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
-
+                    Text("TrainLocHistory Created On: ${train.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
+                    Text("TrainLocHistory Last Updated On: ${train.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -409,11 +576,13 @@ fun TrainItem(
                                     requestHour = requestHour,
                                     requestMinute = requestMinute,
                                     requestSecond = requestSecond,
-                                    trainType = train.trainType,
-                                    trainNumber = train.trainNumber,
+                                    trainType = trainType,
+                                    trainNumber = trainNumber,
                                     routeFrom = routeFrom,
                                     routeTo = routeTo,
-                                    routeStartTime = routeStartTime,
+                                    routeStartTimeHour = routeStartTimeHour,
+                                    routeStartTimeMinute = routeStartTimeMinute,
+                                    routeStartTimeSecond = routeStartTimeSecond,
                                     nextStation = nextStation,
                                     latitude = latitude,
                                     longitude = longitude,
@@ -450,6 +619,10 @@ fun TrainItem(
                             routeFrom = train.routeFrom
                             routeTo = train.routeTo
                             routeStartTime = train.routeStartTime
+                            val (hours, minutes, seconds) = parseTime(routeStartTime)
+                            routeStartTimeHour = hours
+                            routeStartTimeMinute = minutes
+                            routeStartTimeSecond = seconds
                             nextStation = train.nextStation
                             delayMinutes = train.delay
                             coordinates = train.coordinates
@@ -457,8 +630,8 @@ fun TrainItem(
                             longitudeText = TextFieldValue(longitude.toString())
                             latitude = coordinates.lat
                             latitudeText = TextFieldValue(latitude.toString())
-                            createdAt =train.createdAt
-                            updatedAt =train.updatedAt
+                            createdAt = train.createdAt
+                            updatedAt = train.updatedAt
                             editMode = false
                         }
                     ) {
@@ -523,7 +696,9 @@ suspend fun updateTrainInDB(
     trainNumber: String,
     routeFrom: String,
     routeTo: String,
-    routeStartTime: String,
+    routeStartTimeHour: String,
+    routeStartTimeMinute: String,
+    routeStartTimeSecond: String,
     nextStation: String,
     latitude: Float?,
     longitude: Float?,
@@ -554,13 +729,15 @@ suspend fun updateTrainInDB(
         trainNumber.isEmpty() ||
         routeFrom.isEmpty() ||
         routeTo.isEmpty() ||
-        routeStartTime.isEmpty() ||
+        routeStartTimeHour.isEmpty() ||
+        routeStartTimeMinute.isEmpty() ||
+        routeStartTimeSecond.isEmpty() ||
         nextStation.isEmpty()
     ) {
         return ("Please fill in all fields.")
     }
 
-    if (latitude == null ||longitude == null) {
+    if (latitude == null || longitude == null) {
         return ("Please check Latitude and Longitude fields.")
     }
 
@@ -568,6 +745,11 @@ suspend fun updateTrainInDB(
         lat = latitude,
         lng = longitude
     )
+
+    val formattedHour = addLeadingZero(routeStartTimeHour)
+    val formattedMinute = addLeadingZero(routeStartTimeMinute)
+    val formattedSecond = addLeadingZero(routeStartTimeSecond)
+    val routeStartTime = "$formattedHour:$formattedMinute:$formattedSecond"
 
     val trainLocHistoryUpdate = TrainLocHistoryUpdate(
         id = train.id,

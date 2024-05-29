@@ -10,7 +10,7 @@ data class TrainLocHistory(
     @SerialName("_id")
     val id: String,
     @Serializable(with = LocalDateTimeSerializer::class)
-    val timeOfRequest: LocalDateTime,
+    val timeOfRequest: LocalDateTime?,
     val trainType: String,
     val trainNumber: String,
     val routeFrom: String,
