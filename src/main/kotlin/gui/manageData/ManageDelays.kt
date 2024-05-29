@@ -382,7 +382,7 @@ fun DelayItem(
                     Text("Time of Request: ${delay.timeOfRequest?.format(formatter)}")
                     Text("Route Number: ${allRoutes.find { it.second == selectedRoute }?.first}")
                     Text("Current Station: ${allStations.find { it.second == selectedCurrentStation }?.first}")
-                    Text("Train delay (minutes): ${delay.delay}")
+                    Text("Train Delay (minutes): ${delay.delay}")
                     Text("Delay Created On: ${delay.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
                     Text("Delay Last Updated On: ${delay.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
 

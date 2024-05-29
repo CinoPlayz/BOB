@@ -9,22 +9,24 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.Delay
-import models.Route
-import models.Station
-import models.TrainLocHistory
-import utils.api.dao.getAllTrainLocHistories
-import utils.api.dao.getAllRoutes
-import utils.api.dao.getAllStations
+import models.*
+import utils.api.dao.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -194,8 +196,8 @@ fun TrainItem(
     train: TrainLocHistory,
     trainTypes: List<String>,
     modifier: Modifier = Modifier,
-    onDeleteDelay: (Delay) -> Unit,
-    onUpdateDelay: (Delay) -> Unit
+    onDeleteTrain: (TrainLocHistory) -> Unit,
+    onUpdateTrain: (TrainLocHistory) -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     var editMode by remember { mutableStateOf(false) }
@@ -284,8 +286,310 @@ fun TrainItem(
         color = Color.White,
         elevation = 4.dp
     ) {
-        
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (editMode) {
+                    Text("Time of Request")
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = requestYear,
+                            onValueChange = { newYearString ->
+                                requestYear = newYearString.take(4) // Limit input to 4 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("YYYY") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text("-", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestMonth,
+                            onValueChange = { newMonthString ->
+                                requestMonth = newMonthString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("MM") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text("-", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestDay,
+                            onValueChange = { newDayString ->
+                                requestDay = newDayString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("DD") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(" ", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestHour,
+                            onValueChange = { newHourString ->
+                                requestHour = newHourString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("HH") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestMinute,
+                            onValueChange = { newMinuteString ->
+                                requestMinute = newMinuteString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("MM") },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(":", modifier = Modifier.align(Alignment.CenterVertically))
+                        OutlinedTextField(
+                            value = requestSecond,
+                            onValueChange = { newSecondString ->
+                                requestSecond = newSecondString.take(2) // Limit input to 2 characters
+                                updateDateTimeError()
+                            },
+                            isError = dateTimeError,
+                            label = { Text("SS") },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                } else {
+                    Text("Time of Request: ${train.timeOfRequest?.format(formatter)}")
+                    Text("Train Type: ${train.trainType}")
+                    Text("Train Number: ${train.trainNumber}")
+                    Text("Departure Station: ${train.routeFrom}")
+                    Text("Destination Station: ${train.routeTo}")
+                    Text("Route Departure Time: ${train.routeStartTime}")
+                    Text("Upcomming Station: ${train.nextStation}")
+                    Text("Train Delay (minutes): ${train.delay}")
+                    Text("Current Train Coordinates:")
+                    Text(
+                        text = "Latitude: ${train.coordinates.lat}",
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                    Text(
+                        text = "Longitude: ${train.coordinates.lng}",
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                    Text("Delay Created On: ${train.createdAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
+                    Text("Delay Last Updated On: ${train.updatedAt.plusHours(2).format(formatter)}", fontSize = 12.sp)
+
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(
+                    onClick = {
+                        if (editMode) {
+                            coroutineScope.launch {
+                                val feedback = updateTrainInDB(
+                                    train = train,
+                                    requestYear = requestYear,
+                                    requestMonth = requestMonth,
+                                    requestDay = requestDay,
+                                    requestHour = requestHour,
+                                    requestMinute = requestMinute,
+                                    requestSecond = requestSecond,
+                                    trainType = train.trainType,
+                                    trainNumber = train.trainNumber,
+                                    routeFrom = routeFrom,
+                                    routeTo = routeTo,
+                                    routeStartTime = routeStartTime,
+                                    nextStation = nextStation,
+                                    latitude = latitude,
+                                    longitude = longitude,
+                                    delayMinutes = delayMinutes,
+                                    onSuccess = onUpdateTrainSuccess
+                                )
+
+                                feedbackMessage = feedback
+                            }
+                        } else {
+                            editMode = true
+                        }
+                    },
+                ) {
+                    if (editMode) {
+                        Icon(Icons.Default.Check, contentDescription = "Save")
+                    } else {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    }
+                }
+
+                if (editMode) {
+                    IconButton(
+                        onClick = {
+                            // Reset input fields to initial values
+                            requestYear = train.timeOfRequest?.year.toString()
+                            requestMonth = train.timeOfRequest?.monthValue.toString()
+                            requestDay = train.timeOfRequest?.dayOfMonth.toString()
+                            requestHour = train.timeOfRequest?.hour.toString()
+                            requestMinute = train.timeOfRequest?.minute.toString()
+                            requestSecond = train.timeOfRequest?.second.toString()
+                            trainType = train.trainType
+                            trainNumber = train.trainNumber
+                            routeFrom = train.routeFrom
+                            routeTo = train.routeTo
+                            routeStartTime = train.routeStartTime
+                            nextStation = train.nextStation
+                            delayMinutes = train.delay
+                            coordinates = train.coordinates
+                            longitude = coordinates.lng
+                            longitudeText = TextFieldValue(longitude.toString())
+                            latitude = coordinates.lat
+                            latitudeText = TextFieldValue(latitude.toString())
+                            createdAt =train.createdAt
+                            updatedAt =train.updatedAt
+                            editMode = false
+                        }
+                    ) {
+                        Icon(Icons.Default.Cancel, contentDescription = "Cancel")
+                    }
+                }
+
+                if (!editMode) {
+                    IconButton(
+                        onClick = {
+                            onDeleteTrain(train)
+                        }
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                }
+            }
+        }
     }
 
-    TODO()
+    feedbackMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { feedbackMessage = null }, // Reset feedback message on dismiss
+            //title = { Text("Feedback") },
+            text = { Text(message) },
+            confirmButton = {
+                Button(
+                    onClick = { feedbackMessage = null }, // Reset feedback message on confirm
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+}
+
+suspend fun deleteTrainFromDB(
+    id: String,
+    onSuccess: () -> Unit
+): String {
+
+    return try {
+        coroutineScope {
+            deleteTrainLocHistory(id)
+        }
+        onSuccess()
+        "Train location history successfully deleted from the database."
+    } catch (e: Exception) {
+        "Error removing train location history from the database. ${e.message}"
+    }
+}
+
+suspend fun updateTrainInDB(
+    train: TrainLocHistory,
+    requestYear: String,
+    requestMonth: String,
+    requestDay: String,
+    requestHour: String,
+    requestMinute: String,
+    requestSecond: String,
+    trainType: String,
+    trainNumber: String,
+    routeFrom: String,
+    routeTo: String,
+    routeStartTime: String,
+    nextStation: String,
+    latitude: Float?,
+    longitude: Float?,
+    delayMinutes: Int?,
+    onSuccess: (TrainLocHistory) -> Unit
+): String {
+    var newRequestTimeStamp: LocalDateTime
+    try {
+        newRequestTimeStamp = LocalDateTime.of(
+            requestYear.toInt(),
+            requestMonth.toInt(),
+            requestDay.toInt(),
+            requestHour.toInt(),
+            requestMinute.toInt(),
+            requestSecond.toInt()
+        )
+        newRequestTimeStamp = newRequestTimeStamp.plusHours(2)
+    } catch (e: IllegalArgumentException) {
+        return ("Time of Request Format Invalid.")
+    }
+
+    if (delayMinutes == null) {
+        return ("Train Delay Format Invalid.")
+    }
+
+
+    if (trainType.isEmpty() ||
+        trainNumber.isEmpty() ||
+        routeFrom.isEmpty() ||
+        routeTo.isEmpty() ||
+        routeStartTime.isEmpty() ||
+        nextStation.isEmpty()
+    ) {
+        return ("Please fill in all fields.")
+    }
+
+    if (latitude == null ||longitude == null) {
+        return ("Please check Latitude and Longitude fields.")
+    }
+
+    val newCoordinates = Coordinates(
+        lat = latitude,
+        lng = longitude
+    )
+
+    val trainLocHistoryUpdate = TrainLocHistoryUpdate(
+        id = train.id,
+        timeOfRequest = newRequestTimeStamp,
+        trainType = trainType,
+        trainNumber = trainNumber,
+        routeFrom = routeFrom,
+        routeTo = routeTo,
+        routeStartTime = routeStartTime,
+        nextStation = nextStation,
+        delay = delayMinutes,
+        coordinates = newCoordinates
+    )
+
+    return try {
+        var updatedTrainLocHistory: TrainLocHistory
+        coroutineScope {
+            updatedTrainLocHistory = updateTrainLocHistory(trainLocHistoryUpdate)
+        }
+        onSuccess(updatedTrainLocHistory)
+        "Train location history successfully updated in the database."
+    } catch (e: Exception) {
+        "Error updating train location history in the database. ${e.message}"
+    }
 }

@@ -200,7 +200,7 @@ fun ManageDataMenu(
                 )
         ) {
             when (manageDataMenuState.value) {
-                ManageDataMenuState.MANAGE_TRAINS -> TODO()
+                ManageDataMenuState.MANAGE_TRAINS -> ManageTrains()
                 ManageDataMenuState.MANAGE_ROUTES -> TODO()
                 ManageDataMenuState.MANAGE_DELAYS -> ManageDelays()
                 ManageDataMenuState.MANAGE_STATIONS -> ManageStations()
