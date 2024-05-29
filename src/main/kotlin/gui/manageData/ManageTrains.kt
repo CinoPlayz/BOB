@@ -744,10 +744,20 @@ suspend fun updateTrainInDB(
         lng = longitude
     )
 
-    val formattedHour = addLeadingZero(routeStartTimeHour)
-    val formattedMinute = addLeadingZero(routeStartTimeMinute)
-    val formattedSecond = addLeadingZero(routeStartTimeSecond)
-    val routeStartTime = "$formattedHour:$formattedMinute:$formattedSecond"
+    val hourStart = routeStartTimeHour.toIntOrNull()
+    val minuteStart = routeStartTimeMinute.toIntOrNull()
+    val secondStart = routeStartTimeSecond.toIntOrNull()
+    if (hourStart == null || hourStart !in 0..23) {
+        return "Invalid Route Departure Time: $routeStartTimeHour"
+    }
+    if (minuteStart == null || minuteStart !in 0..59) {
+        return "Invalid Route Departure Time: $routeStartTimeMinute"
+    }
+    if (secondStart == null || secondStart !in 0..59) {
+        return "Invalid Route Departure Time: $routeStartTimeMinute"
+    }
+
+    val routeStartTime = "${addLeadingZero(hourStart.toString())}:${addLeadingZero(minuteStart.toString())}:${addLeadingZero(secondStart.toString())}"
 
     val trainLocHistoryUpdate = TrainLocHistoryUpdate(
         id = train.id,
