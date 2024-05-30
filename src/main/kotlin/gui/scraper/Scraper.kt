@@ -136,7 +136,7 @@ fun Scraper(
 
                 ) {
                     Icon(
-                        Icons.Default.RailwayAlert,
+                        Icons.Default.Route,
                         contentDescription = ScraperMenuState.ROUTES.name,
                         modifier = Modifier
                             .size(size = iconSize.dp)

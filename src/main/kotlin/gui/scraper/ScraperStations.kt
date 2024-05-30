@@ -5,18 +5,16 @@ import TitleText
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,14 +22,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import getStationsAndProcess
-import gui.manageData.updateStationInDB
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.Station
+import models.Coordinates
 import models.StationInsert
+import utils.api.dao.insertStation
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -44,6 +42,27 @@ fun ScraperStations(
 
     // State to hold the loading status
     val isLoading = remember { mutableStateOf(true) }
+
+    // Replace original StationInsert in list with updated one after editing
+    fun updateStation(newStation: StationInsert, index: Int) {
+        val updatedList = resultStations.value.listOfStations.toMutableList()
+        if (index in updatedList.indices) {
+            updatedList[index] = newStation
+            resultStations.value = resultStations.value.copy(listOfStations = updatedList)
+        }
+    }
+
+    // Delete station from resultStations.value.listOfStations after successful insert
+    fun insertStation(success: Boolean, index: Int) {
+        if (success) {
+            val updatedList = resultStations.value.listOfStations.toMutableList()
+            if (index in updatedList.indices) {
+                updatedList.removeAt(index)
+                resultStations.value = resultStations.value.copy(listOfStations = updatedList)
+                feedbackMessage = "Station successfully inserted in the database."
+            }
+        }
+    }
 
     // LaunchedEffect to trigger the data fetching operation
     LaunchedEffect(Unit) {
@@ -111,10 +130,18 @@ fun ScraperStations(
                         .padding(16.dp),
                     state = state
                 ) {
-                    items(resultStations.value.listOfStations) { station ->
+                    // indexed items for updating original result list
+                    itemsIndexed(resultStations.value.listOfStations) { index, station ->
                         StationScraperItem(
                             station = station,
-
+                            index = index,
+                            onInsertStation = { success, index ->
+                                insertStation(success, index)
+                            },
+                            onUpdateStation = { stationToUpdate, index ->
+                                updateStation(stationToUpdate, index)
+                            }
+                            //onUpdateStation = { stationToUpdate -> updateStation(stationToUpdate, index) }
                         )
                     }
                 }
@@ -157,8 +184,10 @@ fun ScraperStations(
 @Composable
 fun StationScraperItem(
     station: StationInsert,
+    index: Int, // index of station in resultStation
     modifier: Modifier = Modifier,
-    //onInsertStation: (Station) -> Unit
+    onInsertStation: (Boolean, Int) -> Unit,
+    onUpdateStation: (StationInsert, Int) -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     var editMode by remember { mutableStateOf(false) }
@@ -184,10 +213,15 @@ fun StationScraperItem(
         latitudeText = TextFieldValue(station.coordinates.lat.toString())
     }
 
-    /*val onUpdateStationSuccess: (Station) -> Unit = { updatedStation ->
-        onUpdateStation(updatedStation)
+    val onUpdateStationSuccess: (StationInsert, Int) -> Unit = { updatedStation, index ->
+        onUpdateStation(updatedStation, index)
         editMode = false
-    }*/
+    }
+
+    val onInsertStationSuccess: (Boolean, Int) -> Unit = { success, index ->
+        onInsertStation(success, index)
+        editMode = false
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -276,9 +310,10 @@ fun StationScraperItem(
                 IconButton(
                     onClick = {
                         if (editMode) {
-                            /*coroutineScope.launch {
-                                val feedback = updateStationInDB(
+                            coroutineScope.launch {
+                                val feedback = updateStationInScrapedList(
                                     station = station,
+                                    index = index,
                                     name = name,
                                     officialStationNumber = officialStationNumber,
                                     latitude = latitude,
@@ -286,8 +321,10 @@ fun StationScraperItem(
                                     onSuccess = onUpdateStationSuccess
                                 )
 
-                                feedbackMessage = feedback
-                            }*/
+                                if (feedback.isNotEmpty()) { // show message only on error
+                                    feedbackMessage = feedback
+                                }
+                            }
                         } else {
                             editMode = true
                         }
@@ -321,10 +358,22 @@ fun StationScraperItem(
                 if (!editMode) {
                     IconButton(
                         onClick = {
-                            //onDeleteStation(station)
+                            coroutineScope.launch {
+                                val feedback = insertStationFromScrapedListToDB(
+                                    station = station,
+                                    index = index,
+                                    onSuccess = onInsertStationSuccess
+                                )
+
+                                if (feedback.isNotEmpty()) { // show message only on error
+                                    feedbackMessage = feedback
+                                }
+
+                            }
+                            //onInsertStation(station, index)
                         }
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(Icons.Default.Save, contentDescription = "Save To DB")
                     }
                 }
             }
@@ -344,5 +393,69 @@ fun StationScraperItem(
                 }
             }
         )
+    }
+}
+
+suspend fun updateStationInScrapedList(
+    station: StationInsert,
+    index: Int,
+    name: String,
+    officialStationNumber: String,
+    latitude: Float?,
+    longitude: Float?,
+    onSuccess: (StationInsert, Int) -> Unit // StationInsert, index
+): String {
+
+    if (name.isEmpty() ||
+        officialStationNumber.isEmpty()
+    ) {
+        return ("Please check Name and Official Staion Number fields.")
+    }
+
+    if (latitude == null || longitude == null) {
+        return ("Please check Latitude and Longitude fields.")
+    }
+
+    if (officialStationNumber.toIntOrNull() == null) {
+        return ("Official Station Number must be an integer.")
+    }
+
+    val newCoordinates = Coordinates(
+        lat = latitude,
+        lng = longitude
+    )
+
+    val stationUpdate = StationInsert(
+        name = name,
+        officialStationNumber = officialStationNumber,
+        coordinates = newCoordinates,
+    )
+
+    return try {
+        /*var updatedStation: Station
+        coroutineScope {
+            updatedStation = updateStation(stationUpdate)
+        }*/
+        onSuccess(stationUpdate, index)
+        "" // return empty if success
+    } catch (e: Exception) {
+        "Error updating station in list. ${e.message}"
+    }
+}
+
+suspend fun insertStationFromScrapedListToDB(
+    station: StationInsert,
+    index: Int,
+    onSuccess: (Boolean, Int) -> Unit
+): String {
+    return try {
+        var success: Boolean
+        coroutineScope {
+            success = insertStation(station)
+        }
+        onSuccess(success, index)
+        "" // show success in ScraperStations function
+    } catch (e: Exception) {
+        "Error inserting station to the database. ${e.message}"
     }
 }

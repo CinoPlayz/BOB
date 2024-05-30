@@ -125,7 +125,7 @@ fun AddDataMenu(
                         .wrapContentWidth(Alignment.CenterHorizontally) // align horizontally
                 ) {
                     Icon(
-                        Icons.Default.House,
+                        Icons.Default.Apartment,
                         contentDescription = AddDataMenuState.ADD_STATION.name,
                         modifier = Modifier
                             .size(size = iconSize.dp)

@@ -59,7 +59,7 @@ suspend fun insertStation(station: StationInsert): Boolean {
         .responseString()
 
     //println(response.statusCode)
-    //println(result)
+    println(response.responseMessage)
 
     return when (result) {
         is Result.Success -> {
@@ -70,9 +70,7 @@ suspend fun insertStation(station: StationInsert): Boolean {
 
         is Result.Failure -> {
             //println("Failure")
-            throw IllegalStateException("Error Code: ${response.statusCode}")
-            // Handle failure, log error or throw exception
-            //false
+            throw IllegalStateException("Error: ${response.statusCode}")
         }
     }
 }
