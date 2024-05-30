@@ -74,7 +74,7 @@ fun ScraperStations(
             }}*/
 
         } catch (e: Exception) {
-            println("An error occurred: ${e.message}")
+            println("Error: ${e.message}")
         } finally {
             isLoading.value = false // Set loading to false after fetching data
         }
