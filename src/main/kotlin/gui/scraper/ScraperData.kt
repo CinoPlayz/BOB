@@ -19,6 +19,7 @@ import gui.scraper.process.getDataAndProcess
 import gui.toNameIDPairs
 import gui.toNumberIDPairs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.DelayInsert
 import models.Route
@@ -26,6 +27,8 @@ import models.Station
 import models.TrainLocHistoryInsert
 import utils.api.dao.getAllRoutes
 import utils.api.dao.getAllStations
+import utils.api.dao.insertDelay
+import utils.api.dao.insertTrainLocHistory
 
 @Composable
 fun ScraperData(
@@ -92,6 +95,8 @@ fun ScraperData(
         }
     }
 
+    val coroutineScope = rememberCoroutineScope()
+
     // LaunchedEffect to trigger the data fetching operation
     LaunchedEffect(Unit) {
         try {
@@ -157,7 +162,7 @@ fun ScraperData(
                                     //.padding(bottom = 8.dp)
                                     .align(Alignment.CenterHorizontally)
                             )
-                            if (resultData.value.listOfDelay.isEmpty()) {
+                            if (resultData.value.listOfTrainLocHistory.isEmpty()) {
                                 Text(
                                     text = "*** NO TRAIN LOCATION HISTORY DATA ***",
                                     style = MaterialTheme.typography.h6,
@@ -167,7 +172,16 @@ fun ScraperData(
                                 )
                             } else {
                                 Button(
-                                    onClick = { isLoading.value = true },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            val (feedback, modifiedTLHs) = insertAllTrainLocHistoriesFromScrapedListToDB(
+                                                trains = resultData.value.listOfTrainLocHistory,
+                                                isLoading = isLoading
+                                            )
+                                            resultData.value = resultData.value.copy(listOfTrainLocHistory = modifiedTLHs)
+                                            feedbackMessage = feedback
+                                        }
+                                    },
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
                                 ) {
                                     Text(text = "Save all to the database")
@@ -213,7 +227,16 @@ fun ScraperData(
                                 )
                             } else {
                                 Button(
-                                    onClick = { /* Handle save all action */ },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            val (feedback, modifiedDelays) = insertAllDelaysFromScrapedListToDB(
+                                                delays = resultData.value.listOfDelay,
+                                                isLoading = isLoading
+                                            )
+                                            resultData.value = resultData.value.copy(listOfDelay = modifiedDelays)
+                                            feedbackMessage = feedback
+                                        }
+                                    },
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
                                 ) {
                                     Text(text = "Save all to the database")
@@ -264,3 +287,59 @@ fun ScraperData(
     }
 }
 
+suspend fun insertAllTrainLocHistoriesFromScrapedListToDB(
+    trains: List<TrainLocHistoryInsert>,
+    isLoading: MutableState<Boolean>
+): Pair<String, List<TrainLocHistoryInsert>> {
+    isLoading.value = true
+
+    val mutableTLHs = trains.toMutableList()
+
+    var successCount = 0
+    var failureCount = 0
+
+    val iterator = mutableTLHs.iterator()
+    while (iterator.hasNext()) {
+        val train = iterator.next()
+        try {
+            insertTrainLocHistory(train)
+            successCount++
+            iterator.remove()
+        } catch (e: Exception) {
+            failureCount++
+        }
+    }
+
+    isLoading.value = false
+    val feedbackMessage = "Insert All TLHs: Success: $successCount, Failed: $failureCount"
+    return Pair(feedbackMessage, mutableTLHs)
+}
+
+suspend fun insertAllDelaysFromScrapedListToDB(
+    delays: List<DelayInsert>,
+    isLoading: MutableState<Boolean>
+): Pair<String, List<DelayInsert>> {
+    isLoading.value = true
+
+    val mutableDelays = delays.toMutableList()
+
+    var successCount = 0
+    var failureCount = 0
+
+    val iterator = mutableDelays.iterator()
+    while (iterator.hasNext()) {
+        val delay = iterator.next()
+        try {
+            insertDelay(delay)
+            successCount++
+            iterator.remove()
+        } catch (e: Exception) {
+            failureCount++
+        }
+    }
+
+    isLoading.value = false
+
+    val feedbackMessage = "Insert All Delays: Success: $successCount, Failed: $failureCount"
+    return Pair(feedbackMessage, mutableDelays)
+}

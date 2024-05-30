@@ -63,6 +63,8 @@ fun ScraperStations(
         }
     }
 
+    val coroutineScope = rememberCoroutineScope()
+
     // LaunchedEffect to trigger the data fetching operation
     LaunchedEffect(Unit) {
         try {
@@ -126,7 +128,16 @@ fun ScraperStations(
                                 )
                             } else {
                                 Button(
-                                    onClick = { /* Handle save all action */ },
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            val feedback = insertAllStationsFromScrapedListToDB(
+                                                stations = resultStations.value.listOfStations,
+                                                isLoading = isLoading
+                                            )
+
+                                            feedbackMessage = feedback
+                                        }
+                                    },
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
                                 ) {
                                     Text(text = "Save all to the database")
@@ -451,4 +462,32 @@ suspend fun insertStationFromScrapedListToDB(
     } catch (e: Exception) {
         "Error inserting station to the database. ${e.message}"
     }
+}
+
+suspend fun insertAllStationsFromScrapedListToDB(
+    stations: List<StationInsert>,
+    isLoading: MutableState<Boolean>
+): String {
+    isLoading.value = true
+
+    val mutableStations = stations.toMutableList()
+
+    var successCount = 0
+    var failureCount = 0
+
+    val iterator = mutableStations.iterator()
+    while (iterator.hasNext()) {
+        val station = iterator.next()
+        try {
+            insertStation(station)
+            successCount++
+            iterator.remove()
+        } catch (e: Exception) {
+            failureCount++
+        }
+    }
+
+    isLoading.value = false
+
+    return "Success: $successCount, Failed: $failureCount"
 }
