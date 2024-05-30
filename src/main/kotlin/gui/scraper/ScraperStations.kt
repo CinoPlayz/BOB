@@ -98,6 +98,7 @@ fun ScraperStations(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(16.dp)
             ) {
                 Text("Failed to load stations: ${resultStations.value.error}")
             }

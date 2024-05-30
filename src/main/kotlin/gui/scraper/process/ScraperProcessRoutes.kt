@@ -188,8 +188,7 @@ fun getRouteDetails(
                     println("More details: ${resultTrainDetails.error.response.body().asString("text/html")}")
                 }
 
-                result =
-                    result.copy(error = "Error occurred while getting from route details: ${resultTrainDetails.error.message}")
+                result = result.copy(error = "Error occurred while getting from route details: ${resultTrainDetails.error.message}")
             }
 
             is Result.Success -> {
