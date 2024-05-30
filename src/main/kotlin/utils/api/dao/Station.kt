@@ -59,7 +59,7 @@ suspend fun insertStation(station: StationInsert): Boolean {
         .responseString()
 
     //println(response.statusCode)
-    println(response.responseMessage)
+    //println(response.responseMessage)
 
     return when (result) {
         is Result.Success -> {

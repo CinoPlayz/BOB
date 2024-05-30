@@ -107,29 +107,35 @@ fun ScraperStations(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                if (resultStations.value.listOfStations.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        ) {
-                            TitleText(
-                                text = "*** NO STATIONS ***",
-                                fontSize = 20
-                            )
-                        }
-                    }
-                }
-
                 LazyColumn(
                     modifier = Modifier
                         .padding(16.dp),
                     state = state
                 ) {
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (resultStations.value.listOfStations.isEmpty()) {
+                                Text(
+                                    text = "*** NO STATIONS DATA ***",
+                                    style = MaterialTheme.typography.h6,
+                                    modifier = Modifier
+                                        //.padding(bottom = 8.dp)
+                                        .align(Alignment.CenterHorizontally)
+                                )
+                            } else {
+                                Button(
+                                    onClick = { /* Handle save all action */ },
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                ) {
+                                    Text(text = "Save all to the database")
+                                }
+                            }
+                        }
+                    }
+
                     // indexed items for updating original result list
                     itemsIndexed(resultStations.value.listOfStations) { index, station ->
                         StationScraperItem(
@@ -154,16 +160,6 @@ fun ScraperStations(
                 )
             }
         }
-        /*Box(
-            modifier = Modifier
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()) // Box with enabled scroll
-        ) {
-            Text("Result: ${resultStations.value.listOfStations}")
-        }*/
-        /*resultState.value?.let { result ->
-            Text("Result: $result", modifier = Modifier.padding(16.dp))
-        }*/
     }
 
     feedbackMessage?.let { message ->
@@ -312,7 +308,6 @@ fun StationScraperItem(
                         if (editMode) {
                             coroutineScope.launch {
                                 val feedback = updateStationInScrapedList(
-                                    station = station,
                                     index = index,
                                     name = name,
                                     officialStationNumber = officialStationNumber,
@@ -397,7 +392,6 @@ fun StationScraperItem(
 }
 
 suspend fun updateStationInScrapedList(
-    station: StationInsert,
     index: Int,
     name: String,
     officialStationNumber: String,

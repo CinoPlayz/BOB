@@ -190,14 +190,11 @@ fun Scraper(
         ) {
             when (scraperMenuState.value) {
                 ScraperMenuState.OFFICIAL -> ScraperDataOfficial(SourceWebsite.Official)
-                ScraperMenuState.VLAKSI -> ScraperFetchDataVlakSI(SourceWebsite.Vlaksi)
+                ScraperMenuState.VLAKSI -> ScraperData(SourceWebsite.Vlaksi)
                 ScraperMenuState.STATIONS -> ScraperStations()
                 ScraperMenuState.ROUTES -> ScraperFetchRoutes()
                 ScraperMenuState.RESET -> ScraperReset()
             }
-            // You can change the content of this box dynamically
-            // For example:
-            // Text("Dynamic Content")
         }
     }
 }
