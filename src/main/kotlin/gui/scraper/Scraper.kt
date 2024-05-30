@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import gui.scraper.process.SourceWebsite
 
 enum class ScraperMenuState(val customName: String) {
     OFFICIAL("SZ Official"),

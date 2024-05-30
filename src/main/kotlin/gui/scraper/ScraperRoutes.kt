@@ -1,6 +1,5 @@
 package gui.scraper
 
-import ResultRoute
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -16,7 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import getRoutesAndProcess
+import gui.scraper.process.ResultRoute
+import gui.scraper.process.getRoutesAndProcess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import utils.api.dao.insertRoute

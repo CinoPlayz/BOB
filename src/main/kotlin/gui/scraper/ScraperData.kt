@@ -1,7 +1,5 @@
 package gui.scraper
 
-import ResultData
-import SourceWebsite
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,9 +11,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import getDataAndProcess
 import gui.scraper.parts.DelayScraperItem
 import gui.scraper.parts.TrainLocHistoryScraperItem
+import gui.scraper.process.ResultData
+import gui.scraper.process.SourceWebsite
+import gui.scraper.process.getDataAndProcess
 import gui.toNameIDPairs
 import gui.toNumberIDPairs
 import kotlinx.coroutines.Dispatchers
@@ -133,8 +133,8 @@ fun ScraperData(
         } else {
             val state = rememberLazyListState()
 
-            println(resultData.value.listOfTrainLocHistory)
-            println(resultData.value.listOfDelay)
+            // println(resultData.value.listOfTrainLocHistory)
+            // println(resultData.value.listOfDelay)
 
             Box(
                 modifier = Modifier
@@ -167,7 +167,7 @@ fun ScraperData(
                                 )
                             } else {
                                 Button(
-                                    onClick = { /* Handle save all action */ },
+                                    onClick = { isLoading.value = true },
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
                                 ) {
                                     Text(text = "Save all to the database")
