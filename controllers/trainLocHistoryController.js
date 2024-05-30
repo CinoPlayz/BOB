@@ -32,6 +32,8 @@ module.exports = {
 
 
     create: async function (req, res) {
+        // console.log(req.body)
+        
         try {
             const newTrain = new TrainLocHistory({
                 timeOfRequest: req.body.timeOfRequest,

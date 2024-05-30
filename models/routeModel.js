@@ -8,7 +8,8 @@ const routeSchema = new mongoose.Schema({
     },
     trainNumber: {
         type: Number,
-        required: true
+        required: true,
+        unique: true // unikatni identifikator proge
     },
     validFrom: {
         type: Date,

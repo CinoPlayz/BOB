@@ -30,7 +30,7 @@ const trainLocHistorySchema = new mongoose.Schema({
     },
     nextStation: {
         type: String,
-        required: true
+        required: true // empty when scraping sometimes = fail on insert
     },
     delay: {
         type: Number,
