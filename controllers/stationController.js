@@ -40,6 +40,12 @@ module.exports = {
         });
 
         try {
+            const existingStation = await StationModel.findOne({ officialStationNumber: req.body.officialStationNumber });
+
+            if (existingStation) {
+                return res.status(409).json({ message: "Station already exists." });
+            }
+
             const savedStation = await newStation.save();
             return res.status(201).json(savedStation);
         } catch (err) {
