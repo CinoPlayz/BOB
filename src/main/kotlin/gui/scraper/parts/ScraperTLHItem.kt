@@ -1,201 +1,38 @@
-package gui.scraper
+package gui.scraper.parts
 
-import ResultData
-import SourceWebsite
-import TitleText
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import getDataAndProcess
 import gui.CustomDropdownMenu
 import gui.CustomDropdownMenuInt
+import gui.addLeadingZero
 import gui.parseTime
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import models.Route
-import models.Station
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import models.Coordinates
 import models.TrainLocHistoryInsert
-import utils.api.dao.getAllRoutes
-import utils.api.dao.getAllStations
+import utils.api.dao.insertTrainLocHistory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun ScraperDataOfficial(
-    sourceWebsite: SourceWebsite = SourceWebsite.Official,
-    modifier: Modifier = Modifier
-) {
-    // State to hold the result of the operation
-    val resultData = remember { mutableStateOf(ResultData()) }
-    var allStations by remember { mutableStateOf<List<Station>>(emptyList()) } // for routeFrom/routeTo list
-    var allStationsNames by remember { mutableStateOf<List<String>>(emptyList()) }
-    var allRoutes by remember { mutableStateOf<List<Route>>(emptyList()) } // for route list
-    var allRoutesNumbers by remember { mutableStateOf<List<Int>>(emptyList()) }
-
-    val trainTypes = listOf(
-        "AVT", "BUS", "EC", "EN", "IC", "ICS",
-        "LP", "LPV", "LRG", "MO", "MV", "RG"
-    )
-
-    var feedbackMessage by remember { mutableStateOf<String?>(null) }
-
-    // State to hold the loading status
-    val isLoading = remember { mutableStateOf(true) }
-
-    // LaunchedEffect to trigger the data fetching operation
-    LaunchedEffect(Unit) {
-        try {
-            // Coroutine call - data fetch
-            allStations = withContext(Dispatchers.IO) { getAllStations() }
-            allRoutes = withContext(Dispatchers.IO) { getAllRoutes() }
-            allStationsNames = allStations.map { it.name }
-            allRoutesNumbers = allRoutes.map { it.trainNumber }
-            withContext(Dispatchers.IO) { getDataAndProcess(sourceWebsite, resultData) }
-        } catch (e: Exception) {
-            println("An error occurred: ${e.message}")
-        } finally {
-            isLoading.value = false // Set loading to false after fetching data
-        }
-    }
-
-    // Loading indicator - data processing
-    if (isLoading.value) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(32.dp)
-                .padding(16.dp)
-        ) {
-            CircularProgressIndicator()
-        }
-    } else {
-        // Display data
-        if (resultData.value.error != "") {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                Text("Failed to load train location histories: ${resultData.value.error}")
-            }
-        } else {
-            val state = rememberLazyListState()
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                if (resultData.value.listOfTrainLocHistory.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        ) {
-                            TitleText(
-                                text = "*** NO TRAIN LOCATION HISTORIES ***",
-                                fontSize = 20
-                            )
-                        }
-                    }
-                }
-                if (resultData.value.listOfDelay.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        ) {
-                            TitleText(
-                                text = "*** NO DELAYS ***",
-                                fontSize = 20
-                            )
-                        }
-                    }
-                }
-
-                LazyColumn(
-                    modifier = Modifier
-                        .padding(16.dp),
-                    state = state
-                ) {
-                    items(resultData.value.listOfTrainLocHistory) { train ->
-                        TrainLocHistoryScraperItem(
-                            train = train,
-                            trainTypes = trainTypes,
-                            allStations = allStationsNames,
-                            allRoutes = allRoutesNumbers,
-                            //onInsertTrain = { trainToDelete -> deleteTrain(trainToDelete) },
-                            //onUpdateTrain = { trainToUpdate -> updateTrain(trainToUpdate) }
-                        )
-                    }
-                }
-
-                VerticalScrollbar(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .fillMaxHeight(),
-                    adapter = rememberScrollbarAdapter(scrollState = state)
-                )
-            }
-            /*Box(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()) // Box with enabled scroll
-            ) {
-                Text("Result: ${resultData.value.listOfTrainLocHistory}")
-            }*/
-            /*resultState.value?.let { result ->
-            Text("Result: $result", modifier = Modifier.padding(16.dp))
-        }*/
-        }
-    }
-
-    feedbackMessage?.let { message ->
-        AlertDialog(
-            onDismissRequest = { feedbackMessage = null },
-            text = { Text(message) },
-            confirmButton = {
-                Button(
-                    onClick = { feedbackMessage = null },
-                ) {
-                    Text("OK")
-                }
-            }
-        )
-    }
-}
-
-@Composable
 fun TrainLocHistoryScraperItem(
     train: TrainLocHistoryInsert,
+    index: Int,
     trainTypes: List<String>,
     allStations: List<String>, // name
     allRoutes: List<Int>, // trainNumber
     modifier: Modifier = Modifier,
-    //onInsertTrain: (TrainLocHistory) -> Unit
+    onInsertTrainLocHistory: (Boolean, Int) -> Unit, // Int = index
+    onUpdateTrainLocHistory: (TrainLocHistoryInsert, Int) -> Unit // Int = index
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     var editMode by remember { mutableStateOf(false) }
@@ -254,6 +91,16 @@ fun TrainLocHistoryScraperItem(
         latitude = train.coordinates.lat
         longitudeText = TextFieldValue(train.coordinates.lng.toString())
         latitudeText = TextFieldValue(train.coordinates.lat.toString())
+    }
+
+    val onUpdateTrainLocHistorySuccess: (TrainLocHistoryInsert, Int) -> Unit = { updatedTLH, index ->
+        onUpdateTrainLocHistory(updatedTLH, index)
+        editMode = false
+    }
+
+    val onInsertTrainLocHistorySuccess: (Boolean, Int) -> Unit = { success, index ->
+        onInsertTrainLocHistory(success, index)
+        editMode = false
     }
 
     fun updateDateTimeError() {
@@ -536,9 +383,9 @@ fun TrainLocHistoryScraperItem(
                 IconButton(
                     onClick = {
                         if (editMode) {
-                            /*coroutineScope.launch {
-                                val feedback = insertTrainInDB(
-                                    train = train,
+                            coroutineScope.launch {
+                                val feedback = updateTrainLocHistoryInScrapedList(
+                                    index = index,
                                     requestYear = requestYear,
                                     requestMonth = requestMonth,
                                     requestDay = requestDay,
@@ -556,11 +403,13 @@ fun TrainLocHistoryScraperItem(
                                     latitude = latitude,
                                     longitude = longitude,
                                     delayMinutes = delayMinutes,
-                                    onSuccess = onInsertTrainSuccess
+                                    onSuccess = onUpdateTrainLocHistorySuccess
                                 )
 
-                                feedbackMessage = feedback
-                            }*/
+                                if (feedback.isNotEmpty()) { // show message only on error
+                                    feedbackMessage = feedback
+                                }
+                            }
                         } else {
                             editMode = true
                         }
@@ -609,10 +458,20 @@ fun TrainLocHistoryScraperItem(
                 if (!editMode) {
                     IconButton(
                         onClick = {
-                            //onDeleteTrain(train)
+                            coroutineScope.launch {
+                                val feedback = insertTrainLocHistoryFromScrapedListToDB(
+                                    train = train,
+                                    index = index,
+                                    onSuccess = onInsertTrainLocHistorySuccess
+                                )
+
+                                if (feedback.isNotEmpty()) { // show message only on error
+                                    feedbackMessage = feedback
+                                }
+                            }
                         }
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(Icons.Default.Save, contentDescription = "Save To DB")
                     }
                 }
             }
@@ -632,5 +491,122 @@ fun TrainLocHistoryScraperItem(
                 }
             }
         )
+    }
+}
+
+suspend fun updateTrainLocHistoryInScrapedList(
+    index: Int,
+    requestYear: String,
+    requestMonth: String,
+    requestDay: String,
+    requestHour: String,
+    requestMinute: String,
+    requestSecond: String,
+    trainType: String,
+    trainNumber: String,
+    routeFrom: String,
+    routeTo: String,
+    routeStartTimeHour: String,
+    routeStartTimeMinute: String,
+    routeStartTimeSecond: String,
+    nextStation: String,
+    latitude: Float?,
+    longitude: Float?,
+    delayMinutes: Int?,
+    onSuccess: (TrainLocHistoryInsert, Int) -> Unit // Int = index
+): String {
+    var newRequestTimeStamp: LocalDateTime
+    try {
+        newRequestTimeStamp = LocalDateTime.of(
+            requestYear.toInt(),
+            requestMonth.toInt(),
+            requestDay.toInt(),
+            requestHour.toInt(),
+            requestMinute.toInt(),
+            requestSecond.toInt()
+        )
+        newRequestTimeStamp = newRequestTimeStamp.plusHours(2)
+    } catch (e: IllegalArgumentException) {
+        return ("Time of Request Format Invalid.")
+    }
+
+    if (delayMinutes == null) {
+        return ("Train Delay Format Invalid.")
+    }
+
+    if (trainType.isEmpty() ||
+        trainNumber.isEmpty() ||
+        routeFrom.isEmpty() ||
+        routeTo.isEmpty() ||
+        routeStartTimeHour.isEmpty() ||
+        routeStartTimeMinute.isEmpty() ||
+        routeStartTimeSecond.isEmpty() ||
+        nextStation.isEmpty()
+    ) {
+        return ("Please fill in all fields.")
+    }
+
+    if (latitude == null || longitude == null) {
+        return ("Please check Latitude and Longitude fields.")
+    }
+
+    val newCoordinates = Coordinates(
+        lat = latitude,
+        lng = longitude
+    )
+
+    val hourStart = routeStartTimeHour.toIntOrNull()
+    val minuteStart = routeStartTimeMinute.toIntOrNull()
+    val secondStart = routeStartTimeSecond.toIntOrNull()
+    if (hourStart == null || hourStart !in 0..23) {
+        return "Invalid Route Departure Time: $routeStartTimeHour"
+    }
+    if (minuteStart == null || minuteStart !in 0..59) {
+        return "Invalid Route Departure Time: $routeStartTimeMinute"
+    }
+    if (secondStart == null || secondStart !in 0..59) {
+        return "Invalid Route Departure Time: $routeStartTimeMinute"
+    }
+
+    val routeStartTime = "${addLeadingZero(hourStart.toString())}:${addLeadingZero(minuteStart.toString())}:${addLeadingZero(secondStart.toString())}"
+
+    val trainLocHistoryUpdate = TrainLocHistoryInsert(
+        timeOfRequest = newRequestTimeStamp,
+        trainType = trainType,
+        trainNumber = trainNumber,
+        routeFrom = routeFrom,
+        routeTo = routeTo,
+        routeStartTime = routeStartTime,
+        nextStation = nextStation,
+        delay = delayMinutes,
+        coordinates = newCoordinates
+    )
+
+    return try {
+        /*var updatedStation: Station
+        coroutineScope {
+            updatedStation = updateStation(stationUpdate)
+        }*/
+        onSuccess(trainLocHistoryUpdate, index)
+        "" // return empty if success
+    } catch (e: Exception) {
+        "Error updating train location history in the list. ${e.message}"
+    }
+}
+
+suspend fun insertTrainLocHistoryFromScrapedListToDB(
+    train: TrainLocHistoryInsert,
+    index: Int,
+    onSuccess: (Boolean, Int) -> Unit
+): String {
+    return try {
+        var success: Boolean
+        coroutineScope {
+            success = insertTrainLocHistory(train)
+        }
+        onSuccess(success, index)
+        "" // show success in ScraperStations function
+    } catch (e: Exception) {
+        "Error inserting train location history to the database. ${e.message}"
     }
 }

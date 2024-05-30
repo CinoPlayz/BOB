@@ -23,7 +23,9 @@ data class OfficialRequest(val timeOfRequest: LocalDateTime, val data: List<Offi
                 trainNumber = item.St_vlaka,
                 routeFrom = route[0],
                 routeTo = route[1],
-                routeStartTime = item.Odhod,
+                // routeStartTime = item.Odhod.dropLast(3), // izbrišemo zadnje 3 znake: 12:12:00 --> 12:12 (Scraper)
+                // routeStartTime = item.Odhod,
+                routeStartTime = item.Odhod + ":00",
                 nextStation = item.Postaja,
                 delay = item.Zamuda_cas,
                 coordinates = coordinates

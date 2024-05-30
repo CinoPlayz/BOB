@@ -14,6 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import getDataAndProcess
+import gui.scraper.parts.DelayScraperItem
+import gui.scraper.parts.TrainLocHistoryScraperItem
+import gui.toNameIDPairs
+import gui.toNumberIDPairs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import models.DelayInsert
@@ -32,8 +36,10 @@ fun ScraperData(
     val resultData = remember { mutableStateOf(ResultData()) }
     var allStations by remember { mutableStateOf<List<Station>>(emptyList()) } // for routeFrom/routeTo list
     var allStationsNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var allStationsPairs by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     var allRoutes by remember { mutableStateOf<List<Route>>(emptyList()) } // for route list
     var allRoutesNumbers by remember { mutableStateOf<List<Int>>(emptyList()) }
+    var allRoutesPairs by remember { mutableStateOf<List<Pair<Int, String>>>(emptyList()) }
     val trainTypes = listOf(
         "AVT", "BUS", "EC", "EN", "IC", "ICS",
         "LP", "LPV", "LRG", "MO", "MV", "RG"
@@ -94,6 +100,8 @@ fun ScraperData(
             allRoutes = withContext(Dispatchers.IO) { getAllRoutes() }
             allStationsNames = allStations.map { it.name }
             allRoutesNumbers = allRoutes.map { it.trainNumber }
+            allStationsPairs = allStations.toNameIDPairs()
+            allRoutesPairs = allRoutes.toNumberIDPairs()
             withContext(Dispatchers.IO) { getDataAndProcess(sourceWebsite, resultData) }
         } catch (e: Exception) {
             println("Error: ${e.message}")
@@ -124,6 +132,9 @@ fun ScraperData(
             }
         } else {
             val state = rememberLazyListState()
+
+            println(resultData.value.listOfTrainLocHistory)
+            println(resultData.value.listOfDelay)
 
             Box(
                 modifier = Modifier
@@ -210,6 +221,21 @@ fun ScraperData(
                             }
 
                         }
+                    }
+
+                    itemsIndexed(resultData.value.listOfDelay) { index, delay ->
+                        DelayScraperItem(
+                            delay = delay,
+                            index = index,
+                            allStations = allStationsPairs,
+                            allRoutes = allRoutesPairs,
+                            onInsertDelay = { success, index ->
+                                insertDelay(success, index)
+                            },
+                            onUpdateDelay = { delayToUpdate, index ->
+                                updateDelay(delayToUpdate, index)
+                            }
+                        )
                     }
                 }
 

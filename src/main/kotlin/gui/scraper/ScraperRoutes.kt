@@ -1,9 +1,6 @@
 package gui.scraper
 
-import ResultData
 import ResultRoute
-import ResultStations
-import SourceWebsite
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -19,17 +16,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import getDataAndProcess
 import getRoutesAndProcess
-import getStationsAndProcess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import utils.api.dao.insertRoute
 
-
-
 @Composable
-fun ScraperFetchRoutes(
+fun ScraperRoutes(
     modifier: Modifier = Modifier
 ) {
     // State to hold the result of the operation
