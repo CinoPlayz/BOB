@@ -28,13 +28,11 @@ fun ManageDataMenu(
     modifier: Modifier = Modifier,
     manageDataMenuState: MutableState<ManageDataMenuState> = remember { mutableStateOf(ManageDataMenuState.RESET) },
     buttonPadding: Int = 10,
-    textOffset: Int = 25,
     iconSize: Int = 20,
     fontSize: Int = 16,
     iconTextSpace: Int = 6,
 ) {
     Column(modifier) {
-        val functionProgress = remember { mutableStateOf("") }
         // Bar (row) at the top
         Surface(
             modifier = Modifier
@@ -215,7 +213,6 @@ fun ManageDataMenu(
 fun ManageDataReset(
     modifier: Modifier = Modifier,
     titleFontSize: Int = 20,
-    bodyFontSize: Int = 14
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -227,7 +224,6 @@ fun ManageDataReset(
         TitleText(
             text = "Choose data to manage",
             fontSize = titleFontSize,
-            //modifier = Modifier.padding(bottom = 16.dp, top = 10.dp)
         )
     }
 }

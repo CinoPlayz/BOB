@@ -31,11 +31,11 @@ fun DataProcessorView(
     var numberOfAllDocumentsInDB by remember { mutableStateOf<Long?>(null) }
 
     var fromYear by remember { mutableStateOf("2024") }
-    var fromMonth by remember { mutableStateOf("04") }
-    var fromDay by remember { mutableStateOf("15") }
+    var fromMonth by remember { mutableStateOf("") }
+    var fromDay by remember { mutableStateOf("") }
     var toYear by remember { mutableStateOf("2024") }
-    var toMonth by remember { mutableStateOf("04") }
-    var toDay by remember { mutableStateOf("16") }
+    var toMonth by remember { mutableStateOf("") }
+    var toDay by remember { mutableStateOf("") }
 
     // Reset after successful data processing
     val onSuccess: (String) -> Unit = { message ->
@@ -212,8 +212,6 @@ fun DataProcessorView(
                 source = source,
                 database = database,
                 collection = collection,
-                minDateTime = minTimeOfRequest,
-                maxDateTime = maxTimeOfRequest,
                 fromYear = fromYear,
                 fromMonth = fromMonth,
                 fromDay = fromDay,
@@ -223,30 +221,6 @@ fun DataProcessorView(
                 onFailure = onFailure,
                 onSuccess = onSuccess
             )
-            /*Button(
-                onClick = {
-                    coroutineScope.launch {
-                        val feedback = dataProcessorEngine(
-                            source = source,
-                            collection = collection,
-                            fromYear = fromYear,
-                            fromMonth = fromMonth,
-                            fromDay = fromDay,
-                            toYear = toYear,
-                            toMonth = toMonth,
-                            toDay = toDay,
-                            onSuccess = onSuccess
-                        )
-
-                        feedbackMessage = feedback
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
-            ) {
-                Text("Process data in selected time frame")
-            }*/
         }
     } else {
         Surface(
@@ -288,8 +262,6 @@ fun ProcessDataButton(
     source: DataSourceInDB,
     database: MongoDatabase,
     collection: MongoCollection<Document>?,
-    minDateTime: LocalDateTime?,
-    maxDateTime: LocalDateTime?,
     fromYear: String,
     fromMonth: String,
     fromDay: String,
@@ -312,8 +284,6 @@ fun ProcessDataButton(
                             source,
                             database,
                             collection,
-                            minDateTime,
-                            maxDateTime,
                             fromYear,
                             fromMonth,
                             fromDay,
@@ -325,21 +295,6 @@ fun ProcessDataButton(
                             is Result.Success -> onSuccess(result.data)
                             is Result.Failure -> onFailure(result.message)
                         }
-                        /*dataProcessorEngine(
-                            source,
-                            collection,
-                            minDateTime,
-                            maxDateTime,
-                            fromYear,
-                            fromMonth,
-                            fromDay,
-                            toYear,
-                            toMonth,
-                            toDay,
-                            onSuccess,
-                            onFailure,
-                            updateFeedback = { feedbackMessage.value = it }
-                        )*/
                     } catch (e: Exception) {
                         onSuccess("Error processing data: ${e.message}")
                     }
@@ -354,39 +309,9 @@ fun ProcessDataButton(
     }
 
 
-    /*Button(
-        onClick = {
-            coroutineScope.launch {
-                val feedback = dataProcessorEngine(
-                    source = source,
-                    collection = collection,
-                    minDateTime = minDateTime,
-                    maxDateTime = maxDateTime,
-                    fromYear = fromYear,
-                    fromMonth = fromMonth,
-                    fromDay = fromDay,
-                    toYear = toYear,
-                    toMonth = toMonth,
-                    toDay = toDay,
-                    onSuccess = onSuccess,
-                    updateFeedback = { feedbackMessage.value = it }
-                )
-                if (feedback != "") {
-                    feedbackPopup = feedback
-                }
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp)
-    ) {
-        Text("Process data in selected time frame")
-    }*/
-
-
     Spacer(modifier = Modifier.height(16.dp))
-    // Display processing feedback
-    Text(feedbackMessage.value)
+
+    Text(feedbackMessage.value) // Display processing feedback
 
     feedbackPopup?.let { message ->
         AlertDialog(
@@ -402,4 +327,3 @@ fun ProcessDataButton(
         )
     }
 }
-

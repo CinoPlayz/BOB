@@ -25,16 +25,12 @@ suspend fun dataProcessorEngine(
     source: DataSourceInDB,
     database: MongoDatabase,
     collection: MongoCollection<Document>?,
-    minDateTime: LocalDateTime?,
-    maxDateTime: LocalDateTime?,
     fromYear: String,
     fromMonth: String,
     fromDay: String,
     toYear: String,
     toMonth: String,
     toDay: String,
-    //onSuccess: (String) -> Unit,
-    //onFailure: (String) -> Unit,
     updateFeedback: (String) -> Unit
 ): Result<String> {
     return withContext(Dispatchers.IO) {
@@ -100,17 +96,7 @@ suspend fun dataProcessorEngine(
         val ids = documents?.map { it.getObjectId("_id").toString() } // save ids for moving processed documents
         val dataWithIDs = ids?.zip(data) // combine ids and data for processing
 
-        //println(jsonDocuments)
-        //println(data)
-        /*if (ids != null) {
-            print(ids.size)
-        }*/
-
-        //val documentsString = documents.toString()
-        //val data = json.decodeFromString<List<DatabaseRequest>>(documentsString)
-
-        //println(numberOfDocuments)
-
+        // println(numberOfDocuments)
 
         var trainLocHistoryCounter = 0
         var delayCounter = 0
@@ -124,9 +110,6 @@ suspend fun dataProcessorEngine(
                 updateFeedback("Processing document $index of $numberOfDocuments.")
                 index++
 
-                val trainLocHistories = mutableListOf<TrainLocHistoryInsert>()
-                val delays = mutableListOf<DelayInsert>()
-
                 try {
                     val urlDecodedData = getDecodedData(document.data)
                     val dataOfficial: List<Official> = json.decodeFromString(urlDecodedData)
@@ -138,34 +121,21 @@ suspend fun dataProcessorEngine(
                         // try-catch block for each insert (most common error: empty nextStation)
                         try {
                             insertTrainLocHistory(it) // insert to database
-                            //trainLocHistories.add(it)
                         } catch (e: Exception) {
-                            //println("TLH E: ${e.message}")
+                            // println("TLH E: ${e.message}")
                         }
                         trainLocHistoryCounter++
 
                     }
-                    /*listTLH.forEach {
-                        insertTrainLocHistory(it) // insert to database
-                        //trainLocHistories.add(it)
-                        trainLocHistoryCounter++
-                    }*/
 
                     listDelay.forEach {
                         try {
                             insertDelay(it) // insert to database
-                            //delays.add(it)
                         } catch (e: Exception) {
-                            //println("Delay E: ${e.message}")
+                            // println("Delay E: ${e.message}")
                         }
                         delayCounter++
                     }
-
-                    /*listDelay.forEach {
-                        insertDelay(it) // insert to database
-                        //delays.add(it)
-                        delayCounter++
-                    }*/
 
                     // Move processed document = mark as processed
                     moveAndDeleteDocumentInDB(
@@ -182,7 +152,7 @@ suspend fun dataProcessorEngine(
                         targetCollection,
                         id
                     )
-                    //println("Error processing document: ${e.message}")
+                    // println("Error processing document: ${e.message}")
                     return@forEach
                 }
             }
@@ -240,21 +210,6 @@ suspend fun dataProcessorEngine(
             }
         }
 
-        /*// Process data
-        val processingUpdates = mutableListOf<String>()
-
-        // Simulate processing updates
-        for (i in 1..3) {
-            val update = "Processing step $i completed."
-            processingUpdates.add(update)
-            // Update feedback message
-            updateFeedback(update)
-            delay(1000) // Simulate delay (1 second)
-        }
-    */
-        // Call onSuccess when processing is complete
-        //onSuccess("Success")
-
         updateFeedback("Finished processing $numberOfDocuments documents.")
         return@withContext Result.Success(
             "Success:\n" +
@@ -264,8 +219,6 @@ suspend fun dataProcessorEngine(
                     "Documents with error: $documentErrorCounter"
         )
     }
-
-    //return ""
 }
 
 suspend fun moveAndDeleteDocumentInDB(
