@@ -23,7 +23,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import gui.scraper.Scraper
 import gui.addData.AddDataMenu
-import gui.addData.AddDataMenuState
+import gui.dataProcessor.DataProcessor
 import gui.manageData.ManageDataMenu
 
 const val NAME = "BandOfBytes"
@@ -32,7 +32,7 @@ enum class MenuState(val customName: String) {
     ADD_DATA("Add Data"),
     MANAGE_DATA("Manage Data"),
     SCRAPER("Scraper"),
-    PROCESSOR("//Data Processor//"),
+    PROCESSOR("Data Processor"),
     GENERATOR("//Generator//"),
     ABOUT("About")
 }
@@ -129,7 +129,7 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    //.clickable { menuState.value = MenuState.PROCESSOR }
+                    .clickable { menuState.value = MenuState.PROCESSOR }
                     .background(if (menuState.value == MenuState.PROCESSOR) Color.LightGray else Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
@@ -250,7 +250,7 @@ fun Content(
             MenuState.ADD_DATA -> AddDataMenu()
             MenuState.MANAGE_DATA -> ManageDataMenu()
             MenuState.SCRAPER -> Scraper(modifier)
-            MenuState.PROCESSOR -> TODO()
+            MenuState.PROCESSOR -> DataProcessor()
             MenuState.GENERATOR -> TODO()
         }
     }

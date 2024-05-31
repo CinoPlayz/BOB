@@ -85,6 +85,7 @@ suspend fun getDataAndProcess(
 
                             when (source) {
                                 SourceWebsite.Official -> {
+                                    println(resultGet.value)
                                     val listOfficial = json.decodeFromString<List<Official>>(resultGet.value)
                                     val requestOfficial = OfficialRequest(LocalDateTime.now(), listOfficial)
 
@@ -93,6 +94,7 @@ suspend fun getDataAndProcess(
                                 }
 
                                 SourceWebsite.Vlaksi -> {
+                                    println(resultGet.value)
                                     val listVlakSi = json.decodeFromString<VlakiSi>(resultGet.value)
                                     val requestVlakSi = VlakiSiRequest(LocalDateTime.now(), listVlakSi)
                                     result = result.copy(listOfTrainLocHistory = requestVlakSi.toListTrainLocHistory())
