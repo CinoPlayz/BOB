@@ -28,8 +28,8 @@ router.put('/:id', extractToken, getRoleFromToken, isReqRole("admin"),  userCont
 /*
  * DELETE
  */
+router.delete('/token', extractToken, getRoleAndUserFromToken, userController.deleteToken); 
 router.delete('/:id', extractToken, getRoleFromToken, isReqRole("admin"), userController.remove);
 router.delete('/:userId/tokens', extractToken, getRoleFromToken, isReqRole("admin"), userController.deleteAllTokens); 
-router.delete('/token', extractToken, getRoleAndUserFromToken, userController.deleteToken); 
 
 module.exports = router;

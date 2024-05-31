@@ -356,16 +356,23 @@ module.exports = {
     deleteToken: async function (req, res) {
         try {
             const user = req.user
+            const token = req.token
 
-            const index = user.tokens.indexOf(req.token);
+            await user.updateOne({
+                $pull: {
+                    tokens: { token: token }
+                }
+            });
+
+            /* const index = user.tokens.indexOf(req.token);
             if (index > -1) {
                 user.tokens.splice(index, 1)
-            }
+            } */
 
             await user.save();
-            return res.status(200).json({ message: "All tokens deleted successfully", user });
+            return res.status(200).json({ message: "Token deleted successfully: User Logged Out", user });
         } catch (err) {
-            return shared.handleError(res, 500, "Error when deleting user tokens", err);
+            return shared.handleError(res, 500, "Error when deleting user token", err);
         }
     },
 };
