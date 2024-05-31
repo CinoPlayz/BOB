@@ -10,21 +10,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import models.*
 import org.bson.Document
-import utils.api.dao.insertDelay
-import utils.api.dao.insertTrainLocHistory
-import utils.parsing.getDecodedData
-import java.time.DateTimeException
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 @Composable
 fun DataProcessorView(
@@ -34,7 +24,6 @@ fun DataProcessorView(
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val isLoading = remember { mutableStateOf(true) }
-    val coroutineScope = rememberCoroutineScope()
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
     var collection by remember { mutableStateOf<MongoCollection<Document>?>(null) }
     var maxTimeOfRequest by remember { mutableStateOf<LocalDateTime?>(null) }
@@ -62,10 +51,10 @@ fun DataProcessorView(
             .first()
         minTimeOfRequest = minDoc?.getDate("timeOfRequest")?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDateTime()
         numberOfAllDocumentsInDB = collection!!.countDocuments()
-        fromYear = ""
+        fromYear = "2024"
         fromMonth = ""
         fromDay = ""
-        toYear = ""
+        toYear = "2024"
         toMonth = ""
         toDay = ""
     }
@@ -221,6 +210,7 @@ fun DataProcessorView(
             }
             ProcessDataButton(
                 source = source,
+                database = database,
                 collection = collection,
                 minDateTime = minTimeOfRequest,
                 maxDateTime = maxTimeOfRequest,
@@ -296,6 +286,7 @@ fun DataProcessorView(
 @Composable
 fun ProcessDataButton(
     source: DataSourceInDB,
+    database: MongoDatabase,
     collection: MongoCollection<Document>?,
     minDateTime: LocalDateTime?,
     maxDateTime: LocalDateTime?,
@@ -319,6 +310,7 @@ fun ProcessDataButton(
                     try {
                         when (val result = dataProcessorEngine(
                             source,
+                            database,
                             collection,
                             minDateTime,
                             maxDateTime,
@@ -411,173 +403,3 @@ fun ProcessDataButton(
     }
 }
 
-sealed class Result<out T> {
-    data class Success<out T>(val data: T) : Result<T>()
-    data class Failure(val message: String) : Result<Nothing>()
-}
-
-suspend fun dataProcessorEngine(
-    source: DataSourceInDB,
-    collection: MongoCollection<Document>?,
-    minDateTime: LocalDateTime?,
-    maxDateTime: LocalDateTime?,
-    fromYear: String,
-    fromMonth: String,
-    fromDay: String,
-    toYear: String,
-    toMonth: String,
-    toDay: String,
-    //onSuccess: (String) -> Unit,
-    //onFailure: (String) -> Unit,
-    updateFeedback: (String) -> Unit
-): Result<String> {
-    return withContext(Dispatchers.IO) {
-        if (fromYear.toIntOrNull() == null || fromMonth.toIntOrNull() == null || fromDay.toIntOrNull() == null) {
-            return@withContext Result.Failure("From Date format invalid.")
-        }
-        if (toYear.toIntOrNull() == null || toMonth.toIntOrNull() == null || toDay.toIntOrNull() == null) {
-            return@withContext Result.Failure("To Date format invalid.")
-        }
-
-        val fromTimeStamp: LocalDateTime
-        try {
-            fromTimeStamp = LocalDateTime.of(
-                fromYear.toInt(),
-                fromMonth.toInt(),
-                fromDay.toInt(),
-                "00".toInt(),
-                "00".toInt(),
-                "00".toInt()
-            )
-        } catch (e: DateTimeException) {
-            return@withContext Result.Failure("From Date format invalid.")
-        }
-
-        val toTimeStamp: LocalDateTime
-        try {
-            toTimeStamp = LocalDateTime.of(
-                toYear.toInt(),
-                toMonth.toInt(),
-                toDay.toInt(),
-                "23".toInt(),
-                "59".toInt(),
-                "59".toInt()
-            )
-        } catch (e: DateTimeException) {
-            return@withContext Result.Failure("To Date format invalid.")
-        }
-
-        if (fromTimeStamp > toTimeStamp) {
-            return@withContext Result.Failure("From Date larger than To Date.")
-        }
-
-        val json = Json { ignoreUnknownKeys = true }
-        val startTimestamp = Date.from(fromTimeStamp.atZone(ZoneId.systemDefault()).toInstant())
-        val endTimestamp = Date.from(toTimeStamp.atZone(ZoneId.systemDefault()).toInstant())
-
-        val query = Document("timeOfRequest", Document("\$gte", startTimestamp).append("\$lte", endTimestamp))
-
-        val documents = collection?.find(query)?.toList()
-        // Convert to JSON String and add start and stop [ and ] - for processing
-        val jsonDocuments = "[" + documents?.joinToString(",") { document ->
-            document.toJson()
-        } + "]"
-        val data = json.decodeFromString<List<DatabaseRequest>>(jsonDocuments)
-
-        //println(jsonDocuments)
-        //println(data)
-        
-        //val documentsString = documents.toString()
-        //val data = json.decodeFromString<List<DatabaseRequest>>(documentsString)
-        val numberOfDocuments = documents?.size
-        println(numberOfDocuments)
-
-        if (numberOfDocuments == 0) {
-            return@withContext Result.Failure("No data to process in selected time frame.")
-        }
-
-        var trainLocHistoryCounter = 0
-        var delayCounter = 0
-        var documentErrorCounter = 0
-
-        if (source == DataSourceInDB.OFFICIAL) {
-            var index = 1
-            data.forEach { document ->
-                // Progress Update
-                val update = "Processing document $index of $numberOfDocuments."
-                updateFeedback(update)
-                index++
-
-                val trainLocHistories = mutableListOf<TrainLocHistoryInsert>()
-                val delays = mutableListOf<DelayInsert>()
-
-                try {
-                    val urlDecodedData = getDecodedData(document.data)
-                    val dataOfficial: List<Official> = json.decodeFromString(urlDecodedData)
-                    val convertedRequest = OfficialRequest(document.timeOfRequest.date, dataOfficial)
-                    val listTLH = convertedRequest.toListTrainLocHistory()
-                    val listDelay = convertedRequest.toListDelay()
-                    listTLH.forEach {
-                        insertTrainLocHistory(it) // insert to database
-                        //trainLocHistories.add(it)
-                        trainLocHistoryCounter++
-                    }
-                    listDelay.forEach {
-                        insertDelay(it) // insert to database
-                        //delays.add(it)
-                        delayCounter++
-                    }
-
-                } catch (e: Exception) {
-                    documentErrorCounter++
-                    // println("Error decoding document: ${e.message}")
-                    return@forEach
-                }
-            }
-        }
-
-        if (source == DataSourceInDB.VLAKSI) {
-            var index = 1
-            data.forEach { document ->
-                val update = "Processing document $index of $numberOfDocuments."
-                updateFeedback(update)
-                index++
-                val trainLocHistories = mutableListOf<TrainLocHistoryInsert>()
-                val urlDecodedData = getDecodedData(document.data)
-                //println(urlDecodedData)
-                val dataVlakSi = json.decodeFromString<VlakiSi>(urlDecodedData)
-                val convertedRequest = VlakiSiRequest(document.timeOfRequest.date, dataVlakSi)
-                val listTrain = convertedRequest.toListTrainLocHistory()
-                listTrain.forEach {
-                    trainLocHistories.add(it)
-                }
-            }
-        }
-
-
-        /*// Process data
-        val processingUpdates = mutableListOf<String>()
-
-        // Simulate processing updates
-        for (i in 1..3) {
-            val update = "Processing step $i completed."
-            processingUpdates.add(update)
-            // Update feedback message
-            updateFeedback(update)
-            delay(1000) // Simulate delay (1 second)
-        }
-    */
-        // Call onSuccess when processing is complete
-        //onSuccess("Success")
-        return@withContext Result.Success(
-            "Success:\n" +
-                    "Documents processed: $numberOfDocuments\n" +
-                    "Train Location History datapoints inserted: $trainLocHistoryCounter\n" +
-                    "Delay datapoints inserted: $delayCounter\n" +
-                    "Documents with error: $documentErrorCounter"
-        )
-
-    }
-
-    //return ""
-}
