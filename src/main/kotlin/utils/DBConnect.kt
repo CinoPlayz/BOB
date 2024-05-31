@@ -16,7 +16,7 @@ object DatabaseUtil {
     }*/
 
     suspend fun connectDB(): MongoClient? {
-        val dbUrl = appContextGlobal.dbUri
+        val dbUrl = appContextGlobal.get().dbUri
         return withContext(Dispatchers.IO) {
             try {
                 val client = MongoClients.create(dbUrl)

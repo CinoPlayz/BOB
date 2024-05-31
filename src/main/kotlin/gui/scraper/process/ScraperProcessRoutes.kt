@@ -37,7 +37,7 @@ fun getRoutesAndProcess(resultState: MutableState<ResultRoute>) {
             is Result.Failure -> {
                 println("${getCurrentTime()} - Error occurred while getting routes: ${resultGet.error.message}")
 
-                if (appContextGlobal.requestDetailReport) {
+                if (appContextGlobal.get().requestDetailReport) {
                     println("More details: ${resultGet.error.response.body().asString("text/html")}")
                 }
 
@@ -184,7 +184,7 @@ fun getRouteDetails(
             is Result.Failure -> {
                 println("${getCurrentTime()} - Error occurred while getting route details: ${resultTrainDetails.error.message}")
 
-                if (appContextGlobal.requestDetailReport) {
+                if (appContextGlobal.get().requestDetailReport) {
                     println("More details: ${resultTrainDetails.error.response.body().asString("text/html")}")
                 }
 

@@ -13,7 +13,7 @@ private val json = Json { ignoreUnknownKeys = true }
 
 fun getAllRoutes(): List<Route> {
     var routes = mutableListOf<Route>()
-    val req = Fuel.get("${appContextGlobal.url}/routes")
+    val req = Fuel.get("${appContextGlobal.get().url}/routes")
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
@@ -40,7 +40,7 @@ fun getAllRoutes(): List<Route> {
 }
 
 suspend fun insertRoute(route: RouteInsert): Boolean {
-    val url = "${appContextGlobal.url}/routes"
+    val url = "${appContextGlobal.get().url}/routes"
     val body = Json.encodeToString(route)
 
     val (_, response, result) = Fuel.post(url)
@@ -48,7 +48,7 @@ suspend fun insertRoute(route: RouteInsert): Boolean {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -68,7 +68,7 @@ suspend fun insertRoute(route: RouteInsert): Boolean {
 
 suspend fun updateRoute(route: RouteUpdate): Route {
     val id = route.id
-    val url = "${appContextGlobal.url}/routes/${id}/updateFromApp"
+    val url = "${appContextGlobal.get().url}/routes/${id}/updateFromApp"
     val body = Json.encodeToString(route)
 
     val (_, response, result) = Fuel.put(url)
@@ -76,7 +76,7 @@ suspend fun updateRoute(route: RouteUpdate): Route {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -93,14 +93,14 @@ suspend fun updateRoute(route: RouteUpdate): Route {
 }
 
 suspend fun deleteRoute(id: String): Boolean {
-    val url = "${appContextGlobal.url}/routes/${id}"
+    val url = "${appContextGlobal.get().url}/routes/${id}"
 
     val (_, response, result) = Fuel.delete(url)
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .responseString()
 

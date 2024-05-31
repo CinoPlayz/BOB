@@ -11,13 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import utils.context.appContextGlobal
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("marko1") }
-    var password by remember { mutableStateOf("marko1") }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var twoFATOTP by remember { mutableStateOf("") }
     var twoFATokenLogin by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -26,7 +27,10 @@ fun LoginScreen(
     val coroutineScope = rememberCoroutineScope()
 
     fun onLoginSuccess(token: String) {
-        // TODO() Update AppContext with Token
+        errorMessage = ""
+        val currentContext = appContextGlobal.get()
+        val updatedContext = currentContext.copy(token = token)
+        appContextGlobal.set(updatedContext)
         onLoginSuccess()
     }
 
@@ -35,6 +39,7 @@ fun LoginScreen(
     }
 
     fun onTwoFALogin(tokenLogin: String) {
+        errorMessage = ""
         enterTwoFATOTP = true
         twoFATokenLogin = tokenLogin
 
@@ -66,10 +71,21 @@ fun LoginScreen(
                             twoFATOTP,
                             onSuccess = { token -> onLoginSuccess(token) },
                             onFailure = { message -> onFailureLogin(message) }
-                            )
+                        )
                     }
                 }) {
                     Text("Submit")
+                }
+
+                Button(onClick = {
+                    username = ""
+                    password = ""
+                    twoFATOTP = ""
+                    twoFATokenLogin = ""
+                    errorMessage = ""
+                    enterTwoFATOTP = false
+                }) {
+                    Text("Cancel")
                 }
 
                 errorMessage?.let {
@@ -112,22 +128,11 @@ fun LoginScreen(
                             onSuccess = { token -> onLoginSuccess(token) },
                             onTwoFA = { tokenLogin -> onTwoFALogin(tokenLogin) },
                             onFailure = { message -> onFailureLogin(message) }
-                            )
+                        )
                     }
                 }) {
                     Text("Login")
                 }
-
-                /*Button(onClick = {
-                    // Simulate login logic
-                    if (username == "user" && password == "password") {
-                        onLoginSuccess()
-                    } else {
-                        errorMessage = "Invalid credentials"
-                    }
-                }) {
-                    Text("Login")
-                }*/
 
                 errorMessage?.let {
                     Spacer(modifier = Modifier.height(8.dp))

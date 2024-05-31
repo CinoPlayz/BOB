@@ -13,7 +13,7 @@ private val json = Json { ignoreUnknownKeys = true }
 
 fun getAllTrainLocHistories(): List<TrainLocHistory> {
     val trains = mutableListOf<TrainLocHistory>()
-    val req = Fuel.get("${appContextGlobal.url}/trainLocHistories")
+    val req = Fuel.get("${appContextGlobal.get().url}/trainLocHistories")
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
@@ -37,7 +37,7 @@ fun getAllTrainLocHistories(): List<TrainLocHistory> {
 }
 
 suspend fun insertTrainLocHistory(train: TrainLocHistoryInsert): Boolean {
-    val url = "${appContextGlobal.url}/trainLocHistories"
+    val url = "${appContextGlobal.get().url}/trainLocHistories"
     val body = Json.encodeToString(train)
 
     val (_, response, result) = Fuel.post(url)
@@ -45,7 +45,7 @@ suspend fun insertTrainLocHistory(train: TrainLocHistoryInsert): Boolean {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -65,7 +65,7 @@ suspend fun insertTrainLocHistory(train: TrainLocHistoryInsert): Boolean {
 
 suspend fun updateTrainLocHistory(train: TrainLocHistoryUpdate): TrainLocHistory {
     val id = train.id
-    val url = "${appContextGlobal.url}/trainLocHistories/${id}"
+    val url = "${appContextGlobal.get().url}/trainLocHistories/${id}"
     val body = Json.encodeToString(train)
 
     val (_, response, result) = Fuel.put(url)
@@ -73,7 +73,7 @@ suspend fun updateTrainLocHistory(train: TrainLocHistoryUpdate): TrainLocHistory
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -90,14 +90,14 @@ suspend fun updateTrainLocHistory(train: TrainLocHistoryUpdate): TrainLocHistory
 }
 
 suspend fun deleteTrainLocHistory(id: String): Boolean {
-    val url = "${appContextGlobal.url}/trainLocHistories/${id}"
+    val url = "${appContextGlobal.get().url}/trainLocHistories/${id}"
 
     val (_, response, result) = Fuel.delete(url)
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .responseString()
 

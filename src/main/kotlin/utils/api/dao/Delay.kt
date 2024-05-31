@@ -13,7 +13,7 @@ private val json = Json { ignoreUnknownKeys = true }
 
 fun getAllDelays(): List<Delay> {
     val delays = mutableListOf<Delay>()
-    val req = Fuel.get("${appContextGlobal.url}/delays")
+    val req = Fuel.get("${appContextGlobal.get().url}/delays")
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
@@ -37,7 +37,7 @@ fun getAllDelays(): List<Delay> {
 }
 
 suspend fun insertDelay(delay: DelayInsert): Boolean {
-    val url = "${appContextGlobal.url}/delays"
+    val url = "${appContextGlobal.get().url}/delays"
     val body = Json.encodeToString(delay)
 
     val (_, response, result) = Fuel.post(url)
@@ -45,7 +45,7 @@ suspend fun insertDelay(delay: DelayInsert): Boolean {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -65,7 +65,7 @@ suspend fun insertDelay(delay: DelayInsert): Boolean {
 
 suspend fun updateDelay(delay: DelayUpdate): Delay {
     val id = delay.id
-    val url = "${appContextGlobal.url}/delays/${id}"
+    val url = "${appContextGlobal.get().url}/delays/${id}"
     val body = Json.encodeToString(delay)
 
     val (_, response, result) = Fuel.put(url)
@@ -73,7 +73,7 @@ suspend fun updateDelay(delay: DelayUpdate): Delay {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -90,14 +90,14 @@ suspend fun updateDelay(delay: DelayUpdate): Delay {
 }
 
 suspend fun deleteDelay(id: String): Boolean {
-    val url = "${appContextGlobal.url}/delays/${id}"
+    val url = "${appContextGlobal.get().url}/delays/${id}"
 
     val (_, response, result) = Fuel.delete(url)
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .responseString()
 

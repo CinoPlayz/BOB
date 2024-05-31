@@ -29,6 +29,7 @@ import gui.addData.AddDataMenu
 import gui.dataProcessor.DataProcessor
 import gui.login.LoginScreen
 import gui.manageData.ManageDataMenu
+import utils.context.initializeAppContext
 
 const val NAME = "BandOfBytes"
 
@@ -43,6 +44,7 @@ fun main() = application {
         undecorated = false,
         resizable = true
     ) {
+        initializeAppContext()
         App()
     }
 }

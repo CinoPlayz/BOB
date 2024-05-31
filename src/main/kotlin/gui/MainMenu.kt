@@ -183,6 +183,29 @@ fun Menu(
                 )
             }
             Spacer(modifier = Modifier.weight(1f)) // Push About to the bottom
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { menuState.value = MenuState.ABOUT }
+                    .background(color = Color.Transparent)
+                    .padding(vertical = buttonPadding.dp)
+                    .offset(x = textOffset.dp)
+            ) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = MenuState.ABOUT.name,
+                    modifier = Modifier
+                        .size(size = iconSize.dp)
+                        .align(Alignment.CenterVertically)
+                )
+                Spacer(modifier = Modifier.width(iconTextSpace.dp))
+                Text(
+                    text = MenuState.ABOUT.customName,
+                    textAlign = TextAlign.Center,
+                    fontSize = fontSize.sp,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
             Divider(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
             Row(
                 modifier = Modifier

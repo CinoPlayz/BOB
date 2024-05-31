@@ -17,6 +17,9 @@ private val json = Json { ignoreUnknownKeys = true }
 data class LoginData(val username: String, val password: String)
 
 @Serializable
+data class LoginDataTwoFA(val loginToken: String, val otpCode: String)
+
+@Serializable
 data class LoginResponse(val message: String? = null, val token: String? = null, val loginToken: String? = null)
 
 suspend fun loginUser(
@@ -27,7 +30,7 @@ suspend fun loginUser(
     onFailure: (String) -> Unit,
 ) {
     withContext(Dispatchers.IO) {
-        val url = "${appContextGlobal.url}/users/login"
+        val url = "${appContextGlobal.get().url}/users/login"
         val loginData = LoginData(username, password)
         val body = Json.encodeToString(loginData)
 
@@ -53,7 +56,7 @@ suspend fun loginUser(
                 } else if (loginResponse.token == null && loginResponse.loginToken != null) {
                     onTwoFA(loginResponse.loginToken)
                 } else {
-                    onFailure("Internal Error.")
+                    onFailure("Internal Error")
                 }
             }
 
@@ -80,11 +83,51 @@ suspend fun loginUserTwoFA(
     loginToken: String,
     totp: String,
     onSuccess: (String) -> Unit,
-    onFailure: (String) -> Unit,
+    onFailure: (String) -> Unit
 ) {
     withContext(Dispatchers.IO) {
-        val url = "${appContextGlobal.url}/users/twoFaLogin"
+        val url = "${appContextGlobal.get().url}/users/twoFaLogin"
+        val loginData = LoginDataTwoFA(loginToken, totp)
+        val body = Json.encodeToString(loginData)
 
+        val (_, response, result) = Fuel.post(url)
+            .header("Accept-Language", "en")
+            .header(
+                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+            )
+            .header(Headers.CONTENT_TYPE, "application/json")
+            .jsonBody(body)
+            .responseString()
 
+        when (result) {
+            is Result.Success -> {
+                val responseBody = result.get()
+                val loginResponse = Json.decodeFromString<LoginResponse>(responseBody)
+                if (loginResponse.token != null) {
+                    onSuccess(loginResponse.token)
+                } else {
+                    onFailure("Internal Error")
+                }
+            }
+            is Result.Failure -> {
+                when (response.statusCode) {
+                    -1 -> {
+                        onFailure("Error: Backend Server Offline")
+                    }
+
+                    400 -> {
+                        onFailure("Enter TOTP Code")
+                    }
+
+                    401 -> {
+                        onFailure("Invalid TOTP Code")
+                    }
+
+                    else -> {
+                        onFailure("Error: ${response.statusCode}")
+                    }
+                }
+            }
+        }
     }
 }

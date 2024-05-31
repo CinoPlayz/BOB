@@ -13,7 +13,7 @@ private val json = Json { ignoreUnknownKeys = true }
 
 fun getAllStations(): List<Station> {
     val stations = mutableListOf<Station>()
-    val req = Fuel.get("${appContextGlobal.url}/stations")
+    val req = Fuel.get("${appContextGlobal.get().url}/stations")
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
@@ -39,7 +39,7 @@ fun getAllStations(): List<Station> {
 }
 
 suspend fun insertStation(station: StationInsert): Boolean {
-    val url = "${appContextGlobal.url}/stations"
+    val url = "${appContextGlobal.get().url}/stations"
     val body = Json.encodeToString(station)
 
     //println(apiContextGlobalTemp.url)
@@ -53,7 +53,7 @@ suspend fun insertStation(station: StationInsert): Boolean {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -77,7 +77,7 @@ suspend fun insertStation(station: StationInsert): Boolean {
 
 suspend fun updateStation(station: StationUpdate): Station {
     val id = station.id
-    val url = "${appContextGlobal.url}/stations/${id}"
+    val url = "${appContextGlobal.get().url}/stations/${id}"
     val body = Json.encodeToString(station)
 
     val (_, response, result) = Fuel.put(url)
@@ -85,7 +85,7 @@ suspend fun updateStation(station: StationUpdate): Station {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -102,14 +102,14 @@ suspend fun updateStation(station: StationUpdate): Station {
 }
 
 suspend fun deleteStation(id: String): Boolean {
-    val url = "${appContextGlobal.url}/stations/${id}"
+    val url = "${appContextGlobal.get().url}/stations/${id}"
 
     val (_, response, result) = Fuel.delete(url)
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .responseString()
 

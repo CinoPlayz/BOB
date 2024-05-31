@@ -31,9 +31,9 @@ suspend fun getDataAndProcess(
         launch {
             var result = ResultData()
 
-            val requestURL: String = if (source == SourceWebsite.Official) appContextGlobal.officialUrl else appContextGlobal.vlakSiUrl
-            val requestDetailedReport = appContextGlobal.requestDetailReport
-            val blackList = appContextGlobal.blacklist
+            val requestURL: String = if (source == SourceWebsite.Official) appContextGlobal.get().officialUrl else appContextGlobal.get().vlakSiUrl
+            val requestDetailedReport = appContextGlobal.get().requestDetailReport
+            val blackList = appContextGlobal.get().blacklist
 
             println("\n${getCurrentTime()} - Checking the IP against blacklist")
 

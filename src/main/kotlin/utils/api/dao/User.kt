@@ -17,7 +17,7 @@ import models.UserUpdate
 private val json = Json { ignoreUnknownKeys = true }
 
 suspend fun getAllUsers(): List<User> {
-    val url = "${appContextGlobal.url}/users"
+    val url = "${appContextGlobal.get().url}/users"
 
     val result = url
         .httpGet()
@@ -25,7 +25,7 @@ suspend fun getAllUsers(): List<User> {
         .header(
             "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .awaitStringResult()
 
     return when (result) {
@@ -41,7 +41,7 @@ suspend fun getAllUsers(): List<User> {
 
 
 suspend fun insertUser(user: UserInsert): Boolean {
-    val url = "${appContextGlobal.url}/users/createFromApp"
+    val url = "${appContextGlobal.get().url}/users/createFromApp"
     val body = Json.encodeToString(user)
 
     val (_, response, result) = Fuel.post(url)
@@ -49,7 +49,7 @@ suspend fun insertUser(user: UserInsert): Boolean {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -68,7 +68,7 @@ suspend fun insertUser(user: UserInsert): Boolean {
 
 suspend fun updateUser(user: UserUpdate): User {
     val id = user.id
-    val url = "${appContextGlobal.url}/users/${id}/updateFromApp"
+    val url = "${appContextGlobal.get().url}/users/${id}/updateFromApp"
     val body = Json.encodeToString(user)
 
     val (_, response, result) = Fuel.put(url)
@@ -76,7 +76,7 @@ suspend fun updateUser(user: UserUpdate): User {
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .jsonBody(body)
         .responseString()
@@ -93,14 +93,14 @@ suspend fun updateUser(user: UserUpdate): User {
 }
 
 suspend fun deleteUser(id: String): Boolean {
-    val url = "${appContextGlobal.url}/users/${id}"
+    val url = "${appContextGlobal.get().url}/users/${id}"
 
     val (_, response, result) = Fuel.delete(url)
         .header("Accept-Language", "en")
         .header(
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         )
-        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.token}")
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
         .header(Headers.CONTENT_TYPE, "application/json")
         .responseString()
 

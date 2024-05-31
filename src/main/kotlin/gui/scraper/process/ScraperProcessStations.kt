@@ -40,7 +40,7 @@ suspend fun getStationsAndProcess(
                     is Result.Failure -> {
                         println("${getCurrentTime()} - Error occurred while getting stations: ${resultGet.error.message}")
 
-                        if (appContextGlobal.requestDetailReport) {
+                        if (appContextGlobal.get().requestDetailReport) {
                             println("More details: ${resultGet.error.response.body().asString("text/html")}")
                         }
 
@@ -197,7 +197,7 @@ fun getStationsLocation(query: String): ResultStationsLocation {
             is Result.Failure -> {
                 println("${getCurrentTime()} - Error occurred while getting stations: ${resultGet.error.message}")
 
-                if (appContextGlobal.requestDetailReport) {
+                if (appContextGlobal.get().requestDetailReport) {
                     println("More details: ${resultGet.error.response.body().asString("text/html")}")
                 }
 

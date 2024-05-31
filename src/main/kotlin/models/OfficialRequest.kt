@@ -37,7 +37,6 @@ data class OfficialRequest(val timeOfRequest: LocalDateTime, val data: List<Offi
     fun toListDelay(): List<DelayInsert> {
         val delayList = mutableListOf<DelayInsert>()
 
-        //TODO: ApiContext should be build when reading .env files
         val stations: List<Station> = getAllStations()
         val routes: List<Route> = getAllRoutes()
 

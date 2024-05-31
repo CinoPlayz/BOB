@@ -5,13 +5,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.atomic.AtomicReference
 
-data class AppContext(val url: String, val token: String, val officialUrl: String, val vlakSiUrl: String, val requestDetailReport: Boolean, val dbUri: String, val blacklist: List<String>)
+data class AppContext(
+    val url: String,
+    var token: String, // update after successful login
+    val officialUrl: String,
+    val vlakSiUrl: String,
+    val requestDetailReport: Boolean,
+    val dbUri: String,
+    val blacklist: List<String>
+)
 
 // Lazy initialization: appContextGlobal will be initialized only once, on its first usage.
-val appContextGlobal: AppContext by lazy {
+/*val appContextGlobal: AppContext by lazy {
     runBlocking {
         readConfiguration() ?: throw IllegalStateException("Failed to initialize AppContext")
+    }
+}*/
+
+// Initialize appContextGlobal with AtomicReference
+val appContextGlobal = AtomicReference<AppContext>()
+
+fun initializeAppContext() {
+    runBlocking {
+        val config = readConfiguration() ?: throw IllegalStateException("Failed to initialize AppContext")
+        appContextGlobal.set(config)
     }
 }
 
@@ -30,7 +49,7 @@ private suspend fun readConfiguration(): AppContext? = withContext(Dispatchers.I
         }
 
         val url: String = configSecrets["API_BASE_URL"] ?: throw IllegalStateException("API_BASE_URL not found in configuration")
-        val token: String = configSecrets["API_BASE_TOKEN"] ?: throw IllegalStateException("API_BASE_TOKEN not found in configuration")
+        // val token: String = configSecrets["API_BASE_TOKEN"] ?: throw IllegalStateException("API_BASE_TOKEN not found in configuration")
         val officialUrl: String = configSecrets["OFFICIAL_URL"] ?: throw IllegalStateException("OFFICIAL_URL not found in configuration")
         val vlakSiUrl: String = configSecrets["VLAKSI_URL"] ?: throw IllegalStateException("VLAKSI_URL not found in configuration")
         val requestDetailReport: String = configSecrets["REQUEST_DETAIL_REPORT"] ?: throw IllegalStateException("REQUEST_DETAIL_REPORT not found in configuration")
@@ -49,7 +68,15 @@ private suspend fun readConfiguration(): AppContext? = withContext(Dispatchers.I
 
         val blacklistList = blacklist.split(',')
 
-        AppContext(url= url, token = token, vlakSiUrl = vlakSiUrl, officialUrl = officialUrl, requestDetailReport = requestDetailReportBoolean, dbUri = dbUri, blacklist = blacklistList)
+        AppContext(
+            url = url,
+            token = "",
+            vlakSiUrl = vlakSiUrl,
+            officialUrl = officialUrl,
+            requestDetailReport = requestDetailReportBoolean,
+            dbUri = dbUri,
+            blacklist = blacklistList
+        )
     } catch (e: Exception) {
         println("Error reading database configuration: ${e.message}")
         null
