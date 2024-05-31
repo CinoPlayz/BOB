@@ -190,18 +190,52 @@ suspend fun dataProcessorEngine(
 
         if (source == DataSourceInDB.VLAKSI) {
             var index = 1
-            data.forEach { document ->
+            val targetCollection = database.getCollection("ProcessedVlakiOdVlaksi")
+            dataWithIDs?.forEach { (id, document) ->
                 updateFeedback("Processing document $index of $numberOfDocuments.")
                 index++
 
-                val trainLocHistories = mutableListOf<TrainLocHistoryInsert>()
-                val urlDecodedData = getDecodedData(document.data)
-                //println(urlDecodedData)
-                val dataVlakSi = json.decodeFromString<VlakiSi>(urlDecodedData)
-                val convertedRequest = VlakiSiRequest(document.timeOfRequest.date, dataVlakSi)
-                val listTrain = convertedRequest.toListTrainLocHistory()
-                listTrain.forEach {
-                    trainLocHistories.add(it)
+                try {
+                    val urlDecodedData = getDecodedData(document.data)
+                    val dataVlakSi = json.decodeFromString<VlakiSi>(urlDecodedData)
+                    val convertedRequest = VlakiSiRequest(document.timeOfRequest.date, dataVlakSi)
+                    val listTLH = convertedRequest.toListTrainLocHistory()
+                    val listDelay = convertedRequest.toListDelay()
+
+                    listTLH.forEach {
+                        // try-catch block for each insert (most common error: empty nextStation)
+                        try {
+                            insertTrainLocHistory(it) // insert to database
+                        } catch (_: Exception) {
+                        }
+                        trainLocHistoryCounter++
+                    }
+
+                    listDelay.forEach {
+                        try {
+                            insertDelay(it) // insert to database
+                        } catch (_: Exception) {
+                        }
+                        delayCounter++
+                    }
+
+                    // Move processed document = mark as processed
+                    moveAndDeleteDocumentInDB(
+                        collection,
+                        targetCollection,
+                        id
+                    )
+                } catch (e: Exception) {
+                    documentErrorCounter++
+
+                    // Move processed document with error = mark as processed
+                    moveAndDeleteDocumentInDB(
+                        collection,
+                        targetCollection,
+                        id
+                    )
+                    //println("Error processing document: ${e.message}")
+                    return@forEach
                 }
             }
         }
