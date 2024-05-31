@@ -11,9 +11,11 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,8 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.addData.AddDataMenu
 import gui.dataProcessor.DataProcessor
+import gui.login.logoutUserBackend
 import gui.manageData.ManageDataMenu
 import gui.scraper.Scraper
+import kotlinx.coroutines.launch
 
 enum class MenuState(val customName: String) {
     ADD_DATA("Add Data"),
@@ -43,8 +47,11 @@ fun Menu(
     textOffset: Int = 25,
     iconSize: Int = 20,
     fontSize: Int = 16, //
-    iconTextSpace: Int = 6
+    iconTextSpace: Int = 6,
+    onLogout: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     Box(
         modifier = Modifier
             .fillMaxHeight()
@@ -186,21 +193,26 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { menuState.value = MenuState.ABOUT }
+                    .clickable {
+                        onLogout()
+                        coroutineScope.launch {
+                            logoutUserBackend()
+                        }
+                    }
                     .background(color = Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
             ) {
                 Icon(
-                    Icons.Default.Info,
-                    contentDescription = MenuState.ABOUT.name,
+                    Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = "Logout",
                     modifier = Modifier
                         .size(size = iconSize.dp)
                         .align(Alignment.CenterVertically)
                 )
                 Spacer(modifier = Modifier.width(iconTextSpace.dp))
                 Text(
-                    text = MenuState.ABOUT.customName,
+                    text = "Logout",
                     textAlign = TextAlign.Center,
                     fontSize = fontSize.sp,
                     modifier = Modifier.align(Alignment.CenterVertically)
