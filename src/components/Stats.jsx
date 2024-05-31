@@ -4,6 +4,7 @@ import { Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Transitio
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
 import StatsDelay from './StatsDelay';
 import StatsRoute from './StatsRoute';
+import StatsDelayRoute from './StatsDelayRoute';
 
 const showSelectedOptions = [{ id: 1, name: "Delays" }, { id: 2, name: "Train info" }, { id: 3, name: "Delays By Route" }]
 
@@ -12,10 +13,12 @@ function classNames(...classes) {
 }
 
 function Stats() {
-    const { fetchDelayStats, fetchRouteStats } = useContext(TrainContext);
+    const { fetchDelayStats, fetchRouteStats, fetchStationStats } = useContext(TrainContext);
     const [showSelected, setShowSelected] = useState(showSelectedOptions[0]);
     const [statsDelay, setstatsDelay] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
     const [statsRoute, setStatsRoute] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
+    const [statsStation, setStatsStation] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
+    const [statsDelayRoute, setStatsDelayRoute] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
 
     const getStats = async () => {
         const statsDelayFetch = await fetchDelayStats();
@@ -23,6 +26,9 @@ function Stats() {
 
         const statsRouteFetch = await fetchRouteStats();
         setStatsRoute(statsRouteFetch);
+
+        const statsStationFetch = await fetchStationStats();
+        setStatsStation(statsStationFetch);
     };
 
     useEffect(() => {
@@ -87,6 +93,7 @@ function Stats() {
 
             {showSelected.id == 1 && <StatsDelay statsDelay={statsDelay} />}
             {showSelected.id == 2 && <StatsRoute statsRoute={statsRoute} />}
+            {showSelected.id == 3 && <StatsDelayRoute statsDelay={statsDelay} statsRoute={statsRoute} statsStations={statsStation} />}
 
 
         </div>

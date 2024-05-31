@@ -66,6 +66,17 @@ export const TrainProvider = ({ children }) => {
         }
     };
 
+    const fetchStationStats = async () => {
+        try {
+            const response = await fetch(`http://localhost:3001/stations`); 
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error while getting stats:', error);
+            return [];
+        }
+    };
+
     useEffect(() => {
         fetchTrainData();
         const intervalId = setInterval(fetchTrainData, 5 * 60 * 1000); // Osvežitev vsake 5 minuti
@@ -74,7 +85,7 @@ export const TrainProvider = ({ children }) => {
     }, []);
 
     return (
-        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchDelayStats, fetchRouteStats }}>
+        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchDelayStats, fetchRouteStats, fetchStationStats }}>
             {children}
         </TrainContext.Provider>
     );
