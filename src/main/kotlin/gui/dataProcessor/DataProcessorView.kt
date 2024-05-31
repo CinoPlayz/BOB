@@ -1,6 +1,5 @@
 package gui.dataProcessor
 
-import TitleText
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -10,6 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
+import gui.TitleText
 import kotlinx.coroutines.launch
 import org.bson.Document
 import java.time.LocalDateTime

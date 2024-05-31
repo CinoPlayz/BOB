@@ -1,6 +1,5 @@
 package gui.addData
 
-import TitleText
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import gui.TitleText
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import models.UserInsert
@@ -205,7 +205,7 @@ fun InputUserData(
                 .fillMaxWidth()
                 .padding(top = 4.dp)
         ) {
-            Text("Write route to database")
+            Text("Write user to database")
         }
     }
 

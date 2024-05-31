@@ -1,6 +1,5 @@
 package gui.manageData
 
-import TitleText
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +22,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import gui.TitleText
 import gui.addData.PasswordVisibilityToggleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope

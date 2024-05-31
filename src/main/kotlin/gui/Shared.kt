@@ -7,6 +7,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import models.Route
 import models.Station
 
@@ -247,4 +251,33 @@ fun CustomDropdownMenuInt(
             }
         }
     }
+}
+
+@Composable
+fun TitleText(
+    text: String,
+    fontSize: Int,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        fontWeight = FontWeight.Bold,
+        fontSize = fontSize.sp,
+        textAlign = TextAlign.Center,
+        fontFamily = FontFamily.SansSerif,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun BodyText(
+    text: String,
+    fontSize: Int
+) {
+    Text(
+        text = text,
+        fontSize = fontSize.sp,
+        textAlign = TextAlign.Center,
+        fontFamily = FontFamily.SansSerif
+    )
 }

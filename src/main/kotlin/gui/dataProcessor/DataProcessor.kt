@@ -1,6 +1,5 @@
 package gui.dataProcessor
 
-import TitleText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoDatabase
+import gui.TitleText
 import utils.DatabaseUtil.connectDB
 
 enum class DataSourceInDB(val customName: String) {

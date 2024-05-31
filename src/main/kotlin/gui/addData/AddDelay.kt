@@ -1,6 +1,5 @@
 package gui.addData
 
-import TitleText
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,10 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import gui.RoutesDropdownMenu
-import gui.StationsDropdownMenu
-import gui.toNameIDPairs
-import gui.toNumberIDPairs
+import gui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -276,7 +272,7 @@ fun InputDelayData(
                 .fillMaxWidth()
                 .padding(top = 4.dp)
         ) {
-            Text("Write station to database")
+            Text("Write delay to database")
         }
     }
 

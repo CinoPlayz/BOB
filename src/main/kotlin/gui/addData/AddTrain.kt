@@ -1,6 +1,5 @@
 package gui.addData
 
-import TitleText
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import gui.CustomDropdownMenu
+import gui.TitleText
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import models.Coordinates

@@ -1,8 +1,6 @@
 package gui.addData
 
-import TitleText
 import gui.daysOfWeek
-import gui.daysOfWeekMap
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +16,7 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.material.Button
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import gui.TitleText
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import models.RouteInsert

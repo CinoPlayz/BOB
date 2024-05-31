@@ -1,6 +1,5 @@
 package gui.manageData
 
-import TitleText
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,10 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import gui.RoutesDropdownMenu
-import gui.StationsDropdownMenu
-import gui.toNameIDPairs
-import gui.toNumberIDPairs
+import gui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
