@@ -215,6 +215,43 @@ module.exports = {
         }
     },
 
+    /**
+    * userController.2faLogin()
+    */
+    createDelay: async function (req, res, next) {
+        try {
+            const user = req.user;
+            let requestDelay = req.body.delay
+
+            if (!requestDelay) {
+                return shared.handleError(res, 400, "Missing required fields", null);
+            }
+            
+
+
+            if (!user) {
+                return shared.handleError(res, 404, "User not found", null);
+            }
+
+            if(!user['traveledDelays']){
+                user.traveledDelays = [];
+            }
+
+            if (user.traveledDelays.some(e => e.delay == requestDelay)) {
+                return shared.handleError(res, 400, "Delay already added", null);
+            }
+            
+            requestDelay = {delay: requestDelay};
+            user.traveledDelays.push(requestDelay);
+            await user.save();
+
+            return res.json(user.traveledDelays);
+        } catch (err) {
+            return shared.handleError(res, 500, "Error in creating user delay", err);
+        }
+
+    },
+
 
     /**
      * userController.update()

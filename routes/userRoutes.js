@@ -18,6 +18,7 @@ router.post('/createFromApp', extractToken, getRoleAndUserFromToken, isReqRole("
 router.post('/login', userController.login);
 router.post('/twoFaSetup', extractToken, getRoleAndUserFromToken, userController.twoFaSetup);
 router.post('/twoFaLogin', extractToken, userController.twoFaLogin);
+router.post('/createDelay', extractToken, getRoleAndUserFromToken, userController.createDelay);
 
 /*
  * PUT

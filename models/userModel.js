@@ -37,6 +37,13 @@ const userSchema = new Schema({
         //minlength: 8   ->za boljšo varnost?
     },
     tokens: [tokenSchema],
+    traveledDelays: [{
+        delay: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'delay',
+            required: true
+        },
+    }],
     '2faEnabled': {
         type: Boolean,
         default: false
