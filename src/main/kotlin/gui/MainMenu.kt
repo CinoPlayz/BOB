@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.addData.AddDataMenu
 import gui.dataProcessor.DataProcessor
+import gui.generateData.GenerateData
 import gui.login.logoutUserBackend
 import gui.manageData.ManageDataMenu
 import gui.scraper.Scraper
@@ -169,7 +170,7 @@ fun Menu(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    //.clickable { menuState.value = MenuState.GENERATOR }
+                    .clickable { menuState.value = MenuState.GENERATOR }
                     .background(if (menuState.value == MenuState.GENERATOR) Color.LightGray else Color.Transparent)
                     .padding(vertical = buttonPadding.dp)
                     .offset(x = textOffset.dp)
@@ -271,7 +272,7 @@ fun Content(
             MenuState.MANAGE_DATA -> ManageDataMenu()
             MenuState.SCRAPER -> Scraper(modifier)
             MenuState.PROCESSOR -> DataProcessor()
-            MenuState.GENERATOR -> TODO()
+            MenuState.GENERATOR -> GenerateData()
         }
     }
 }

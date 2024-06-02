@@ -59,15 +59,6 @@ fun App() {
     } else {
         LoginScreen(onLoginSuccess = { isAuthenticated = true })
     }
-
-    /*val menuState = remember { mutableStateOf(MenuState.ABOUT) }
-
-    MaterialTheme {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Menu(menuState, modifier = Modifier.weight(1f))
-            Content(menuState, modifier = Modifier.weight(2f))
-        }
-    }*/
 }
 
 

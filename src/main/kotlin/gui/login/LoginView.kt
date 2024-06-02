@@ -17,8 +17,8 @@ import utils.context.appContextGlobal
 fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("marko") }
+    var password by remember { mutableStateOf("marko1") }
     var twoFATOTP by remember { mutableStateOf("") }
     var twoFATokenLogin by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
