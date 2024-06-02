@@ -7,6 +7,7 @@ const { extractToken, getRoleFromToken, getRoleAndUserFromToken, isReqRole } = r
  * GET
  */
 router.get('/', extractToken, getRoleFromToken, userController.list);
+router.get('/delays', extractToken, getRoleAndUserFromToken, userController.listDelays);
 router.get('/:id', extractToken, getRoleFromToken, userController.show);
 
 

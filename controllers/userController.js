@@ -1,7 +1,9 @@
 var UserModel = require('../models/userModel.js');
+var DelayModel = require('../models/delayModel.js');
 const crypto = require('node:crypto')
 const OTPAuth = require('otpauth');
 var shared = require('./shared.js');
+const delayModel = require('../models/delayModel.js');
 
 module.exports = {
 
@@ -39,6 +41,25 @@ module.exports = {
         catch (err) {
             return shared.handleError(res, 500, "Error when getting user", err);
         }
+    },
+
+    /**
+     * userController.list()
+     */
+    listDelays: async function (req, res) {
+        try {
+            let user = req.user;
+            if (!user["traveledDelays"]) {
+                res.json([]);
+            } else {
+                res.json(user.traveledDelays);
+            }
+        }
+        catch (err) {
+            console.log(err);
+            return shared.handleError(res, 500, "Error when getting users", err);
+        }
+
     },
 
 
@@ -218,35 +239,48 @@ module.exports = {
     /**
     * userController.2faLogin()
     */
-    createDelay: async function (req, res, next) {
+    createDelay: async function (req, res) {
         try {
             const user = req.user;
             let requestDelay = req.body.delay
+            let requestTime = req.body.time
 
-            if (!requestDelay) {
+            if (!requestDelay || !requestTime) {
                 return shared.handleError(res, 400, "Missing required fields", null);
             }
-            
-
 
             if (!user) {
                 return shared.handleError(res, 404, "User not found", null);
             }
 
-            if(!user['traveledDelays']){
+            if (!user['traveledDelays']) {
                 user.traveledDelays = [];
             }
 
-            if (user.traveledDelays.some(e => e.delay == requestDelay)) {
+            let requestTimeDate = new Date(requestTime);
+            if (user.traveledDelays.some(e => e.delay == requestDelay && new Date(e.time).getTime() == requestTimeDate.getTime())) {
                 return shared.handleError(res, 400, "Delay already added", null);
             }
-            
-            requestDelay = {delay: requestDelay};
-            user.traveledDelays.push(requestDelay);
+
+            let foundDelay = await delayModel.findOne({
+                route: requestDelay, timeOfRequest: {
+                    $gte: new Date(requestTimeDate).setHours(0, 0, 0, 0),
+                    $lt: new Date(requestTimeDate).setHours(23, 59, 59, 999)
+                }
+            })
+
+            if (foundDelay == null) {
+                return shared.handleError(res, 400, "No delay saved for that route at that time", null);
+            }
+
+            let userDelay = { "delay": requestDelay, "time": requestTimeDate };
+            console.log(userDelay);
+            user.traveledDelays.push(userDelay);
             await user.save();
 
             return res.json(user.traveledDelays);
         } catch (err) {
+            console.log(err);
             return shared.handleError(res, 500, "Error in creating user delay", err);
         }
 

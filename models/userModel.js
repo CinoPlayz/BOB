@@ -43,6 +43,10 @@ const userSchema = new Schema({
             ref: 'delay',
             required: true
         },
+        time: {
+            type: Date,
+            required: true
+        },
     }],
     '2faEnabled': {
         type: Boolean,
