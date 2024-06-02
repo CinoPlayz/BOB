@@ -19,7 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.TitleText
-import gui.manageData.*
 
 enum class GenerateDataMenuState(val customName: String) {
     TLH("Train Location History"),
@@ -130,7 +129,7 @@ fun GenerateData(
                 )
         ) {
             when (generateDataMenuState.value) {
-                GenerateDataMenuState.TLH -> TODO()
+                GenerateDataMenuState.TLH -> GenerateDataTLHView()
                 GenerateDataMenuState.DELAY -> GenerateDataDelayView()
                 GenerateDataMenuState.RESET -> GenerateDataReset()
             }

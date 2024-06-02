@@ -13,20 +13,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.CustomDropdownMenuInt
-import gui.generateData.parts.DelayGenerateItem
-import gui.toNameIDPairs
-import gui.toNumberIDPairs
+import gui.generateData.parts.TLHGenerateItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.DelayInsert
 import models.Route
 import models.Station
+import models.TrainLocHistoryInsert
 import utils.api.dao.getAllRoutes
 import utils.api.dao.getAllStations
 
 @Composable
-fun GenerateDataDelayView(
+fun GenerateDataTLHView(
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -35,11 +33,16 @@ fun GenerateDataDelayView(
 
     var numberToGenerate by remember { mutableStateOf(1) }
 
-    var delays by remember { mutableStateOf<List<DelayInsert>>(emptyList()) } // generated delays (DelayInsert)
+    var tlhs by remember { mutableStateOf<List<TrainLocHistoryInsert>>(emptyList()) } // generated TrainLocHistories (TrainLocHistoryInsert)
     var allStations by remember { mutableStateOf<List<Station>>(emptyList()) } // generator - pick one at random
-    var allStationsPairs by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
-    var allRoutes by remember { mutableStateOf<List<Route>>(emptyList()) } // generator - pick one at random
-    var allRoutesPairs by remember { mutableStateOf<List<Pair<Int, String>>>(emptyList()) }
+    var allStationsNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var allRoutes by remember { mutableStateOf<List<Route>>(emptyList()) } // for route list
+    var allRoutesNumbers by remember { mutableStateOf<List<Int>>(emptyList()) }
+
+    val trainTypes = listOf(
+        "AVT", "BUS", "EC", "EN", "IC", "ICS",
+        "LP", "LPV", "LRG", "MO", "MV", "RG"
+    )
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -47,8 +50,8 @@ fun GenerateDataDelayView(
             try {
                 allStations = withContext(Dispatchers.IO) { getAllStations() }
                 allRoutes = withContext(Dispatchers.IO) { getAllRoutes() }
-                allStationsPairs = allStations.toNameIDPairs()
-                allRoutesPairs = allRoutes.toNumberIDPairs()
+                allStationsNames = allStations.map { it.name }
+                allRoutesNumbers = allRoutes.map { it.trainNumber }
             } catch (e: Exception) {
                 feedbackMessage = "Error: ${e.message}"
             } finally {
@@ -57,30 +60,30 @@ fun GenerateDataDelayView(
         }
     }
 
-    fun updateDelay(newDelay: DelayInsert, index: Int) {
-        val updatedList = delays.toMutableList()
+    fun updateTLH(newTLH: TrainLocHistoryInsert, index: Int) {
+        val updatedList = tlhs.toMutableList()
         if (index in updatedList.indices) {
-            updatedList[index] = newDelay
-            delays = updatedList
+            updatedList[index] = newTLH
+            tlhs = updatedList
         }
     }
 
-    fun insertDelay(success: Boolean, index: Int) {
+    fun insertTLH(success: Boolean, index: Int) {
         if (success) {
-            val updatedList = delays.toMutableList()
+            val updatedList = tlhs.toMutableList()
             if (index in updatedList.indices) {
                 updatedList.removeAt(index)
-                delays = updatedList
-                feedbackMessage = "Delay datapoint successfully inserted in the database."
+                tlhs = updatedList
+                feedbackMessage = "TLH datapoint successfully inserted in the database."
             }
         }
     }
 
-    fun removeDelay(index: Int) {
-        val updatedList = delays.toMutableList()
+    fun removeTLH(index: Int) {
+        val updatedList = tlhs.toMutableList()
         if (index in updatedList.indices) {
             updatedList.removeAt(index)
-            delays = updatedList
+            tlhs = updatedList
         }
     }
 
@@ -98,7 +101,7 @@ fun GenerateDataDelayView(
                 CircularProgressIndicator()
             }
         }
-    } else if (delays.isEmpty()) {
+    } else if (tlhs.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -107,7 +110,7 @@ fun GenerateDataDelayView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Choose number of Delays to generate",
+                "Choose number of Train Location Histories to generate",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -136,14 +139,15 @@ fun GenerateDataDelayView(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        val (feedback, generatedDelays) = generateDelays(
-                            delays = delays,
+                        val (feedback, generatedTLHs) = generateTLHs(
+                            tlhs = tlhs,
+                            trainTypes = trainTypes,
                             numberToGenerate = numberToGenerate,
-                            allStations = allStationsPairs,
-                            allRoutes = allRoutesPairs,
+                            allStations = allStationsNames,
+                            allRoutes = allRoutesNumbers,
                             isLoading = isLoading
                         )
-                        delays = generatedDelays
+                        tlhs = generatedTLHs
                         if (feedback != "") {
                             feedbackMessage = feedback
                         }
@@ -151,7 +155,7 @@ fun GenerateDataDelayView(
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text(text = "Generate Delays")
+                Text(text = "Generate Train Location Histories")
             }
         }
     } else {
@@ -181,11 +185,11 @@ fun GenerateDataDelayView(
                         Button(
                             onClick = {
                                 coroutineScope.launch {
-                                    val (feedback, insertedDelays) = insertAllDelaysFromGeneratedListToDB(
-                                        delays = delays,
+                                    val (feedback, insertedTLHs) = insertAllTLHsFromGeneratedListToDB(
+                                        tlhs = tlhs,
                                         isLoading = isLoading
                                     )
-                                    delays = insertedDelays
+                                    tlhs = insertedTLHs
                                     feedbackMessage = feedback
                                 }
                             },
@@ -195,7 +199,7 @@ fun GenerateDataDelayView(
                         }
                         Button(
                             onClick = {
-                                delays = emptyList()
+                                tlhs = emptyList()
                             },
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
@@ -203,20 +207,21 @@ fun GenerateDataDelayView(
                         }
                     }
                 }
-                itemsIndexed(delays) { index, delay ->
-                    DelayGenerateItem(
-                        delay = delay,
+                itemsIndexed(tlhs) { index, tlh ->
+                    TLHGenerateItem(
+                        train = tlh,
                         index = index,
-                        allStations = allStationsPairs,
-                        allRoutes = allRoutesPairs,
-                        onInsertDelay = { success, index ->
-                            insertDelay(success, index)
+                        trainTypes = trainTypes,
+                        allStations = allStationsNames,
+                        allRoutes = allRoutesNumbers,
+                        onInsertTrainLocHistory = { success, index ->
+                            insertTLH(success, index)
                         },
-                        onUpdateDelay = { delayToUpdate, index ->
-                            updateDelay(delayToUpdate, index)
+                        onUpdateTrainLocHistory = { delayToUpdate, index ->
+                            updateTLH(delayToUpdate, index)
                         },
-                        onRemoveDelay = { index ->
-                            removeDelay(index)
+                        onRemoveTrainLocHistory = { index ->
+                            removeTLH(index)
                         }
                     )
                 }

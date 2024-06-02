@@ -84,3 +84,4 @@ suspend fun insertAllDelaysFromGeneratedListToDB(
         "Insert All Delays: Success: $successCount, Failed: $failureCount" to mutableDelays
     }
 }
+

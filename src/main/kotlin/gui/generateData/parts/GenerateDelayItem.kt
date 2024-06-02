@@ -14,10 +14,8 @@ import gui.RoutesDropdownMenu
 import gui.StationsDropdownMenu
 import gui.scraper.parts.insertDelayFromScrapedListToDB
 import gui.scraper.parts.updateDelayInScrapedList
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import models.DelayInsert
-import utils.api.dao.insertDelay
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -322,69 +320,5 @@ fun DelayGenerateItem(
                 }
             }
         )
-    }
-}
-
-suspend fun updateDelayInGeneratedList(
-    index: Int,
-    requestYear: String,
-    requestMonth: String,
-    requestDay: String,
-    requestHour: String,
-    requestMinute: String,
-    requestSecond: String,
-    stationId: String,
-    routeId: String,
-    delayMinutes: Int?,
-    onSuccess: (DelayInsert, Int) -> Unit // Int = index
-): String {
-    var newRequestTimeStamp: LocalDateTime
-    try {
-        newRequestTimeStamp = LocalDateTime.of(
-            requestYear.toInt(),
-            requestMonth.toInt(),
-            requestDay.toInt(),
-            requestHour.toInt(),
-            requestMinute.toInt(),
-            requestSecond.toInt()
-        )
-        newRequestTimeStamp = newRequestTimeStamp.plusHours(2)
-    } catch (e: IllegalArgumentException) {
-        return ("Time of Request Format Invalid.")
-    }
-
-    if (delayMinutes == null) {
-        return ("Train Delay Format Invalid.")
-    }
-
-    val delayUpdate = DelayInsert(
-        timeOfRequest = newRequestTimeStamp,
-        route = routeId,
-        currentStation = stationId,
-        delay = delayMinutes
-    )
-
-    return try {
-        onSuccess(delayUpdate, index)
-        ""
-    } catch (e: Exception) {
-        "Error updating delay in the list. ${e.message}"
-    }
-}
-
-suspend fun insertDelayFromGeneratedListToDB(
-    delay: DelayInsert,
-    index: Int,
-    onSuccess: (Boolean, Int) -> Unit
-): String {
-    return try {
-        var success: Boolean
-        coroutineScope {
-            success = insertDelay(delay)
-        }
-        onSuccess(success, index)
-        ""
-    } catch (e: Exception) {
-        "Error inserting delay to the database. ${e.message}"
     }
 }
