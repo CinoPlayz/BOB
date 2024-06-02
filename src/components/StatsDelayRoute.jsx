@@ -2,6 +2,7 @@ import React, { useState, useEffect, } from 'react';
 import { VictoryTheme, VictoryTooltip, VictoryPie } from 'victory';
 import { Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
+import StatsDelay from './StatsDelay';
 
 
 function classNames(...classes) {
@@ -9,13 +10,13 @@ function classNames(...classes) {
 }
 
 
-function StatsDelayRoute({ statsDelay, statsRoute, statsStations }) {
-    const [dataByFilterBikes, setDataByFilterBikes] = useState([{ index: 0, trainNames: [], averageDelayByTrainNumber: 1 }]);
-    const [dataByFilterType, setDataByFilterType] = useState([{ index: 0, trainType: "Loading", countOfTrains: 0, label: "Loading" }]);
+function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay, addUserDelay }) {
+    const [dataByUserDelay, setDataByUserDelay] = useState([{ index: 0, trainName: "T", averageDelayByTrainNumber: 1, startTime: "", endTime: "" }]);
     const [schedule, setSchedule] = useState([{ _id: "0", trainName: "", timeStart: "", timeEnd: "" }]);
+    const [userDelays, setUserDelays] = useState([]);
     const [startStation, setStartStation] = useState(statsStations[0]);
     const [endStation, setEndStation] = useState(statsStations[1]);
-    const [dateOfRide, setDateOfRide] = useState("2024-05-23");
+    const [dateOfRide, setDateOfRide] = useState("2024-05-24");
     const [checkedTrains, setCheckedTrains] = useState([]);
 
 
@@ -33,44 +34,40 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations }) {
         return map;
     }
 
-    const getStats = async (statsRoute, statsDelay) => {
-        //Group by Type
-        let groupedByType = groupBy(statsRoute, stat => stat.trainType);
-        //console.log(Array.from(groupedByType));
-        let routeByType = []
-        let countOfByType = 0;
-        let countOfTrainsByType = 0;
+    const getStats = async (userDelays) => {
+        if (userDelays.length !== 0) {
+            //Group By Train Number
+            const groupedByTrainNumber = groupBy(userDelays, stat => stat.route.trainNumber + new Date(stat.timeOfRequest).setHours(0,0,0,0).toString());
+            //console.log(Array.from(groupedByTrainNumber));
+            let delayByTrainNumber = [];
+            let countOfByTrainNumber = 1;
+            groupedByTrainNumber.forEach((values, keys) => {
+                countOfByTrainNumber += 1;
+                let sum = 0;
+                let count = 0;
+                values.forEach((data) => {
+                    sum += data.delay;
+                    count += 1;
+                });
 
-        groupedByType.forEach((values, keys) => {
-            countOfByType += 1;
-            countOfTrainsByType = 0;
+                let averageDelayByTrainNumber = sum / count;
 
-            values.forEach((data) => {
-                countOfTrainsByType += 1;
+                let trainName = values[0].route.trainType + " " + values[0].route.trainNumber
+
+                delayByTrainNumber.push({ index: countOfByTrainNumber, trainName: trainName, averageDelayByTrainNumber, startTime: values[0].route.start.time, endTime: values[0].route.end.time, timeOfRide: values[0].timeOfRequest })
             });
 
-            let trainType = values[0].trainType
-            routeByType.push({ index: countOfByType, trainType: trainType, countOfTrains: countOfTrainsByType, label: trainType + "\n" + countOfTrainsByType + " trains" })
-        })
-
-        if (routeByType.length != 0) {
-            setDataByFilterType(routeByType);
+            if (delayByTrainNumber.length != 0) {
+                setDataByUserDelay(delayByTrainNumber);
+            }
         }
 
 
-        //Group by Bikes
-        let groupedByBikes = groupBy(statsRoute, stat => stat.canSupportBikes);
-        let routeByBikes = []
 
-        routeByBikes.push({ index: 0, count: groupedByBikes.get(true).length, supports: true, label: groupedByBikes.get(true).length + " trains\nsupport" })
-        routeByBikes.push({ index: 1, count: groupedByBikes.get(false).length, supports: false, label: groupedByBikes.get(false).length + " trains\nnot support" })
-        if (routeByBikes.length != 0) {
-            setDataByFilterBikes(routeByBikes);
-        }
     };
 
-    useEffect(() => {
-        getStats(statsRoute, statsDelay);
+    useEffect(() => {        
+        getUserDelays();
     }, [statsRoute]);
 
     const handleSearchDelays = async (e) => {
@@ -125,7 +122,7 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations }) {
     const handleCheck = (e) => {
         let checkedValue = e.target.value;
         let checkedTrainsNew = checkedTrains.slice();
-        if(!checkedTrains.includes(checkedValue)){
+        if (!checkedTrains.includes(checkedValue)) {
             checkedTrainsNew.push(checkedValue);
         }
         else {
@@ -133,8 +130,34 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations }) {
         }
 
         setCheckedTrains(checkedTrainsNew);
-        console.log(checkedTrainsNew);
     };
+
+    const handleAddUserDelay = async (e) => {
+        e.preventDefault();
+        await addUserDelay(checkedTrains, dateOfRide);
+        await getUserDelays();
+    }
+
+    const getUserDelays = async () => {
+        let fetchedUserDelay = await fetchUserDelay();
+
+        let userDelays = []
+        fetchedUserDelay.forEach((userDelay) => {
+            statsDelay.forEach((delay) => {
+                let timeOfRequestDate = new Date(delay.timeOfRequest).setHours(0, 0, 0, 0);
+                let userDelayDate = new Date(userDelay.time).setHours(0, 0, 0, 0);
+                if (timeOfRequestDate == userDelayDate && delay.route._id == userDelay.delay) {
+                    userDelays.push(delay);
+                }
+            });
+        })
+
+        setUserDelays(userDelays);
+    }
+
+    useEffect(() => {  
+        getStats(userDelays);
+    }, [userDelays]);
 
     return (
         <div>
@@ -297,7 +320,7 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations }) {
                 <div className="px-4 py-5 sm:p-6">
                     <ul role="list" className="divide-y divide-gray-100">
                         <fieldset>
-                            {schedule.map((entry) => (
+                            {schedule[0].trainName != "" && schedule.map((entry) => (
                                 <li key={entry._id} className="flex justify-between gap-x-6 py-5">
                                     <div className="flex h-6 items-center">
                                         <input
@@ -319,47 +342,45 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations }) {
                         </fieldset>
                     </ul>
 
+                    {schedule[0].trainName != "" &&
+                        <form onSubmit={handleAddUserDelay}>
+                            <button
+                                type="submit"
+                                className="rounded-md bg-indigo-600 px-3 mt-8 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            >
+                                Save
+                            </button>
+                        </form>
+                    }
+
+
+                </div>
+
+                <div className="px-4 py-5 sm:p-6">
+                    <ul role="list" className="divide-y divide-gray-100">
+                        <fieldset>
+                            {dataByUserDelay[0].index != "0" && dataByUserDelay.map((entry) => (
+                                <li key={entry.index} className="flex justify-between gap-x-6 py-5">
+                                    <div className="flex min-w-0 gap-x-4">
+                                        <p className="text-sm font-semibold leading-6 text-gray-900">{entry.trainName}</p>
+                                        <p className="text-sm leading-6 text-gray-900">{"(" + new Date(entry.timeOfRide).toLocaleDateString() + ")"}</p>
+                                    </div>
+                                    <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+                                        <p className="text-sm leading-6 text-gray-900">{entry.startTime} - {entry.endTime}</p>
+                                    </div>
+                                </li>
+                            ))}
+                        </fieldset>
+                    </ul>
+
                 </div>
 
 
             </div>
 
-            <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow my-8">
-                <div className="px-4 py-5 sm:px-6">
-                    <h4 className="text-xl">Number of trains by Type</h4>
-                </div>
-                <div className="px-4 py-5 sm:p-6">
-                    <p>Total: {dataByFilterType.reduce((sum, currentValue) => {
-                        return sum + currentValue.countOfTrains
-                    }, 0)}</p>
-                    <div className="size-3/6">
-                        <VictoryPie
-                            theme={VictoryTheme.material}
-                            data={dataByFilterType}
-                            innerRadius={100}
-                            labelComponent={<VictoryTooltip />}
-                            x="trainType" y="countOfTrains">
-                        </VictoryPie>
-                    </div>
-                </div>
-            </div>
-
 
             <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow my-8">
-                <div className="px-4 py-5 sm:px-6">
-                    <h4 className="text-xl">Trains by supproting bikes</h4>
-                </div>
-                <div className="px-4 py-5 sm:p-6">
-                    <div className="size-3/6">
-                        <VictoryPie
-                            theme={VictoryTheme.material}
-                            data={dataByFilterBikes}
-                            innerRadius={100}
-                            labelComponent={<VictoryTooltip />}
-                            x="label" y="count">
-                        </VictoryPie>
-                    </div>
-                </div>
+                <StatsDelay statsDelay={userDelays} ></StatsDelay>
             </div>
         </div>
     );

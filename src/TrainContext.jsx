@@ -35,7 +35,7 @@ export const TrainProvider = ({ children }) => {
 
     const fetchTrainDataByDateRange = async (startDate, endDate) => {
         try {
-            const response = await fetch(`http://localhost:3001/trainLocHistories/trainLocByDate?startDate=${startDate}&endDate=${endDate}`); 
+            const response = await fetch(`http://localhost:3001/trainLocHistories/trainLocByDate?startDate=${startDate}&endDate=${endDate}`);
             const data = await response.json();
             return data;
         } catch (error) {
@@ -46,7 +46,7 @@ export const TrainProvider = ({ children }) => {
 
     const fetchDelayStats = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/delays/stats`); 
+            const response = await fetch(`http://localhost:3001/delays/stats`);
             const data = await response.json();
             return data;
         } catch (error) {
@@ -57,7 +57,7 @@ export const TrainProvider = ({ children }) => {
 
     const fetchRouteStats = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/routes`); 
+            const response = await fetch(`http://localhost:3001/routes`);
             const data = await response.json();
             return data;
         } catch (error) {
@@ -68,8 +68,54 @@ export const TrainProvider = ({ children }) => {
 
     const fetchStationStats = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/stations`); 
+            const response = await fetch(`http://localhost:3001/stations`);
             const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error while getting stats:', error);
+            return [];
+        }
+    };
+
+    const fetchUserDelay = async () => {
+        try {
+            let token = localStorage.getItem('token') || null;
+            const response = await fetch(`http://localhost:3001/users/delays`, {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error while getting stats:', error);
+            return [];
+        }
+    };
+
+    const addUserDelay = async (listOfDelays, dateOfRide) => {
+        try {
+            let token = localStorage.getItem('token') || null;
+            let data = [];
+
+            for (let i = 0; i < listOfDelays.length; i++) {
+                const response = await fetch(`http://localhost:3001/users/createDelay`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "delay": listOfDelays[i],
+                            "time": dateOfRide
+                        })
+                    }
+                );
+                data = await response.json();
+            }
+            
             return data;
         } catch (error) {
             console.error('Error while getting stats:', error);
@@ -85,7 +131,7 @@ export const TrainProvider = ({ children }) => {
     }, []);
 
     return (
-        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchDelayStats, fetchRouteStats, fetchStationStats }}>
+        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchDelayStats, fetchRouteStats, fetchStationStats, addUserDelay, fetchUserDelay }}>
             {children}
         </TrainContext.Provider>
     );

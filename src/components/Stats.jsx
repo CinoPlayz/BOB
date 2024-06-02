@@ -13,12 +13,11 @@ function classNames(...classes) {
 }
 
 function Stats() {
-    const { fetchDelayStats, fetchRouteStats, fetchStationStats } = useContext(TrainContext);
+    const { fetchDelayStats, fetchRouteStats, fetchStationStats, fetchUserDelay, addUserDelay } = useContext(TrainContext);
     const [showSelected, setShowSelected] = useState(showSelectedOptions[0]);
     const [statsDelay, setstatsDelay] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
     const [statsRoute, setStatsRoute] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
-    const [statsStation, setStatsStation] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
-    const [statsDelayRoute, setStatsDelayRoute] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);
+    const [statsStation, setStatsStation] = useState([{ route: { trainType: "Loading", trainNumber: "Loading" } }]);    
 
     const getStats = async () => {
         const statsDelayFetch = await fetchDelayStats();
@@ -93,7 +92,7 @@ function Stats() {
 
             {showSelected.id == 1 && <StatsDelay statsDelay={statsDelay} />}
             {showSelected.id == 2 && <StatsRoute statsRoute={statsRoute} />}
-            {showSelected.id == 3 && <StatsDelayRoute statsDelay={statsDelay} statsRoute={statsRoute} statsStations={statsStation} />}
+            {showSelected.id == 3 && <StatsDelayRoute statsDelay={statsDelay} statsRoute={statsRoute} statsStations={statsStation} fetchUserDelay={fetchUserDelay} addUserDelay={addUserDelay} />}
 
 
         </div>
