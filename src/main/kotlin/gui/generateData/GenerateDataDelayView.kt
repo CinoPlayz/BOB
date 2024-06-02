@@ -195,6 +195,14 @@ fun GenerateDataDelayView(
                         ) {
                             Text(text = "Save all to the database")
                         }
+                        Button(
+                            onClick = {
+                                delays = emptyList()
+                            },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(text = "Reset")
+                        }
                     }
                 }
                 itemsIndexed(delays) { index, delay ->
