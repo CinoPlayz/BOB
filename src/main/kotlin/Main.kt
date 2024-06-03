@@ -2,43 +2,43 @@ import java.io.File
 import java.io.InputStream
 
 enum class Symbol {
-    EOF,
-    BOX,
-    PERON,
-    LINE,
-    DEFINE, // let
-    VAR,
-    REAL,
-    PLUS,
-    MINUS,
-    TIMES,
-    DIVIDES,
-    INTDIVIDES,
-    POW,
-    LPAREN,
-    RPAREN,
+    ARROW,
     ASSIGN,
-    SKIP,
-    CIRC,
-    PLATFORM,
-    INFRASTRUCTURE,
-    TUNNEL,
+    BEND,
+    BOX,
     BRIDGE,
-    CROSSING,
-    TRAIN,
-    TRACK,
-    STATION,
-    SWITCH,
-    SEMICOLON,
+    CIRC,
     COMMA,
+    CROSSING,
+    DEFINE, // let
+    DIVIDES,
+    EOF,
+    INFRASTRUCTURE,
+    INTDIVIDES,
     LCURLY,
-    RCURLY,
+    LINE,
+    LPAREN,
     LSQUARE,
-    RSQUARE,
+    MINUS,
     NAME,
     NULL,
-    ARROW,
-    BEND,
+    PERON,
+    PLATFORM,
+    PLUS,
+    POW,
+    RCURLY,
+    REAL,
+    RPAREN,
+    RSQUARE,
+    SEMICOLON,
+    SKIP,
+    STATION,
+    SWITCH,
+    TIMES,
+    TRACK,
+    TRAIN,
+    TUNNEL,
+    VAR,
 }
 
 const val EOF = -1
@@ -125,7 +125,7 @@ object RailwayAutomaton : DFA {
 
     private fun setTransitionElseVariable(from: Int, chr: Char, to: Int, skipCharSet: Set<Char>) {
         alphaNumberCharSet.forEach {
-            if(!skipCharSet.contains(it)){
+            if (!skipCharSet.contains(it)) {
                 transitions[from][it.code + 1] = 68 // + 1 because EOF is -1 and the array starts at 0
             }
         }
@@ -179,7 +179,6 @@ object RailwayAutomaton : DFA {
         setTransition(68, alphabetCharSet, 68)
 
 
-
         //Reserved words
 
         //b
@@ -200,7 +199,6 @@ object RailwayAutomaton : DFA {
         setTransitionElseVariable(9, 'd', 10)
         setTransitionElseVariable(10, 'g', 11)
         setTransitionElseVariable(11, 'e', 12)
-
 
 
         //c
@@ -440,41 +438,41 @@ class Scanner(private val automaton: DFA, private val stream: InputStream) {
 
 fun name(symbol: Symbol) =
     when (symbol) {
-        Symbol.REAL -> "real"
-        Symbol.VAR -> "variable"
-        Symbol.PLUS -> "plus"
-        Symbol.MINUS -> "minus"
-        Symbol.TIMES -> "times"
-        Symbol.DIVIDES -> "divides"
-        Symbol.INTDIVIDES -> "integer-divides"
-        Symbol.POW -> "pow"
-        Symbol. LPAREN -> "lparen"
-        Symbol.RPAREN -> "rparen"
+        Symbol.ARROW -> "arrow"
         Symbol.ASSIGN -> "assign"
-        Symbol.DEFINE -> "define" //let
+        Symbol.BEND -> "bend"
         Symbol.BOX -> "box"
-        Symbol.PERON -> "peron"
-        Symbol.CIRC -> "circ"
-        Symbol.INFRASTRUCTURE -> "infrastructure"
-        Symbol.SWITCH -> "switch"
-        Symbol.TUNNEL -> "tunnel"
         Symbol.BRIDGE -> "bridge"
-        Symbol.CROSSING -> "crossing"
-        Symbol.TRAIN -> "train"
-        Symbol.TRACK -> "track"
-        Symbol.STATION -> "station"
-        Symbol.LCURLY -> "lcurly"
-        Symbol.RCURLY -> "rcurly"
+        Symbol.CIRC -> "circ"
         Symbol.COMMA -> "comma"
-        Symbol.SEMICOLON -> "semicolon"
+        Symbol.CROSSING -> "crossing"
+        Symbol.DEFINE -> "define" //let
+        Symbol.DIVIDES -> "divides"
+        Symbol.INFRASTRUCTURE -> "infrastructure"
+        Symbol.INTDIVIDES -> "integer-divides"
+        Symbol.LCURLY -> "lcurly"
+        Symbol.LINE -> "line"
+        Symbol.LPAREN -> "lparen"
+        Symbol.LSQUARE -> "lsquare"
+        Symbol.MINUS -> "minus"
         Symbol.NAME -> "name"
         Symbol.NULL -> "null"
-        Symbol.ARROW -> "arrow"
-        Symbol.BEND -> "bend"
-        Symbol.LINE -> "line"
-        Symbol.LSQUARE -> "lsquare"
-        Symbol.RSQUARE -> "rsquare"
+        Symbol.PERON -> "peron"
         Symbol.PLATFORM -> "platform"
+        Symbol.PLUS -> "plus"
+        Symbol.POW -> "pow"
+        Symbol.RCURLY -> "rcurly"
+        Symbol.REAL -> "real"
+        Symbol.RPAREN -> "rparen"
+        Symbol.RSQUARE -> "rsquare"
+        Symbol.SEMICOLON -> "semicolon"
+        Symbol.STATION -> "station"
+        Symbol.SWITCH -> "switch"
+        Symbol.TIMES -> "times"
+        Symbol.TRACK -> "track"
+        Symbol.TRAIN -> "train"
+        Symbol.TUNNEL -> "tunnel"
+        Symbol.VAR -> "variable"
         else -> throw Error("Invalid symbol")
     }
 
