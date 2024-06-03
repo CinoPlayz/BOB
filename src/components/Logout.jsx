@@ -6,9 +6,20 @@ function Logout() {
     const userContext = useContext(UserContext);
     useEffect(() => {
         const logout = async () => {
+            const token = localStorage.getItem('token'); // get token before reseting userContext
             userContext.setUserContext(null);
             localStorage.removeItem('token');
-            // const res = await fetch("http://localhost:3001/users/logout");
+
+            //console.log("token: " + token)
+
+            await fetch("http://localhost:3001/users/token", {
+                method: 'DELETE',
+                credentials: "include",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
         };
         logout();
     }, [userContext]);
