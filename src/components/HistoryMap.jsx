@@ -16,6 +16,7 @@ function HistoryMap() {
     const [speed, setSpeed] = useState(1);
     const [currentDateTime, setCurrentDateTime] = useState(null);
     const [filtersVisible, setFiltersVisible] = useState(false);
+    const [selectedTrainType, setSelectedTrainType] = useState('all');
     const mapRef = useRef(null);
     const timerRef = useRef(null);
     const currentGroupIndexRef = useRef(0);
@@ -32,9 +33,13 @@ function HistoryMap() {
 
     const handleSearch = async () => {
         const data = await fetchTrainDataByDateRange(startDate, endDate);
-        setTrainData(data);
+        if (selectedTrainType !== 'all') {
+            const filteredData = data.filter(train => train.trainType === selectedTrainType);
+            setTrainData(filteredData);
+        } else {
+            setTrainData(data);
+        }
     };
-
     const displayNextGroup = (timeOfRequestGroups, sortedGroupTimes) => {
         if (currentGroupIndexRef.current >= sortedGroupTimes.length) return;
         const time = parseInt(sortedGroupTimes[currentGroupIndexRef.current]);
@@ -50,7 +55,7 @@ function HistoryMap() {
         }
 
         group.forEach(train => {
-            const { trainNumber, coordinates, nextStation, delay } = train;
+            const { trainNumber, coordinates, nextStation, delay, trainType } = train;
             if (coordinates) {
                 const { lat, lng } = coordinates;
                 const marker = L.marker([lat, lng], { icon: L.icon({ iconUrl: trainIcon, iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(mapRef.current);
@@ -58,7 +63,8 @@ function HistoryMap() {
                     <div>
                         <b>Train Number:</b> ${trainNumber}<br>
                         <b>Next Station:</b> ${nextStation}<br>
-                        <b>Delay:</b> ${delay} min
+                        <b>Delay:</b> ${delay} min <br>
+                        <b>Train Type:</b> ${trainType}<br>
                     </div>
                 `);
             }
@@ -163,6 +169,21 @@ function HistoryMap() {
                         <button onClick={handlePauseResume} style={{ paddingLeft: '10px' }}>
                         <FontAwesomeIcon icon={isPaused ? faPlay : faPause} />
                         </button>
+                    </div>
+                    <div>
+                        <label style={{ paddingRight: '2px' }}>
+                            Train Type:
+                            <select value={selectedTrainType} onChange={(e) => setSelectedTrainType(e.target.value)} style={{ paddingLeft: '5px' }}>
+                                <option value="all">All</option>
+                                <option value="ICS">ICS</option>
+                                <option value="EC">EC</option>
+                                <option value="MV">MV</option>
+                                <option value="EN">EN</option>
+                                <option value="RG">RG</option>
+                                <option value="LP">LP</option>
+                                <option value="LPV">LPV</option>
+                            </select>
+                        </label>
                     </div>
                     {currentDateTime && <div>Current Time: {currentDateTime.toLocaleString()}</div>}
                 </div>
