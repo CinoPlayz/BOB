@@ -7,7 +7,7 @@ const { extractToken, getRoleFromToken, getRoleAndUserFromToken, isReqRole } = r
  * GET
  */
 router.get('/', extractToken, getRoleFromToken, userController.list);
-router.get('/delays', extractToken, getRoleAndUserFromToken, userController.listDelays);
+router.get('/delays', extractToken, getRoleAndUserFromToken, userController.listUserDelays);
 router.get('/:id', extractToken, getRoleFromToken, userController.show);
 
 
@@ -19,7 +19,7 @@ router.post('/createFromApp', extractToken, getRoleAndUserFromToken, isReqRole("
 router.post('/login', userController.login);
 router.post('/twoFaSetup', extractToken, getRoleAndUserFromToken, userController.twoFaSetup);
 router.post('/twoFaLogin', extractToken, userController.twoFaLogin);
-router.post('/createDelay', extractToken, getRoleAndUserFromToken, userController.createDelay);
+router.post('/delays', extractToken, getRoleAndUserFromToken, userController.createUserDelay);
 
 /*
  * PUT
@@ -32,6 +32,7 @@ router.put('/:id', extractToken, getRoleFromToken, isReqRole("admin"),  userCont
  */
 router.delete('/token', extractToken, getRoleAndUserFromToken, userController.deleteToken); 
 router.delete('/:id', extractToken, getRoleFromToken, isReqRole("admin"), userController.remove);
+router.delete('/delays/:id', extractToken, getRoleAndUserFromToken, userController.deleteUserDelay);
 router.delete('/:userId/tokens', extractToken, getRoleFromToken, isReqRole("admin"), userController.deleteAllTokens); 
 
 module.exports = router;

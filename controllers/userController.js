@@ -46,7 +46,7 @@ module.exports = {
     /**
      * userController.list()
      */
-    listDelays: async function (req, res) {
+    listUserDelays: async function (req, res) {
         try {
             let user = req.user;
             if (!user["traveledDelays"]) {
@@ -239,7 +239,7 @@ module.exports = {
     /**
     * userController.2faLogin()
     */
-    createDelay: async function (req, res) {
+    createUserDelay: async function (req, res) {
         try {
             const user = req.user;
             let requestDelay = req.body.delay
@@ -390,6 +390,26 @@ module.exports = {
 
         try {
             await UserModel.findByIdAndDelete(id);
+
+            return res.status(204).json();
+        }
+        catch (err) {
+            return shared.handleError(res, 500, "Error when deleting the user", err);
+        }
+    },
+
+    /**
+     * userController.remove()
+     */
+    deleteUserDelay: async function (req, res) {
+        var id = req.params.id;
+        var user = req.user;
+
+        try {
+            user.traveledDelays = user.traveledDelays.filter((item) => {
+                return item.delay != id
+            });
+            await user.save();
 
             return res.status(204).json();
         }
