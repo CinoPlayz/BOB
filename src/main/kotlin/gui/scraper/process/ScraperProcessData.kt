@@ -7,8 +7,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import models.*
-import utils.api.dao.insertStation
-import utils.api.dao.insertTrainLocHistory
 import utils.context.appContextGlobal
 import java.time.LocalDateTime
 
@@ -85,7 +83,7 @@ suspend fun getDataAndProcess(
 
                             when (source) {
                                 SourceWebsite.Official -> {
-                                    println(resultGet.value)
+                                    //println(resultGet.value)
                                     val listOfficial = json.decodeFromString<List<Official>>(resultGet.value)
                                     val requestOfficial = OfficialRequest(LocalDateTime.now(), listOfficial)
 
@@ -94,7 +92,7 @@ suspend fun getDataAndProcess(
                                 }
 
                                 SourceWebsite.Vlaksi -> {
-                                    println(resultGet.value)
+                                    //println(resultGet.value)
                                     val listVlakSi = json.decodeFromString<VlakiSi>(resultGet.value)
                                     val requestVlakSi = VlakiSiRequest(LocalDateTime.now(), listVlakSi)
                                     result = result.copy(listOfTrainLocHistory = requestVlakSi.toListTrainLocHistory())

@@ -26,7 +26,7 @@ data class ResultRoute(
 fun getRoutesAndProcess(resultState: MutableState<ResultRoute>) {
     var result = ResultRoute()
     try {
-        val request = Fuel.get("https://potniski.sz.si/vozni-redi-po-relacijah-od-11-decembra-2022-do-9-decembra-2023/")
+        val request = Fuel.get("https://potniski.sz.si/vozni-redi/vozni-redi-po-relacijah/")
 
         val (_, response, resultGet) = request.header("Accept-Language", "en")
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0")
@@ -52,14 +52,18 @@ fun getRoutesAndProcess(resultState: MutableState<ResultRoute>) {
                 val cookies = response.headers["Set-Cookie"].first()
 
                 val doc: Document = Ksoup.parse(resultGet.value)
-                val fileLinksElements = doc.body().getElementsByClass("filename")
+                val fileDivElements = doc.body().getElementsByClass("wp-block-file")
 
                 val pdfLinks = mutableListOf<String>()
 
-                fileLinksElements.forEach {
-                    if (it.tagName() == "a" && it.attribute("href") != null) {
-                        pdfLinks.add(it.attribute("href")!!.value)
+                fileDivElements.forEach { divElement ->
+                    val fileAElements = divElement.getElementsByTag("a")
+                    if(fileAElements.size > 0){
+                        if (fileAElements[0].attribute("href") != null) {
+                            pdfLinks.add(fileAElements[0].attribute("href")!!.value)
+                        }
                     }
+
                 }
 
                 val routes = mutableListOf<RouteInsert>()
@@ -172,7 +176,7 @@ fun getRouteDetails(
     try {
         val requestTrainDetails = Fuel.post(
             "https://potniski.sz.si/wp-admin/admin-ajax.php",
-            listOf("action" to "train_details", "data[train]" to trainNumber)
+            listOf("action" to "train_details", "data[train]" to trainNumber, "data[date]" to "22.05.2024")
         ).header(Headers.COOKIE to cookies)
 
         val (_, responseTrainDetails, resultTrainDetails) = requestTrainDetails.header("Accept-Language", "en")
