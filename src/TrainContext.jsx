@@ -82,14 +82,13 @@ export const TrainProvider = ({ children }) => {
             let token = localStorage.getItem('token') || null;
             const response = await fetch(`http://localhost:3001/users/delays`, {
                 headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
+                    'Authorization': 'Bearer ' + token
                 },
             });
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('Error while getting stats:', error);
+            console.error('Error while getting user stats:', error);
             return [];
         }
     };
@@ -100,12 +99,11 @@ export const TrainProvider = ({ children }) => {
             let data = [];
 
             for (let i = 0; i < listOfDelays.length; i++) {
-                const response = await fetch(`http://localhost:3001/users/createDelay`,
+                const response = await fetch(`http://localhost:3001/users/delays`,
                     {
                         method: 'POST',
                         headers: {
                             'Authorization': 'Bearer ' + token,
-                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
                             "delay": listOfDelays[i],
@@ -115,10 +113,30 @@ export const TrainProvider = ({ children }) => {
                 );
                 data = await response.json();
             }
-            
+
             return data;
         } catch (error) {
             console.error('Error while getting stats:', error);
+            return [];
+        }
+    };
+
+    const deleteUserDelay = async (id) => {
+        try {
+            let token = localStorage.getItem('token') || null;
+            const response = await fetch(`http://localhost:3001/users/delays/` + id,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                }
+            );
+            await response.text();
+
+            return "Deleted";
+        } catch (error) {
+            console.error('Error while deleting stats:', error);
             return [];
         }
     };
@@ -131,7 +149,7 @@ export const TrainProvider = ({ children }) => {
     }, []);
 
     return (
-        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchDelayStats, fetchRouteStats, fetchStationStats, addUserDelay, fetchUserDelay }}>
+        <TrainContext.Provider value={{ trainData, lastUpdate, fetchTrainDataByDateRange, fetchDelayStats, fetchRouteStats, fetchStationStats, addUserDelay, deleteUserDelay, fetchUserDelay }}>
             {children}
         </TrainContext.Provider>
     );

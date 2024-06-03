@@ -1,7 +1,7 @@
 import React, { useState, useEffect, } from 'react';
 import { VictoryTheme, VictoryTooltip, VictoryPie } from 'victory';
 import { Label, Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from '@headlessui/react'
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
+import { CheckIcon, ChevronUpDownIcon, TrashIcon } from '@heroicons/react/20/solid'
 import StatsDelay from './StatsDelay';
 
 
@@ -10,8 +10,8 @@ function classNames(...classes) {
 }
 
 
-function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay, addUserDelay }) {
-    const [dataByUserDelay, setDataByUserDelay] = useState([{ index: 0, trainName: "T", averageDelayByTrainNumber: 1, startTime: "", endTime: "" }]);
+function StatsUserDelay({ statsDelay, statsRoute, statsStations, fetchUserDelay, addUserDelay, deleteUserDelay }) {
+    const [dataByUserDelay, setDataByUserDelay] = useState([{ index: 0, routeId: "", trainName: "T", averageDelayByTrainNumber: 1, startTime: "", endTime: "" }]);
     const [schedule, setSchedule] = useState([{ _id: "0", trainName: "", timeStart: "", timeEnd: "" }]);
     const [userDelays, setUserDelays] = useState([]);
     const [startStation, setStartStation] = useState(statsStations[0]);
@@ -37,7 +37,7 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay
     const getStats = async (userDelays) => {
         if (userDelays.length !== 0) {
             //Group By Train Number
-            const groupedByTrainNumber = groupBy(userDelays, stat => stat.route.trainNumber + new Date(stat.timeOfRequest).setHours(0,0,0,0).toString());
+            const groupedByTrainNumber = groupBy(userDelays, stat => stat.route.trainNumber + new Date(stat.timeOfRequest).setHours(0, 0, 0, 0).toString());
             //console.log(Array.from(groupedByTrainNumber));
             let delayByTrainNumber = [];
             let countOfByTrainNumber = 1;
@@ -54,7 +54,7 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay
 
                 let trainName = values[0].route.trainType + " " + values[0].route.trainNumber
 
-                delayByTrainNumber.push({ index: countOfByTrainNumber, trainName: trainName, averageDelayByTrainNumber, startTime: values[0].route.start.time, endTime: values[0].route.end.time, timeOfRide: values[0].timeOfRequest })
+                delayByTrainNumber.push({ index: countOfByTrainNumber, routeId: values[0].route._id, trainName: trainName, averageDelayByTrainNumber, startTime: values[0].route.start.time, endTime: values[0].route.end.time, timeOfRide: values[0].timeOfRequest })
             });
 
             if (delayByTrainNumber.length != 0) {
@@ -66,7 +66,7 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay
 
     };
 
-    useEffect(() => {        
+    useEffect(() => {
         getUserDelays();
     }, [statsRoute]);
 
@@ -155,9 +155,25 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay
         setUserDelays(userDelays);
     }
 
-    useEffect(() => {  
+    useEffect(() => {
         getStats(userDelays);
     }, [userDelays]);
+
+    const handleDeleteUserDelay = async (e) => {
+        e.preventDefault();
+        //Button get value
+        let value = e.target.value        
+        if(value === undefined){
+            //SVG get value
+            value = e.target.parentElement.value;
+            if(value === undefined){
+                //g get value
+                value = e.target.parentElement.attributes.value.nodeValue
+            }
+        }
+        await deleteUserDelay(value);
+        await getUserDelays();
+    }
 
     return (
         <div>
@@ -365,8 +381,17 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay
                                         <p className="text-sm font-semibold leading-6 text-gray-900">{entry.trainName}</p>
                                         <p className="text-sm leading-6 text-gray-900">{"(" + new Date(entry.timeOfRide).toLocaleDateString() + ")"}</p>
                                     </div>
-                                    <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+                                    <div className="hidden shrink-0 sm:flex sm:flex-row sm:items-center sm:gap-3">
                                         <p className="text-sm leading-6 text-gray-900">{entry.startTime} - {entry.endTime}</p>
+                                        <button
+                                            type="button"
+                                            value={entry.routeId}
+                                            onClick={handleDeleteUserDelay}
+                                            className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                        >
+                                            <TrashIcon className="-ml-0.5 h-5 w-5" aria-hidden="true" value={entry.routeId}/>
+                                            
+                                        </button>
                                     </div>
                                 </li>
                             ))}
@@ -386,4 +411,4 @@ function StatsDelayRoute({ statsDelay, statsRoute, statsStations, fetchUserDelay
     );
 }
 
-export default StatsDelayRoute;
+export default StatsUserDelay;

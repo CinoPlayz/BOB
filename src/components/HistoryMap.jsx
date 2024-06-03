@@ -3,8 +3,11 @@ import TrainContext from '../TrainContext';
 import trainIcon from '../assets/train_icon.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faPause, faFilter, faSearch  } from '@fortawesome/free-solid-svg-icons';
+import { UserContext } from '../UserContext';
+import { Navigate } from 'react-router-dom';
 
 function HistoryMap() {
+    const userContext = useContext(UserContext);
     const { fetchTrainDataByDateRange } = useContext(TrainContext);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -106,6 +109,8 @@ function HistoryMap() {
     }, [isPaused]);
 
     return (
+        <>
+        {!userContext.token ? <Navigate replace to="/login" /> : ""}
         <div>
             <button
                 style={{
@@ -164,6 +169,8 @@ function HistoryMap() {
             )}
             <div id="map" style={{ height: '100vh', width: '100vw', zIndex: 0 }}></div>
         </div>
+        </>
+        
     );
 }
 

@@ -20,7 +20,7 @@ export default function Header(props) {
 
   const handleLinkClick = () => {
     setOpen(false);
-    navigate(path);
+    //navigate(path);
   };
 
   return (
@@ -69,14 +69,14 @@ export default function Header(props) {
                           </Link>
                           <Link
                             to="/stats"
-                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/stats')}`}
+                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/stats')}`}                            
                           >
                             Stats
                           </Link>
                         </>
                         :
                         <>
-                          
+
                           <Link
                             to="/login"
                             className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/login')}`}
@@ -88,6 +88,13 @@ export default function Header(props) {
                             className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/register')}`}
                           >
                             Register
+                          </Link>
+                          <Link
+                            to="/map"
+                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/map')}`}
+                            onClick={handleLinkClick}
+                          >
+                            Map
                           </Link>
                         </>
 
@@ -219,6 +226,14 @@ export default function Header(props) {
                         onClick={() => handleLinkClick('/register')}
                       >
                         Register
+                      </DisclosureButton>
+                      <DisclosureButton
+                        as={Link}
+                        to="/map"
+                        className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${isActive('/login')}`}
+                        onClick={() => handleLinkClick('/map')}
+                      >
+                        Map
                       </DisclosureButton>
                     </>
                 )}
