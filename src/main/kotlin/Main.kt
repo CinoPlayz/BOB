@@ -1,137 +1,86 @@
 import java.io.File
 import java.io.InputStream
 
-const val ERROR_STATE = 0
+enum class Symbol {
+    EOF,
+    BOX,
+    PERON,
+    LINE,
+    DEFINE, // let
+    VAR,
+    REAL,
+    PLUS,
+    MINUS,
+    TIMES,
+    DIVIDES,
+    INTDIVIDES,
+    POW,
+    LPAREN,
+    RPAREN,
+    ASSIGN,
+    SKIP,
+    CIRC,
+    PLATFORM,
+    INFRASTRUCTURE,
+    TUNNEL,
+    BRIDGE,
+    CROSSING,
+    TRAIN,
+    TRACK,
+    STATION,
+    SWITCH,
+    SEMICOLON,
+    COMMA,
+    LCURLY,
+    RCURLY,
+    LSQUARE,
+    RSQUARE,
+    NAME,
+    NULL,
+    ARROW,
+    BEND,
+}
 
 const val EOF = -1
-const val BOX = 0
-const val PERON = 1
-const val DEFINE = 2 // let
-const val VAR = 3
-const val REAL = 4
-const val PLUS = 5
-const val MINUS = 6
-const val TIMES = 7
-const val DIVIDES = 8
-const val INTDIVIDES = 9
-const val POW = 10
-const val LPAREN = 11
-const val RPAREN = 12
-const val ASSIGN = 13
-const val SKIP = 14
-const val CIRC = 15
-const val INFRASTRUCTURE = 16
-const val TUNEL = 17
-const val MOST = 18
-const val PREHOD = 19
-const val VLAK = 20
-const val TIR = 21
-const val POSTAJA = 22
-const val KRETNICA = 23
-const val SEMICOLON = 24
-const val COMMA = 25
-const val LCURLY = 26
-const val RCURLY = 27
-const val NAME = 28
-const val NULL = 29
-const val DOT = 30
-const val ARROW = 31
-const val BEND = 32
-
-
+const val ERROR_STATE = 0
 const val NEWLINE = '\n'.code
+
 
 interface DFA {
     val states: Set<Int>
     val alphabet: IntRange
     fun next(state: Int, code: Int): Int
-    fun symbol(state: Int): Int
+    fun symbol(state: Int): Symbol
     val startState: Int
     val finalStates: Set<Int>
 }
 
-object LeksAutomaton : DFA {
-    override val states = (1..140).toSet()
+object RailwayAutomaton : DFA {
+    override val states = (1..103).toSet()
     override val alphabet = 0..255
     override val startState = 1
 
 
     override val finalStates =
         setOf(
-            2,
-            4,
             5,
-            6,
             7,
-            8,
-            9,
-            10,
-            11,
             12,
-            13,
-            14,
-            15,
             16,
-            17,
-            18,
-            19,
-            20,
-            21,
-            22,
             23,
-            24,
-            25,
-            26,
-            27,
-            28,
-            29,
-            30,
-            31,
-            32,
-            33,
-            34,
-            35,
-            36,
             37,
-            38,
-            39,
             40,
-            41,
-            42,
             43,
-            44,
-            45,
-            46,
-            47,
-            48,
-            49,
             50,
-            51,
-            52,
-            53,
-            54,
             55,
-            56,
-            57,
-            58,
-            59,
             60,
-            61,
             62,
-            63,
-            64,
-            65,
-            66,
             67,
             68,
-            69,
-            70,
-            71,
             72,
             73,
             74,
             75,
-            76,
             77,
             78,
             79,
@@ -148,60 +97,38 @@ object LeksAutomaton : DFA {
             90,
             91,
             92,
-            93,
             94,
             95,
-            96,
-            97,
-            98,
-            99,
-            100,
-            101,
-            102,
-            103,
-            104,
-            105,
-            106,
-            107,
-            108,
-            109,
-            110,
-            111,
-            112,
-            113,
-            114,
-            115,
-            116,
-            117,
-            118,
-            119,
-            120,
-            121,
-            122,
-            123,
-            124,
-            125,
-            126,
-            127,
-            128,
-            129,
-            130,
-            131,
-            132,
-            133,
-            134,
-            135,
-            136,
-            137,
-            138
+            103
         )
 
     private val numberOfStates = states.max() + 1 // plus the ERROR_STATE
     private val numberOfCodes = alphabet.max() + 2 // plus the EOF
     private val transitions = Array(numberOfStates) { IntArray(numberOfCodes) }
-    private val values = Array(numberOfStates) { SKIP }
+    private val values = Array(numberOfStates) { Symbol.SKIP }
+    private val alphabetLowerCharSet: Set<Char> = ('a'..'z').toSet()
+    private val alphabetUpperCharSet: Set<Char> = ('A'..'Z').toSet()
+    private val alphabetCharSet: Set<Char> = alphabetLowerCharSet + alphabetUpperCharSet
+    private val numberCharSet: Set<Char> = ('0'..'9').toSet()
+    private val alphaNumberCharSet: Set<Char> = alphabetCharSet + numberCharSet
 
     private fun setTransition(from: Int, chr: Char, to: Int) {
+        transitions[from][chr.code + 1] = to
+    }
+
+    private fun setTransitionElseVariable(from: Int, chr: Char, to: Int) {
+        alphaNumberCharSet.forEach {
+            transitions[from][it.code + 1] = 68 // + 1 because EOF is -1 and the array starts at 0
+        }
+        transitions[from][chr.code + 1] = to
+    }
+
+    private fun setTransitionElseVariable(from: Int, chr: Char, to: Int, skipCharSet: Set<Char>) {
+        alphaNumberCharSet.forEach {
+            if(!skipCharSet.contains(it)){
+                transitions[from][it.code + 1] = 68 // + 1 because EOF is -1 and the array starts at 0
+            }
+        }
         transitions[from][chr.code + 1] = to
     }
 
@@ -209,7 +136,13 @@ object LeksAutomaton : DFA {
         transitions[from][code + 1] = to
     }
 
-    private fun setSymbol(state: Int, symbol: Int) {
+    private fun setTransition(from: Int, charSet: Set<Char>, to: Int) {
+        charSet.forEach {
+            transitions[from][it.code + 1] = to // + 1 because EOF is -1 and the array starts at 0
+        }
+    }
+
+    private fun setSymbol(state: Int, symbol: Symbol) {
         values[state] = symbol
     }
 
@@ -219,265 +152,239 @@ object LeksAutomaton : DFA {
         return transitions[state][code + 1]
     }
 
-    override fun symbol(state: Int): Int {
+    override fun symbol(state: Int): Symbol {
         assert(states.contains(state))
         return values[state]
     }
 
     init {
+        //Skip
+        setTransition(1, '\n', 86)
+        setTransition(1, '\r', 86)
+        setTransition(1, ' ', 86)
+        setTransition(1, '\t', 86)
+
+        //.2 - IS OK
+        setTransition(1, '.', 75)
+        setTransition(75, '.', 76)
+
+        //0-9
+        setTransition(1, numberCharSet, 75)
+        setTransition(75, numberCharSet, 75)
+        setTransition(76, numberCharSet, 77)
+        setTransition(77, numberCharSet, 77)
+
+        //a-z A-Z
+        setTransition(1, alphabetCharSet, 68)
+        setTransition(68, alphabetCharSet, 68)
 
 
-//         skipped
-        setTransition(1, '\n', 87)
-        setTransition(1, '\r', 87)
-        setTransition(1, ' ', 87)
-        setTransition(87, '\n', 87)
-        setTransition(87, '\r', 87)
-        setTransition(87, ' ', 87)
-        setTransition(1, '\t', 87)
-        setTransition(87, '\t', 87)
+
+        //Reserved words
+
+        //b
+        setTransition(1, 'b', 2)
+
+        //bend
+        setTransitionElseVariable(2, 'e', 3, setOf('e', 'o', 'r'))
+        setTransitionElseVariable(3, 'n', 4)
+        setTransitionElseVariable(4, 'd', 5)
+
+        //box
+        setTransitionElseVariable(2, 'o', 6, setOf('e', 'o', 'r'))
+        setTransitionElseVariable(6, 'x', 7)
+
+        //bridge
+        setTransitionElseVariable(2, 'r', 8, setOf('e', 'o', 'r'))
+        setTransitionElseVariable(8, 'i', 9)
+        setTransitionElseVariable(9, 'd', 10)
+        setTransitionElseVariable(10, 'g', 11)
+        setTransitionElseVariable(11, 'e', 12)
 
 
-        for (n in '0'..'9') {
-            setTransition(1, n, 71)
-            setTransition(71, n, 71)
-            setTransition(72, n, 73)
-            setTransition(73, n, 73)
-            setTransition(69, n, 70)
-            setTransition(70, n, 70)
-        }
+
+        //c
+        setTransition(1, 'c', 13)
+
+        //circ
+        setTransitionElseVariable(13, 'i', 14, setOf('i', 'r'))
+        setTransitionElseVariable(15, 'r', 16)
+        setTransitionElseVariable(15, 'c', 16)
+
+        //crossing
+        setTransitionElseVariable(13, 'r', 17, setOf('i', 'r'))
+        setTransitionElseVariable(17, 'o', 18)
+        setTransitionElseVariable(18, 's', 19)
+        setTransitionElseVariable(19, 's', 20)
+        setTransitionElseVariable(20, 'i', 21)
+        setTransitionElseVariable(21, 'n', 22)
+        setTransitionElseVariable(22, 'g', 23)
 
 
-        for (n in 'a'..'z') {
-            setTransition(1, n, 69)
-            setTransition(69, n, 69)
-            //setTransition(70, n, 70)
-        }
-
-        for (n in 'A'..'Z') {
-            setTransition(1, n, 69)
-            setTransition(69, n, 69)
-            //setTransition(70, n, 70)
-        }
-
-        // rezervirane besede
-        for (n in ('a'..'z') + ('A'..'Z') + ('0'..'9')) {
-            for (m in 2..68) {
-                if (m == 2 && n == 'o')//box
-                    setTransition(m, n, 3)
-                else if (m == 3 && n == 'x')//box
-                    setTransition(m, n, 4)
-                else if (m == 5 && n == 'e')//peron
-                    setTransition(m, n, 6)
-                else if (m == 6 && n == 'r')
-                    setTransition(m, n, 7)
-                else if (m == 7 && n == 'o')
-                    setTransition(m, n, 8)
-                else if (m == 8 && n == 'n')//peron
-                    setTransition(m, n, 9)
-                else if (m == 10 && n == 'e')//let
-                    setTransition(m, n, 11)
-                else if (m == 11 && n == 't')
-                    setTransition(m, n, 12)//let
-                else if (m == 13 && n == 'i')//circ
-                    setTransition(m, n, 14)
-                else if (m == 14 && n == 'r')
-                    setTransition(m, n, 15)
-                else if (m == 15 && n == 'c')
-                    setTransition(m, n, 16)
-                else if (m == 17 && n == 'n') // infrastruktura
-                    setTransition(m, n, 18)
-                else if (m == 18 && n == 'f')
-                    setTransition(m, n, 19)
-                else if (m == 19 && n == 'r')
-                    setTransition(m, n, 20)
-                else if (m == 20 && n == 'a')
-                    setTransition(m, n, 21)
-                else if (m == 21 && n == 's')
-                    setTransition(m, n, 22)
-                else if (m == 22 && n == 't')
-                    setTransition(m, n, 23)
-                else if (m == 23 && n == 'r')
-                    setTransition(m, n, 24)
-                else if (m == 24 && n == 'u')
-                    setTransition(m, n, 25)
-                else if (m == 25 && n == 'k')
-                    setTransition(m, n, 26)
-                else if (m == 26 && n == 't')
-                    setTransition(m, n, 27)
-                else if (m == 27 && n == 'u')
-                    setTransition(m, n, 28)
-                else if (m == 28 && n == 'r')
-                    setTransition(m, n, 29)
-                else if (m == 29 && n == 'a')
-                    setTransition(m, n, 30)
-                else if (m == 5 && n == 'o') // postaja
-                    setTransition(m, n, 31)
-                else if (m == 31 && n == 's')
-                    setTransition(m, n, 32)
-                else if (m == 32 && n == 't')
-                    setTransition(m, n, 33)
-                else if (m == 33 && n == 'a')
-                    setTransition(m, n, 34)
-                else if (m == 34 && n == 'j')
-                    setTransition(m, n, 35)
-                else if (m == 35 && n == 'a')
-                    setTransition(m, n, 36) // postaja
-                else if (m == 37 && n == 'r') // kretnica
-                    setTransition(m, n, 38)
-                else if (m == 38 && n == 'e')
-                    setTransition(m, n, 39)
-                else if (m == 39 && n == 't')
-                    setTransition(m, n, 40)
-                else if (m == 40 && n == 'n')
-                    setTransition(m, n, 41)
-                else if (m == 41 && n == 'i')
-                    setTransition(m, n, 42)
-                else if (m == 42 && n == 'c')
-                    setTransition(m, n, 43)
-                else if (m == 43 && n == 'a')
-                    setTransition(m, n, 44) // kretnica
-                else if (m == 45 && n == 'u') // tunel
-                    setTransition(m, n, 46)
-                else if (m == 46 && n == 'n')
-                    setTransition(m, n, 47)
-                else if (m == 47 && n == 'e')
-                    setTransition(m, n, 48)
-                else if (m == 48 && n == 'l')
-                    setTransition(m, n, 49) // tunel
-                else if (m == 50 && n == 'o') // most
-                    setTransition(m, n, 51)
-                else if (m == 51 && n == 's')
-                    setTransition(m, n, 52)
-                else if (m == 52 && n == 't')
-                    setTransition(m, n, 53) // most
-                else if (m == 5 && n == 'r') // prehod
-                    setTransition(m, n, 54)
-                else if (m == 54 && n == 'e')
-                    setTransition(m, n, 55)
-                else if (m == 55 && n == 'h')
-                    setTransition(m, n, 56)
-                else if (m == 56 && n == 'o')
-                    setTransition(m, n, 57)
-                else if (m == 57 && n == 'd')
-                    setTransition(m, n, 58) // prehod
-                else if (m == 59 && n == 'l') // vlak
-                    setTransition(m, n, 60)
-                else if (m == 60 && n == 'a')
-                    setTransition(m, n, 61)
-                else if (m == 61 && n == 'k')
-                    setTransition(m, n, 62) // vlak
-                else if (m == 45 && n == 'i') // tir
-                    setTransition(m, n, 63)
-                else if (m == 63 && n == 'r')
-                    setTransition(m, n, 64) // tir
-                else if (m == 65 && n == 'u')
-                    setTransition(m, n, 66) // null
-                else if (m == 66 && n == 'l')
-                    setTransition(m, n, 67)
-                else if (m == 67 && n == 'l')
-                    setTransition(m, n, 68) // null
-                else {
-                    setTransition(m, n, 69)
-                    setSymbol(m, VAR)
-                }
-            }
-        }
+        //i - infrastructure
+        setTransition(1, 'i', 24)
+        setTransitionElseVariable(24, 'n', 25)
+        setTransitionElseVariable(25, 'f', 26)
+        setTransitionElseVariable(26, 'r', 27)
+        setTransitionElseVariable(27, 'a', 28)
+        setTransitionElseVariable(28, 's', 29)
+        setTransitionElseVariable(29, 't', 30)
+        setTransitionElseVariable(30, 'r', 31)
+        setTransitionElseVariable(31, 'u', 32)
+        setTransitionElseVariable(32, 'c', 33)
+        setTransitionElseVariable(33, 't', 34)
+        setTransitionElseVariable(34, 'u', 35)
+        setTransitionElseVariable(35, 'r', 36)
+        setTransitionElseVariable(36, 'e', 37)
 
 
-        for (n in ('a'..'z') + ('A'..'Z') + ('0'..'9')) {
-            for (m in 2..96) {
-                if (m == 2 && n == 'e')
-                    setTransition(m, n, 93)
-                else if (m == 93 && n == 'n')
-                    setTransition(m, n, 94)
-                else if (m == 94 && n == 'd')
-                    setTransition(m, n, 95)
-            }
-        }
+        //l
+        setTransition(1, 'l', 38)
 
-        setTransition(1, '"', 89)
-        for (n in 0..255) { // kateri koli znak znotraj narekovajev
+        //let
+        setTransitionElseVariable(38, 'e', 39, setOf('e', 'i'))
+        setTransitionElseVariable(39, 't', 40)
+
+        //line
+        setTransitionElseVariable(38, 'i', 41, setOf('e', 'i'))
+        setTransitionElseVariable(41, 'n', 42)
+        setTransitionElseVariable(42, 'e', 43)
+
+        //p - platform
+        setTransition(1, 'p', 96)
+        setTransitionElseVariable(96, 'l', 97)
+        setTransitionElseVariable(97, 'a', 98)
+        setTransitionElseVariable(98, 't', 99)
+        setTransitionElseVariable(99, 'f', 100)
+        setTransitionElseVariable(100, 'o', 101)
+        setTransitionElseVariable(101, 'r', 102)
+        setTransitionElseVariable(102, 'm', 103)
+
+
+        //s
+        setTransition(1, 's', 44)
+
+        //station
+        setTransitionElseVariable(44, 't', 45, setOf('t', 'w'))
+        setTransitionElseVariable(45, 'a', 46)
+        setTransitionElseVariable(46, 't', 47)
+        setTransitionElseVariable(47, 'i', 48)
+        setTransitionElseVariable(48, 'o', 49)
+        setTransitionElseVariable(49, 'n', 50)
+
+        //switch
+        setTransitionElseVariable(44, 'w', 51, setOf('t', 'w'))
+        setTransitionElseVariable(51, 'i', 52)
+        setTransitionElseVariable(52, 't', 53)
+        setTransitionElseVariable(53, 'c', 54)
+        setTransitionElseVariable(54, 'h', 55)
+
+
+        //t
+        setTransition(1, 't', 56)
+
+        //tra
+        setTransitionElseVariable(56, 'r', 57, setOf('r', 'u'))
+        setTransitionElseVariable(57, 'a', 58)
+
+        //track
+        setTransitionElseVariable(58, 'c', 59, setOf('c', 'i'))
+        setTransitionElseVariable(59, 'k', 60)
+
+        //train
+        setTransitionElseVariable(58, 'i', 61, setOf('c', 'i'))
+        setTransitionElseVariable(61, 'n', 62)
+
+        //tunnel
+        setTransitionElseVariable(56, 'u', 63, setOf('r', 'u'))
+        setTransitionElseVariable(63, 'n', 64)
+        setTransitionElseVariable(64, 'n', 65)
+        setTransitionElseVariable(65, 'e', 66)
+        setTransitionElseVariable(66, 'l', 67)
+
+
+        //n - null
+        setTransition(1, 'n', 69)
+        setTransitionElseVariable(69, 'u', 70)
+        setTransitionElseVariable(70, 'l', 71)
+        setTransitionElseVariable(71, 'l', 72)
+
+
+
+        setTransition(1, '"', 93)
+        for (n in 0..255) { //Any character inside "
             if (n != '"'.code) {
-                setTransition(89, n, 89)
+                setTransition(93, n, 93)
             }
         }
-        setTransition(89, '"', 90)
-
-        // začetne tranzicije rezerviranih besed
-        setTransition(1, 'b', 2) // box
-        setTransition(1, 'p', 5) // peron
-        setTransition(1, 'l', 10) // let
-        setTransition(1, 'c', 13) // circ
-        setTransition(1, 'i', 17) // infrastruktura
-        setTransition(1, 'k', 37) // kretnica
-        setTransition(1, 't', 45) // tunel
-        setTransition(1, 'm', 50) // most
-        setTransition(1, 'v', 59) // vlak
-        setTransition(1, 'n', 65)
+        setTransition(93, '"', 94)
 
 
-        setTransition(71, '.', 72)//za realno število
-        setTransition(1, '+', 74)
-        setTransition(1, '-', 75)
-        setTransition(1, '*', 76)
-        setTransition(1, '/', 77)
-        setTransition(77, '/', 78)
-        setTransition(1, '^', 79)
-        setTransition(1, '(', 80)
-        setTransition(1, ')', 81)
-        setTransition(1, '=', 82)
-        setTransition(1, ';', 83)
-        setTransition(1, ',', 84)
-        setTransition(1, '{', 85)
-        setTransition(1, '}', 86)
-        setTransition(1, '.', 91)
-        setTransition(75, '>', 92)
+        setTransition(1, '-', 73)
+        setTransition(73, '>', 74)
+        setTransition(1, '/', 78)
+        setTransition(78, '/', 79)
+        setTransition(1, '+', 80)
+        setTransition(1, '*', 81)
 
-        setTransition(1, EOF, 88)
-        setSymbol(4, BOX)
-        setSymbol(9, PERON)
-        setSymbol(12, DEFINE)
-        setSymbol(16, CIRC)
-        setSymbol(30, INFRASTRUCTURE)
-        setSymbol(36, POSTAJA)
-        setSymbol(44, KRETNICA)
-        setSymbol(49, TUNEL)
-        setSymbol(53, MOST)
-        setSymbol(58, PREHOD)
-        setSymbol(62, VLAK)
-        setSymbol(64, TIR)
-        setSymbol(68, NULL)
+        setTransition(1, '^', 82)
+        setTransition(1, '=', 83)
+        setTransition(1, ';', 84)
+        setTransition(1, ',', 85)
 
-        setSymbol(69, VAR)
-        setSymbol(70, VAR)
-        setSymbol(71, REAL)
-        setSymbol(73, REAL)
-        setSymbol(74, PLUS)
-        setSymbol(75, MINUS)
-        setSymbol(76, TIMES)
-        setSymbol(77, DIVIDES)
-        setSymbol(78, INTDIVIDES)
-        setSymbol(79, POW)
-        setSymbol(80, LPAREN)
-        setSymbol(81, RPAREN)
-        setSymbol(82, ASSIGN)
-        setSymbol(83, SEMICOLON)
-        setSymbol(84, COMMA)
-        setSymbol(85, LCURLY)
-        setSymbol(86, RCURLY)
-        setSymbol(87, SKIP)//se ne izpiše
-        setSymbol(88, EOF)
-        setSymbol(90, NAME)
-        setSymbol(91, DOT)
-        setSymbol(92, ARROW)
-        setSymbol(95, BEND)
+        setTransition(1, '(', 87)
+        setTransition(1, ')', 88)
+        setTransition(1, '}', 89)
+        setTransition(1, '{', 90)
+        setTransition(1, '[', 91)
+        setTransition(1, ']', 92)
 
+        setTransition(1, EOF, 95)
 
+        setSymbol(5, Symbol.BEND)
+        setSymbol(7, Symbol.BOX)
+        setSymbol(12, Symbol.BRIDGE)
+        setSymbol(16, Symbol.CIRC)
+        setSymbol(23, Symbol.CROSSING)
+        setSymbol(37, Symbol.INFRASTRUCTURE)
+        setSymbol(40, Symbol.DEFINE)
+        setSymbol(43, Symbol.LINE)
+        setSymbol(50, Symbol.STATION)
+        setSymbol(55, Symbol.SWITCH)
+        setSymbol(60, Symbol.TRACK)
+        setSymbol(62, Symbol.TRAIN)
+        setSymbol(67, Symbol.TUNNEL)
+
+        setSymbol(68, Symbol.VAR)
+        setSymbol(72, Symbol.NULL)
+        setSymbol(74, Symbol.ARROW)
+        setSymbol(75, Symbol.REAL)
+        setSymbol(77, Symbol.REAL)
+        setSymbol(78, Symbol.DIVIDES)
+        setSymbol(79, Symbol.INTDIVIDES)
+        setSymbol(80, Symbol.PLUS)
+        setSymbol(81, Symbol.TIMES)
+        setSymbol(82, Symbol.POW)
+        setSymbol(83, Symbol.ASSIGN)
+
+        setSymbol(84, Symbol.SEMICOLON)
+        setSymbol(85, Symbol.COMMA)
+        setSymbol(86, Symbol.SKIP) //Doesn't print
+
+        setSymbol(87, Symbol.LPAREN)
+        setSymbol(88, Symbol.RPAREN)
+        setSymbol(89, Symbol.RCURLY)
+        setSymbol(90, Symbol.LCURLY)
+        setSymbol(91, Symbol.LPAREN)
+        setSymbol(92, Symbol.RPAREN)
+        setSymbol(94, Symbol.NAME)
+        setSymbol(95, Symbol.EOF)
+
+        setSymbol(103, Symbol.PLATFORM)
     }
 }
 
-data class Token(val symbol: Int, val lexeme: String, val startRow: Int, val startColumn: Int)
+data class Token(val symbol: Symbol, val lexeme: String, val startRow: Int, val startColumn: Int)
 
 class Scanner(private val automaton: DFA, private val stream: InputStream) {
     private var last: Int? = null
@@ -498,30 +405,30 @@ class Scanner(private val automaton: DFA, private val stream: InputStream) {
         val startColumn = column
         val buffer = mutableListOf<Char>()
 
-        var code = last ?: stream.read()//zadnji znak ki ni bil obdelan ali pa prebere novega
+        var code = last ?: stream.read()//Last character that was processed or reads new one
         var state = automaton.startState
         while (true) {
-            val nextState = automaton.next(state, code)//prehodi med stanji
-            if (nextState == ERROR_STATE) break //trenutni znak ne ustreza nobenemmu vzorcu
+            val nextState = automaton.next(state, code)//Transition between states
+            if (nextState == ERROR_STATE) break //Current character doesn't belong to any state
 
             state = nextState
             updatePosition(code)
             buffer.add(code.toChar())
             code = stream.read()
         }
-        //Po izhodu iz zanke se zadnji prebrani znak, ki ni bil del trenutnega leksema (ker je povzročil prekinitev zanke), shrani v last.
+
+        //Last character that was read in loop which wasn't part of current lexeme (this causes loop break)
         last = code // The code following the current lexeme is the first code of the next lexeme
 
 
-        //preverja, ali je trenutno stanje (state) eno izmed končnih stanj avtomata (DFA).
-        //Končna stanja so tista, ki predstavljajo uspešno prepoznane lekseme.
+        //Checks if the current state is final state if not error
         if (automaton.finalStates.contains(state)) {
-            val symbol = automaton.symbol(state)//določa, kateri vrsti tokena pripada prepoznani leksem.
-            return if (symbol == SKIP) {
+            val symbol = automaton.symbol(state) //Gets which symbol belongs to this state
+            return if (symbol == Symbol.SKIP) {
                 getToken()
             } else {
-                val lexeme = String(buffer.toCharArray())//sestavi se leksem iz znakov v buffer
-                Token(symbol, lexeme, startRow, startColumn)//vrne se kot rezultat getToken
+                val lexeme = String(buffer.toCharArray()).replace("\"", "") //Creates lexeme from buffer
+                Token(symbol, lexeme, startRow, startColumn)
             }
         } else {
             throw Error("Invalid pattern at ${row}:${column}")
@@ -531,47 +438,50 @@ class Scanner(private val automaton: DFA, private val stream: InputStream) {
 }
 
 
-fun name(symbol: Int) =
+fun name(symbol: Symbol) =
     when (symbol) {
-        REAL -> "real"
-        VAR -> "variable"
-        PLUS -> "plus"
-        MINUS -> "minus"
-        TIMES -> "times"
-        DIVIDES -> "divides"
-        INTDIVIDES -> "integer-divides"
-        POW -> "pow"
-        LPAREN -> "lparen"
-        RPAREN -> "rparen"
-        ASSIGN -> "assign"
-        DEFINE -> "define" //let
-        BOX -> "box"
-        PERON -> "peron"
-        CIRC -> "circ"
-        INFRASTRUCTURE -> "infrastructure"
-        KRETNICA -> "kretnica"
-        TUNEL -> "tunel"
-        MOST -> "most"
-        PREHOD -> "prehod"
-        VLAK -> "vlak"
-        TIR -> "tir"
-        POSTAJA -> "postaja"
-        LCURLY -> "lcurly"
-        RCURLY -> "rcurly"
-        COMMA -> "comma"
-        SEMICOLON -> "semicolon"
-        NAME -> "name"
-        NULL -> "null"
-        DOT -> "dot"
-        ARROW -> "arrow"
-        BEND -> "bend"
+        Symbol.REAL -> "real"
+        Symbol.VAR -> "variable"
+        Symbol.PLUS -> "plus"
+        Symbol.MINUS -> "minus"
+        Symbol.TIMES -> "times"
+        Symbol.DIVIDES -> "divides"
+        Symbol.INTDIVIDES -> "integer-divides"
+        Symbol.POW -> "pow"
+        Symbol. LPAREN -> "lparen"
+        Symbol.RPAREN -> "rparen"
+        Symbol.ASSIGN -> "assign"
+        Symbol.DEFINE -> "define" //let
+        Symbol.BOX -> "box"
+        Symbol.PERON -> "peron"
+        Symbol.CIRC -> "circ"
+        Symbol.INFRASTRUCTURE -> "infrastructure"
+        Symbol.SWITCH -> "switch"
+        Symbol.TUNNEL -> "tunnel"
+        Symbol.BRIDGE -> "bridge"
+        Symbol.CROSSING -> "crossing"
+        Symbol.TRAIN -> "train"
+        Symbol.TRACK -> "track"
+        Symbol.STATION -> "station"
+        Symbol.LCURLY -> "lcurly"
+        Symbol.RCURLY -> "rcurly"
+        Symbol.COMMA -> "comma"
+        Symbol.SEMICOLON -> "semicolon"
+        Symbol.NAME -> "name"
+        Symbol.NULL -> "null"
+        Symbol.ARROW -> "arrow"
+        Symbol.BEND -> "bend"
+        Symbol.LINE -> "line"
+        Symbol.LSQUARE -> "lsquare"
+        Symbol.RSQUARE -> "rsquare"
+        Symbol.PLATFORM -> "platform"
         else -> throw Error("Invalid symbol")
     }
 
 
 fun printTokens(scanner: Scanner) {
     val tmpToken = scanner.getToken()
-    if (tmpToken.symbol != EOF) {
+    if (tmpToken.symbol != Symbol.EOF) {
         print("${name(tmpToken.symbol)}(\"${tmpToken.lexeme}\") ")
         printTokens(scanner)
     }
@@ -580,5 +490,5 @@ fun printTokens(scanner: Scanner) {
 fun main(args: Array<String>) {
 
     val input = File(args[0])
-    printTokens(Scanner(LeksAutomaton, input.readText().byteInputStream()))
+    printTokens(Scanner(RailwayAutomaton, input.readText().byteInputStream()))
 }
