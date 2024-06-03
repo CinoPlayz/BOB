@@ -4,5 +4,7 @@ import { createContext } from 'react';
      user: null,
      token: null,
      setUserContext: () => {},
-     login: () => {}
+     login: () => {},
+     verifyTOTP: () => {}
  });
+

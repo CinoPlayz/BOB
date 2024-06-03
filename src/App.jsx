@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate  } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { UserContext } from "./UserContext.jsx";
 import { TrainProvider } from "./TrainContext.jsx";
 import Register from "./components/Register.jsx";
@@ -14,23 +14,34 @@ import './App.css'
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [username, setUsername] = useState(localStorage.getItem('username') || null);
 
-  const updateUserData = (token) => {//če token obstaja ga shrani v localstorage
+  const updateUserData = (token, username = null) => { //če token obstaja ga shrani v localstorage
     if (token) {
       localStorage.setItem("token", token);
+      if (username) {
+        localStorage.setItem("username", username);
+      }
     } else {
       localStorage.removeItem("token");
+      localStorage.removeItem("username");
     }
     setToken(token);
+    if (username !== null) {
+      setUsername(username);
+    }
   };
 
-  useEffect(() => {//preverja ali je token prisoten v localstorage ob inicializaciji
+  useEffect(() => { //preverja ali je token prisoten v localstorage ob inicializaciji
     const savedToken = localStorage.getItem('token');
+    const savedUsername = localStorage.getItem('username');
     if (savedToken) {
       setToken(savedToken);
     }
+    if (savedUsername) {
+      setUsername(savedUsername);
+    }
   }, []);
-
 
   const login = async (username, password) => {
     const res = await fetch("http://localhost:3001/users/login", {
@@ -41,14 +52,36 @@ function App() {
         username: username,
         password: password
       })
-    })
+    });
+
     const data = await res.json();
     if (data.token) {
-      updateUserData(data.token);
-      return true;
+      updateUserData(data.token, username);
+      return { success: true };
+    } else if (data.loginToken) {
+      return { success: false, loginToken: data.loginToken };
     } else {
-      console.log("falsee");
-      return false;
+      return { success: false };
+    }
+  };
+
+  const verifyTOTP = async (loginToken, totp, username) => {
+    const res = await fetch("http://localhost:3001/users/twoFaLogin", {
+      method: "POST",
+      credentials: "include",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        loginToken: loginToken,
+        otpCode: totp
+      })
+    });
+
+    const data = await res.json();
+    if (data.token) {
+      updateUserData(data.token, username);
+      return { success: true };
+    } else {
+      return { success: false };
     }
   };
 
@@ -56,8 +89,10 @@ function App() {
     <BrowserRouter>
       <UserContext.Provider value={{
         token: token,
+        username: username,
         setUserContext: updateUserData,
-        login: login
+        login: login,
+        verifyTOTP: verifyTOTP
       }}>
         <TrainProvider>
           <Header title="Zelezniski promet" />

@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useContext } from 'react';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
@@ -13,6 +13,7 @@ function classNames(...classes) {
 export default function Header(props) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const userContext = useContext(UserContext);
 
   const isActive = (path) => {
     return location.pathname === path ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700';
@@ -119,8 +120,9 @@ export default function Header(props) {
                         {/* Profile dropdown */}
                         <Menu as="div" className="relative ml-3 z-50">
                           <div>
-                            <MenuButton className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            <MenuButton className="relative flex items-center justify-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                               <span className="absolute -inset-1.5" />
+                              <span className="text-sm font-medium text-gray-700">{userContext.username}</span> {/* Show username in header */}
                               <span className="sr-only">Open user menu</span>
                               <img
                                 className="h-8 w-11 rounded-full"
