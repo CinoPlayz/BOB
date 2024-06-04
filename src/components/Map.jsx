@@ -25,13 +25,13 @@ function Map() {
 
         if (trainData.length > 0) {
             trainData.forEach(train => {
-                const { St_vlaka, Koordinate, Postaja, Vrsta, Zamuda_cas } = train;
+                const { St_vlaka, Koordinate, Postaja, Vrsta, Zamuda_cas, Rang } = train; // Rang = trainType (LPV, ICS...)
                 if (Koordinate) {
                     const [longitude, latitude] = Koordinate.split(',').map(Number);
                     const marker = L.marker([latitude, longitude], { icon: L.icon({ iconUrl: trainIcon, iconSize: [25, 38], iconAnchor: [12, 41] }) }).addTo(mapRef.current);
                     marker.bindPopup(`
                         <div>
-                            <b>St_vlaka:</b> ${St_vlaka}<br>
+                            <b>${Rang}</b> ${St_vlaka}<br>
                             <b>Postaja:</b> ${Postaja}<br>
                             <b>Zamuda:</b> ${Zamuda_cas} min
                         </div>

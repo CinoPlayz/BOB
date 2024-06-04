@@ -13,7 +13,7 @@ export const TrainProvider = ({ children }) => {
         const fiveMinutes = 5 * 60 * 1000;
 
         if (lastFetch && now - lastFetch < fiveMinutes && cachedData) {
-            //console.log('Using cached data');
+            //console.log('Using cached data', cachedData);
             setTrainData(JSON.parse(cachedData));
             setLastUpdate(Date.now());
             return;
@@ -28,7 +28,7 @@ export const TrainProvider = ({ children }) => {
             localStorage.setItem('cachedTrainData', JSON.stringify(data));
             //console.log('Podatki o vlakih:', data);
         } catch (error) {
-            console.error('Napaka pri pridobivanju podatkov o vlakih:', error);
+            //console.error('Napaka pri pridobivanju podatkov o vlakih:', error);
         }
     };
 
@@ -39,7 +39,7 @@ export const TrainProvider = ({ children }) => {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('Napaka pri pridobivanju podatkov o vlakih:', error);
+            //console.error('Napaka pri pridobivanju podatkov o vlakih:', error);
             return [];
         }
     };
@@ -50,7 +50,7 @@ export const TrainProvider = ({ children }) => {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('Error while getting stats:', error);
+            //console.error('Error while getting stats:', error);
             return [];
         }
     };
@@ -61,7 +61,7 @@ export const TrainProvider = ({ children }) => {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('Error while getting stats:', error);
+            //console.error('Error while getting stats:', error);
             return [];
         }
     };
@@ -72,7 +72,7 @@ export const TrainProvider = ({ children }) => {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('Error while getting stats:', error);
+            //console.error('Error while getting stats:', error);
             return [];
         }
     };
@@ -88,7 +88,7 @@ export const TrainProvider = ({ children }) => {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('Error while getting user stats:', error);
+            //console.error('Error while getting user stats:', error);
             return [];
         }
     };
@@ -116,7 +116,7 @@ export const TrainProvider = ({ children }) => {
 
             return data;
         } catch (error) {
-            console.error('Error while getting stats:', error);
+            //console.error('Error while getting stats:', error);
             return [];
         }
     };
@@ -136,7 +136,7 @@ export const TrainProvider = ({ children }) => {
 
             return "Deleted";
         } catch (error) {
-            console.error('Error while deleting stats:', error);
+            //console.error('Error while deleting stats:', error);
             return [];
         }
     };
