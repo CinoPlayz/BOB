@@ -1,0 +1,35 @@
+.home-container {
+    display: flex;
+    height: 89vh;
+    background-color: white;
+    color: black;
+    position: relative;
+}
+
+.left-side, .right-side {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.left-side {
+    position: relative;
+}
+
+.overlapping-image {
+    position: absolute;
+    right: 0%;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+@media (prefers-color-scheme: dark) {
+    .home-container {
+        background-color: #dde1e6;
+    }
+    .right-side p {
+        color: rgb(70, 66, 66);
+    }
+}

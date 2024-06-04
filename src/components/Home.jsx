@@ -1,14 +1,17 @@
-import { useEffect, useContext } from 'react';
-import Footer from './Footer';
-
+import React from 'react';
+import FrontPhoto from '../assets/front.png';
+import '../style/Home.css';
 
 function Home() {
     return (
-        <div className="home-container bg-white dark:bg-gray-200">
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '89vh' }}>
+        <div className="home-container">
+            <div className="left-side">
+                <img src={FrontPhoto} alt="Front" className="overlapping-image" />
+            </div>
+            <div className="right-side">
                 <p>BandOfBytes</p>
             </div>
-            {/* <Footer /> */}
+            {/* <Footer /> */} {/* Included globally in App.jsx */}
         </div>
     );
 }
