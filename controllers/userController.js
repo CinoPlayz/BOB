@@ -341,15 +341,16 @@ module.exports = {
             }
 
             // If 2faEnabled == false && 2faSecret == empty --> disable 2fa
-            if ((!req.body['2faSecret'] || req.body['2faSecret'].trim() === "" || req.body['2faSecret'] === undefined) && !req.body['2faEnabled']) {
+            if ((!req.body['2faSecret'] || req.body['2faSecret'].trim() === "" || req.body['2faSecret'] === undefined) || !req.body['2faEnabled']) {
                 userFound['2faEnabled'] = false;
-                delete userFound['2faSecret'];
+                userFound['2faSecret'] = "";
             }
 
 
             // If 2faEnabled == true && 2faSecret != empty --> enable 2fa
             if ((req.body['2faSecret'] || req.body['2faSecret'].trim() !== "" || req.body['2faSecret'] !== undefined) && req.body['2faEnabled']) {
                 userFound['2faSecret'] = req.body['2faSecret'].trim();
+                userFound['2faEnabled'] = true;
             }
 
             // Update tokens if provided in request body
