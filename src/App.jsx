@@ -4,6 +4,7 @@ import { UserContext } from "./UserContext.jsx";
 import { TrainProvider } from "./TrainContext.jsx";
 import Register from "./components/Register.jsx";
 import Header from "./components/Header.jsx";
+import Footer from "./components/Footer.jsx";
 import Login from './components/Login.jsx';
 import Logout from "./components/Logout.jsx";
 import Map from "./components/Map.jsx";
@@ -110,6 +111,7 @@ function App() {
               <Route path="*" element={<ErrorPage />}></Route>
             </Routes>
           </div>
+          <Footer/>
         </TrainProvider>
       </UserContext.Provider>
     </BrowserRouter>
