@@ -43,12 +43,15 @@ export default function Header(props) {
               </div>
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div className="flex flex-shrink-0 items-center">
-                  <img
-                    className="h-8 w-auto"
-                    src={trainIcon}
-                    alt="Train Icon"
-                  />
+                  <Link to="/" className="h-8 w-auto">  {/* Image as Link to Homepage */}
+                    <img
+                      className="h-8 w-auto"
+                      src={trainIcon}
+                      alt="Train Icon"
+                    />
+                  </Link>
                 </div>
+
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8 h-full items-center">
                   <UserContext.Consumer>
                     {context => (
@@ -70,7 +73,7 @@ export default function Header(props) {
                           </Link>
                           <Link
                             to="/stats"
-                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/stats')}`}                            
+                            className={`inline-flex items-center h-full border-b-2 px-1 pt-1 text-sm font-medium ${isActive('/stats')}`}
                           >
                             Stats
                           </Link>

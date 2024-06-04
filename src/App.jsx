@@ -9,6 +9,7 @@ import Logout from "./components/Logout.jsx";
 import Map from "./components/Map.jsx";
 import HistoryMap from "./components/HistoryMap.jsx";
 import Stats from "./components/Stats.jsx";
+import Home from "./components/Home.jsx"
 
 import './App.css'
 
@@ -98,6 +99,7 @@ function App() {
           <Header title="Zelezniski promet" />
           <div className="App pt-16">
             <Routes>
+              <Route path="/" exact element={<Home />} />
               <Route path="/login" exact element={<Login />}></Route>
               <Route path="/register" element={<Register />}></Route>
               <Route path="/logout" element={<Logout />}></Route>

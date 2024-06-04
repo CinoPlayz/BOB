@@ -13,7 +13,7 @@ export const TrainProvider = ({ children }) => {
         const fiveMinutes = 5 * 60 * 1000;
 
         if (lastFetch && now - lastFetch < fiveMinutes && cachedData) {
-            console.log('Using cached data');
+            //console.log('Using cached data');
             setTrainData(JSON.parse(cachedData));
             setLastUpdate(Date.now());
             return;
@@ -26,7 +26,7 @@ export const TrainProvider = ({ children }) => {
             setLastUpdate(Date.now());
             localStorage.setItem('lastFetch', Date.now());
             localStorage.setItem('cachedTrainData', JSON.stringify(data));
-            console.log('Podatki o vlakih:', data);
+            //console.log('Podatki o vlakih:', data);
         } catch (error) {
             console.error('Napaka pri pridobivanju podatkov o vlakih:', error);
         }
