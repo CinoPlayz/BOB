@@ -38,6 +38,7 @@ import utils.api.dao.updateUser
 import java.time.DateTimeException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.random.Random
 
 @Composable
 fun ManageUsers(
@@ -280,7 +281,7 @@ fun UserItem(
                             .fillMaxWidth(),
                         singleLine = true
                     )
-                    //Text("Username: ${user.username}", fontWeight = FontWeight.Bold)
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -336,7 +337,6 @@ fun UserItem(
                         )
                     }
 
-                    //Text("Email: ${user.email}")
                     Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
                         Row(
                             modifier = Modifier
@@ -400,16 +400,29 @@ fun UserItem(
                         }
                     }
                     if (twoFA) {
-                        OutlinedTextField(
-                            value = twoFASecret,
-                            onValueChange = { twoFASecret = it },
-                            label = { Text("2FA Secret") },
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth(),
-                            singleLine = true
-                        )
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = twoFASecret,
+                                onValueChange = { twoFASecret = it },
+                                label = { Text("2FA Secret") },
+                                modifier = Modifier
+                                    .fillMaxWidth(0.7f),
+                                singleLine = true
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = { twoFASecret = generateRandomString(30) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Generate")
+                            }
+                        }
                     }
-                    //Text("2FA Enabled: ${if (user.`2faEnabled`) "Yes" else "No"}")
+
                     if (tokens != null) {
                         Column {
                             tokens!!.forEachIndexed { index, token ->
@@ -427,7 +440,6 @@ fun UserItem(
                                 Text("Token ${index + 1}:", fontWeight = FontWeight.Bold)
                                 OutlinedTextField(
                                     value = token.token,
-                                    // onValueChange = { tokens!![index].token = it },
                                     onValueChange = { newTokenValue ->
                                         tokens = tokens!!.toMutableList().apply { this[index] = token.copy(token = newTokenValue) }
                                     },
@@ -467,16 +479,7 @@ fun UserItem(
                                         Text("Login", modifier = Modifier.padding(start = 8.dp))
                                     }
                                 }
-                                /*OutlinedTextField(
-                                    value = token.type,
-                                    // onValueChange = { tokens!![index].type = it },
-                                    onValueChange = { newTypeValue ->
-                                        tokens = tokens!!.toMutableList().apply { this[index] = token.copy(type = newTypeValue) }
-                                    },
-                                    label = { Text("Token Type [ all / login ]") },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                )*/
+
                                 Text("Token Expires On")
                                 Row(modifier = Modifier.fillMaxWidth()) {
                                     OutlinedTextField(
@@ -527,7 +530,6 @@ fun UserItem(
                                                 }
                                                 dateTimeError = false
                                             } catch (e: DateTimeException) {
-                                                //month = newMonthString.take(2)
                                                 month = newMonthString.take(2)
                                                 dateTimeError = true
                                             }
@@ -637,19 +639,6 @@ fun UserItem(
                                         modifier = Modifier.weight(1f),
                                     )
                                 }
-
-                                /*OutlinedTextField(
-                                    value = formatter.format(token.expiresOn),
-                                    //value = token.expiresOn, // Assuming token is a String
-                                    //onValueChange = { token.expiresOn = LocalDateTime.parse(it) },
-                                    onValueChange = { newExpiryDate ->
-                                        tokens = tokens!!.toMutableList().apply { this[index] = token.copy(expiresOn = LocalDateTime.parse(newExpiryDate)) }
-                                    },
-                                    //onValueChange = { tokens!![index].expiresOn = it }, // Update token in the list
-                                    label = { Text("Token Expires On") },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                )*/
                             }
                         }
                     }
@@ -663,9 +652,6 @@ fun UserItem(
                             }
                         }
                     )
-
-                    // Text("Role: ${user.role}")
-                    // Text("Active Login Tokens: ${user.tokens?.size}")
 
                     Text("Created On: ${user.createdAt.format(formatter)}")
                     Text("Last Updated On: ${user.updatedAt.format(formatter)}")
@@ -750,24 +736,6 @@ fun UserItem(
                         Icon(Icons.Default.Delete, contentDescription = "Delete")
                     }
                 }
-
-                /*if (!editMode) {
-                    IconButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                val feedback = deleteUserFromDB(
-                                    id = user.id,
-                                    onSuccess = onDeleteUserSuccess
-                                )
-                                feedbackMessage = feedback
-                            }
-
-                            // editMode = false
-                        }
-                    ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
-                    }
-                }*/
             }
         }
     }
@@ -877,7 +845,6 @@ fun TokensInput(
     onUpdateToken: (Int, TokenInsert) -> Unit
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
-        // Text("Tokens", style = MaterialTheme.typography.h6)
 
         newTokens.forEachIndexed { index, token ->
             TokenInput(
@@ -931,9 +898,7 @@ fun TokenInput(
                 selected = type == "all",
                 onClick = {
                     type = "all"
-                    //onTokenChange(token.copy(type = type))
                     token.type = type
-                    //token = token.copy(type = type)
                 }
             )
             Text("All", modifier = Modifier.padding(start = 8.dp))
@@ -943,7 +908,6 @@ fun TokenInput(
                 onClick = {
                     type = "login"
                     token.type = type
-                    //onTokenChange(token.copy(type = type))
                 }
             )
             Text("Login", modifier = Modifier.padding(start = 8.dp))
@@ -971,31 +935,6 @@ fun TokenInput(
                         dateTimeError = true
                     }
                 },
-                /*onValueChange = {
-                    year = it.take(4)
-                    try {
-                        onTokenChange(token.copy(expiresOn = token.expiresOn.withYear(it.toIntOrNull() ?: token.expiresOn.year)))
-                        dateTimeError = false
-                    } catch (e: DateTimeException) {
-                        dateTimeError = true
-                    }
-                },*/
-                /*onValueChange = {
-                    // year = it.take(4)
-                    // onTokenChange(token.copy(expiresOn = token.expiresOn.withYear(it.toIntOrNull() ?: token.expiresOn.year)))
-                    val newYearString = it.take(4)
-                    val newYear = newYearString.toIntOrNull() ?: token.expiresOn.year
-
-                    if (newYear in 1900..2100) {
-                        val newDateTime = token.expiresOn.withYear(newYear)
-                        year = newYearString
-                        onTokenChange(token.copy(expiresOn = newDateTime))
-                        dateTimeError = false
-                    } else {
-                        year = newYearString
-                        dateTimeError = true
-                    }
-                },*/
                 isError = dateTimeError,
                 label = { Text("YYYY") },
                 modifier = Modifier.weight(1f),
@@ -1127,4 +1066,13 @@ fun TokenInput(
             )
         }
     }
+}
+
+fun generateRandomString(length: Int): String {
+    val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+    val random = Random(System.currentTimeMillis())
+    val randomString = (1..length)
+        .map { charPool.random(random) }
+        .joinToString("")
+    return randomString
 }
