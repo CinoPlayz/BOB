@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import TrainContext from '../TrainContext';
 import trainIcon from '../assets/train_icon.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faPause, faFilter, faSearch  } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faPause, faFilter, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
@@ -61,10 +61,9 @@ function HistoryMap() {
                 const marker = L.marker([lat, lng], { icon: L.icon({ iconUrl: trainIcon, iconSize: [25, 41], iconAnchor: [12, 41] }) }).addTo(mapRef.current);
                 marker.bindPopup(`
                     <div>
-                        <b>Train Number:</b> ${trainNumber}<br>
+                        <b>${trainType}</b> ${trainNumber}<br>
                         <b>Next Station:</b> ${nextStation}<br>
                         <b>Delay:</b> ${delay} min <br>
-                        <b>Train Type:</b> ${trainType}<br>
                     </div>
                 `);
             }
@@ -116,82 +115,82 @@ function HistoryMap() {
 
     return (
         <>
-        {!userContext.token ? <Navigate replace to="/login" /> : ""}
-        <div>
-            <button
-                style={{
-                    position: 'absolute',
-                    top: '80px',
-                    right: '10px',
-                    zIndex: 1000,
-                    backgroundColor: 'white',
-                    borderRadius: '50%',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                    padding: '10px'
-                }}
-                onClick={() => setFiltersVisible(!filtersVisible)}
-            >
-                <FontAwesomeIcon icon={faFilter} />
-            </button>
-            {filtersVisible && (
-                <div style={{
-                    position: 'absolute',
-                    top: '130px',
-                    right: '10px',
-                    zIndex: 10,
-                    backgroundColor: 'white',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-                }}>
-                    <label style={{ paddingRight: '10px' }}>
-                        Start Date:
-                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ paddingLeft: '5px' }} />
-                    </label>
-                    <label>
-                        End Date:
-                        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ paddingRight: '10px' }} />
-                    </label>
-                    <button onClick={handleSearch}>
-                    <FontAwesomeIcon icon={faSearch} />
-                    </button>
-                    <div>
-                        <label style={{ paddingRight: '2px' }}>
-                            Animation Speed:
-                            <select value={speed} onChange={(e) => setSpeed(parseInt(e.target.value))} style={{ paddingLeft: '5px' }}>
-                                <option value={1}>1x</option>
-                                <option value={2}>2x</option>
-                                <option value={3}>3x</option>
-                                <option value={4}>4x</option>
-                                <option value={5}>5x</option>
-                            </select>
+            {!userContext.token ? <Navigate replace to="/login" /> : ""}
+            <div>
+                <button
+                    style={{
+                        position: 'absolute',
+                        top: '80px',
+                        right: '10px',
+                        zIndex: 1000,
+                        backgroundColor: 'white',
+                        borderRadius: '50%',
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        padding: '10px'
+                    }}
+                    onClick={() => setFiltersVisible(!filtersVisible)}
+                >
+                    <FontAwesomeIcon icon={faFilter} />
+                </button>
+                {filtersVisible && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '130px',
+                        right: '10px',
+                        zIndex: 10,
+                        backgroundColor: 'white',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+                    }}>
+                        <label style={{ paddingRight: '10px' }}>
+                            Start Date:
+                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ paddingLeft: '5px' }} />
                         </label>
-                        <button onClick={handlePauseResume} style={{ paddingLeft: '10px' }}>
-                        <FontAwesomeIcon icon={isPaused ? faPlay : faPause} />
+                        <label>
+                            End Date:
+                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ paddingRight: '10px' }} />
+                        </label>
+                        <button onClick={handleSearch}>
+                            <FontAwesomeIcon icon={faSearch} />
                         </button>
+                        <div>
+                            <label style={{ paddingRight: '2px' }}>
+                                Animation Speed:
+                                <select value={speed} onChange={(e) => setSpeed(parseInt(e.target.value))} style={{ paddingLeft: '5px' }}>
+                                    <option value={1}>1x</option>
+                                    <option value={2}>2x</option>
+                                    <option value={3}>3x</option>
+                                    <option value={4}>4x</option>
+                                    <option value={5}>5x</option>
+                                </select>
+                            </label>
+                            <button onClick={handlePauseResume} style={{ paddingLeft: '10px' }}>
+                                <FontAwesomeIcon icon={isPaused ? faPlay : faPause} />
+                            </button>
+                        </div>
+                        <div>
+                            <label style={{ paddingRight: '2px' }}>
+                                Train Type:
+                                <select value={selectedTrainType} onChange={(e) => setSelectedTrainType(e.target.value)} style={{ paddingLeft: '5px' }}>
+                                    <option value="all">All</option>
+                                    <option value="ICS">ICS</option>
+                                    <option value="EC">EC</option>
+                                    <option value="MV">MV</option>
+                                    <option value="EN">EN</option>
+                                    <option value="RG">RG</option>
+                                    <option value="LP">LP</option>
+                                    <option value="LPV">LPV</option>
+                                </select>
+                            </label>
+                        </div>
+                        {currentDateTime && <div>Current Time: {currentDateTime.toLocaleString()}</div>}
                     </div>
-                    <div>
-                        <label style={{ paddingRight: '2px' }}>
-                            Train Type:
-                            <select value={selectedTrainType} onChange={(e) => setSelectedTrainType(e.target.value)} style={{ paddingLeft: '5px' }}>
-                                <option value="all">All</option>
-                                <option value="ICS">ICS</option>
-                                <option value="EC">EC</option>
-                                <option value="MV">MV</option>
-                                <option value="EN">EN</option>
-                                <option value="RG">RG</option>
-                                <option value="LP">LP</option>
-                                <option value="LPV">LPV</option>
-                            </select>
-                        </label>
-                    </div>
-                    {currentDateTime && <div>Current Time: {currentDateTime.toLocaleString()}</div>}
-                </div>
-            )}
-            <div id="map" style={{ height: '100vh', width: '100vw', zIndex: 0 }}></div>
-        </div>
+                )}
+                <div id="map" style={{ height: '100vh', width: '100vw', zIndex: 0 }}></div>
+            </div>
         </>
-        
+
     );
 }
 

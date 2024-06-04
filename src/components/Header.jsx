@@ -125,7 +125,7 @@ export default function Header(props) {
                           <div>
                             <MenuButton className="relative flex items-center justify-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                               <span className="absolute -inset-1.5" />
-                              <span className="text-sm font-medium text-gray-700">{userContext.username}</span> {/* Show username in header */}
+                              <span className="text-sm font-medium text-gray-700 ml-2">{userContext.username}</span> {/* Show username in header */}
                               <span className="sr-only">Open user menu</span>
                               <img
                                 className="h-8 w-11 rounded-full"

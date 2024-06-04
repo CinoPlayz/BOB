@@ -32,8 +32,8 @@ function Map() {
                     marker.bindPopup(`
                         <div>
                             <b>${Rang}</b> ${St_vlaka}<br>
-                            <b>Postaja:</b> ${Postaja}<br>
-                            <b>Zamuda:</b> ${Zamuda_cas} min
+                            <b>Next Station:</b> ${Postaja}<br>
+                            <b>Delay:</b> ${Zamuda_cas} min
                         </div>
                     `);
                 }

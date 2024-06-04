@@ -25,7 +25,7 @@ function Logout() {
     }, [userContext]);
 
     return (
-        <Navigate replace to="/login" />
+        <Navigate replace to="/" />
     );
 }
 
