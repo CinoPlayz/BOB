@@ -2,43 +2,8 @@ import java.io.File
 import java.io.InputStream
 
 enum class Symbol {
-    ARROW,
-    ASSIGN,
-    BEND,
-    BOX,
-    BRIDGE,
-    CIRC,
-    COMMA,
-    CROSSING,
-    DEFINE, // let
-    DIVIDES,
-    EOF,
-    INFRASTRUCTURE,
-    INTDIVIDES,
-    LCURLY,
-    LINE,
-    LPAREN,
-    LSQUARE,
-    MINUS,
-    NAME,
-    NULL,
-    PERON,
-    PLATFORM,
-    PLUS,
-    POW,
-    RCURLY,
-    REAL,
-    RPAREN,
-    RSQUARE,
-    SEMICOLON,
-    SKIP,
-    STATION,
-    SWITCH,
-    TIMES,
-    TRACK,
-    TRAIN,
-    TUNNEL,
-    VAR,
+    ARROW, ASSIGN, BEND, BOX, BRIDGE, CIRC, COMMA, CROSSING, DEFINE, // let
+    DIVIDES, EOF, INFRASTRUCTURE, INTDIVIDES, LCURLY, LINE, LPAREN, LSQUARE, MINUS, NAME, NULL, PERON, PLATFORM, PLUS, POW, RCURLY, REAL, RPAREN, RSQUARE, SEMICOLON, SKIP, STATION, SWITCH, TIMES, TRACK, TRAIN, TUNNEL, VAR,
 }
 
 const val EOF = -1
@@ -61,46 +26,45 @@ object RailwayAutomaton : DFA {
     override val startState = 1
 
 
-    override val finalStates =
-        setOf(
-            5,
-            7,
-            12,
-            16,
-            23,
-            37,
-            40,
-            43,
-            50,
-            55,
-            60,
-            62,
-            67,
-            68,
-            72,
-            73,
-            74,
-            75,
-            77,
-            78,
-            79,
-            80,
-            81,
-            82,
-            83,
-            84,
-            85,
-            86,
-            87,
-            88,
-            89,
-            90,
-            91,
-            92,
-            94,
-            95,
-            103
-        )
+    override val finalStates = setOf(
+        5,
+        7,
+        12,
+        16,
+        23,
+        37,
+        40,
+        43,
+        50,
+        55,
+        60,
+        62,
+        67,
+        68,
+        72,
+        73,
+        74,
+        75,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        94,
+        95,
+        103
+    )
 
     private val numberOfStates = states.max() + 1 // plus the ERROR_STATE
     private val numberOfCodes = alphabet.max() + 2 // plus the EOF
@@ -206,7 +170,7 @@ object RailwayAutomaton : DFA {
 
         //circ
         setTransitionElseVariable(13, 'i', 14, setOf('i', 'r'))
-        setTransitionElseVariable(15, 'r', 16)
+        setTransitionElseVariable(14, 'r', 15)
         setTransitionElseVariable(15, 'c', 16)
 
         //crossing
@@ -373,8 +337,8 @@ object RailwayAutomaton : DFA {
         setSymbol(88, Symbol.RPAREN)
         setSymbol(89, Symbol.RCURLY)
         setSymbol(90, Symbol.LCURLY)
-        setSymbol(91, Symbol.LPAREN)
-        setSymbol(92, Symbol.RPAREN)
+        setSymbol(91, Symbol.LSQUARE)
+        setSymbol(92, Symbol.RSQUARE)
         setSymbol(94, Symbol.NAME)
         setSymbol(95, Symbol.EOF)
 
@@ -436,46 +400,533 @@ class Scanner(private val automaton: DFA, private val stream: InputStream) {
 }
 
 
-fun name(symbol: Symbol) =
-    when (symbol) {
-        Symbol.ARROW -> "arrow"
-        Symbol.ASSIGN -> "assign"
-        Symbol.BEND -> "bend"
-        Symbol.BOX -> "box"
-        Symbol.BRIDGE -> "bridge"
-        Symbol.CIRC -> "circ"
-        Symbol.COMMA -> "comma"
-        Symbol.CROSSING -> "crossing"
-        Symbol.DEFINE -> "define" //let
-        Symbol.DIVIDES -> "divides"
-        Symbol.INFRASTRUCTURE -> "infrastructure"
-        Symbol.INTDIVIDES -> "integer-divides"
-        Symbol.LCURLY -> "lcurly"
-        Symbol.LINE -> "line"
-        Symbol.LPAREN -> "lparen"
-        Symbol.LSQUARE -> "lsquare"
-        Symbol.MINUS -> "minus"
-        Symbol.NAME -> "name"
-        Symbol.NULL -> "null"
-        Symbol.PERON -> "peron"
-        Symbol.PLATFORM -> "platform"
-        Symbol.PLUS -> "plus"
-        Symbol.POW -> "pow"
-        Symbol.RCURLY -> "rcurly"
-        Symbol.REAL -> "real"
-        Symbol.RPAREN -> "rparen"
-        Symbol.RSQUARE -> "rsquare"
-        Symbol.SEMICOLON -> "semicolon"
-        Symbol.STATION -> "station"
-        Symbol.SWITCH -> "switch"
-        Symbol.TIMES -> "times"
-        Symbol.TRACK -> "track"
-        Symbol.TRAIN -> "train"
-        Symbol.TUNNEL -> "tunnel"
-        Symbol.VAR -> "variable"
-        else -> throw Error("Invalid symbol")
+fun name(symbol: Symbol) = when (symbol) {
+    Symbol.ARROW -> "arrow"
+    Symbol.ASSIGN -> "assign"
+    Symbol.BEND -> "bend"
+    Symbol.BOX -> "box"
+    Symbol.BRIDGE -> "bridge"
+    Symbol.CIRC -> "circ"
+    Symbol.COMMA -> "comma"
+    Symbol.CROSSING -> "crossing"
+    Symbol.DEFINE -> "define" //let
+    Symbol.DIVIDES -> "divides"
+    Symbol.INFRASTRUCTURE -> "infrastructure"
+    Symbol.INTDIVIDES -> "integer-divides"
+    Symbol.LCURLY -> "lcurly"
+    Symbol.LINE -> "line"
+    Symbol.LPAREN -> "lparen"
+    Symbol.LSQUARE -> "lsquare"
+    Symbol.MINUS -> "minus"
+    Symbol.NAME -> "name"
+    Symbol.NULL -> "null"
+    Symbol.PERON -> "peron"
+    Symbol.PLATFORM -> "platform"
+    Symbol.PLUS -> "plus"
+    Symbol.POW -> "pow"
+    Symbol.RCURLY -> "rcurly"
+    Symbol.REAL -> "real"
+    Symbol.RPAREN -> "rparen"
+    Symbol.RSQUARE -> "rsquare"
+    Symbol.SEMICOLON -> "semicolon"
+    Symbol.STATION -> "station"
+    Symbol.SWITCH -> "switch"
+    Symbol.TIMES -> "times"
+    Symbol.TRACK -> "track"
+    Symbol.TRAIN -> "train"
+    Symbol.TUNNEL -> "tunnel"
+    Symbol.VAR -> "variable"
+    else -> throw Error("Invalid symbol")
+}
+
+
+class Parser(private val scanner: Scanner) {
+    private var currentToken: Token? = null
+
+    fun parse(): Boolean {
+        currentToken = scanner.getToken()
+        return infra() && currentToken?.symbol == Symbol.EOF
     }
 
+    private fun infra(): Boolean {
+        if (currentToken?.symbol == Symbol.INFRASTRUCTURE) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.NAME) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.LCURLY) {
+                    currentToken = scanner.getToken()
+                    val status = exprs()
+                    if (status && currentToken?.symbol == Symbol.RCURLY) {
+                        currentToken = scanner.getToken()
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun exprs(): Boolean {
+        if (expr()) {
+            while (expr()) {
+                // Zanka za preverjanje več EXPR
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun expr(): Boolean {
+        if (currentToken?.symbol == Symbol.DEFINE) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.VAR) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.ASSIGN) {
+                    currentToken = scanner.getToken()
+                    var tmp = comp()
+                    return tmp
+                }
+            }
+        }
+        return comp()
+
+    }
+
+    private fun comp(): Boolean {
+        return station() || track() || switch() || tunnel() || bridge() || crossing() || train()
+
+    }
+
+    private fun station(): Boolean {
+        if (currentToken?.symbol == Symbol.STATION) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.NAME) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.LCURLY) {
+                    currentToken = scanner.getToken()
+                    val shapesStatus = shapesmul()
+                    val platformStatus = platformmul()
+                    if (shapesStatus || platformStatus) {
+                        while (currentToken?.symbol != Symbol.RCURLY) {
+                            if (!shapesmul() && !platformmul()) {
+                                break
+                            }
+                        }
+                        if (currentToken?.symbol == Symbol.RCURLY) {
+                            currentToken = scanner.getToken()
+                            return true
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun platformmul(): Boolean {
+        if (platform()) {
+            while (platform()) {
+                // Zanka za preverjanje več EXPR
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun platform(): Boolean {
+        if (currentToken?.symbol == Symbol.PLATFORM) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.REAL) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (currentToken?.symbol == Symbol.REAL) {
+                        currentToken = scanner.getToken()
+                        if (currentToken?.symbol == Symbol.LCURLY) {
+                            currentToken = scanner.getToken()
+                            if (shapesmul()) {
+                                if (currentToken?.symbol == Symbol.RCURLY) {
+                                    currentToken = scanner.getToken()
+                                    return true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun shapesmul(): Boolean {
+        if (shapes()) {
+            while (shapes()) {
+                // Zanka za preverjanje več shapes
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun shapes(): Boolean {
+        return when (currentToken?.symbol) {
+
+            Symbol.BOX -> {
+                currentToken = scanner.getToken()
+                return box()
+            }
+
+            Symbol.CIRC -> {
+                currentToken = scanner.getToken()
+                return circ()
+            }
+
+            else -> shapes1d()
+        }
+    }
+
+    private fun box(): Boolean {
+        if (currentToken?.symbol == Symbol.LPAREN) {
+            currentToken = scanner.getToken()
+            if (cord()) {
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (cord()) {
+                        if (currentToken?.symbol == Symbol.RPAREN) {
+                            currentToken = scanner.getToken()
+                            if (currentToken?.symbol == Symbol.SEMICOLON) {
+                                currentToken = scanner.getToken()
+                            }
+                            return true
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+
+    private fun circ(): Boolean {
+        if (currentToken?.symbol == Symbol.LPAREN) {
+            currentToken = scanner.getToken()
+            if (cord()) {
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (currentToken?.symbol == Symbol.REAL) {
+                        currentToken = scanner.getToken()
+                        if (currentToken?.symbol == Symbol.RPAREN) {
+                            currentToken = scanner.getToken()
+                            if (currentToken?.symbol == Symbol.SEMICOLON) {
+                                currentToken = scanner.getToken()
+                            }
+                            return true
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun cord(): Boolean {
+        val firstPart = (currentToken?.symbol == Symbol.LPAREN)
+        if (firstPart) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.REAL) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    val secondPart = (currentToken?.symbol == Symbol.REAL)
+                    if (secondPart) {
+                        currentToken = scanner.getToken()
+                        if (currentToken?.symbol == Symbol.RPAREN) {
+                            currentToken = scanner.getToken()
+                            return true
+                        }
+                    }
+                }
+            }
+        } else if (currentToken?.symbol == Symbol.NULL) {
+            currentToken = scanner.getToken()
+            return true
+        }
+        return false
+    }
+
+
+    private fun shapes1d(): Boolean {
+        return when (currentToken?.symbol) {
+            Symbol.LINE -> {
+                currentToken = scanner.getToken()
+                return line()
+            }
+            Symbol.BEND -> {
+                currentToken = scanner.getToken()
+                return bend()
+            }
+            else -> {
+                false
+            }
+        }
+    }
+
+    private fun line(): Boolean {
+        if (currentToken?.symbol == Symbol.LPAREN) {
+            currentToken = scanner.getToken()
+            if (cord()) {
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (cord()) {
+                        if (currentToken?.symbol == Symbol.RPAREN) {
+                            currentToken = scanner.getToken()
+                            if (currentToken?.symbol == Symbol.SEMICOLON) {
+                                currentToken = scanner.getToken()
+                            }
+                            return true
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+
+    private fun bend(): Boolean {
+        if (currentToken?.symbol == Symbol.LPAREN) {
+            currentToken = scanner.getToken()
+            if (cord()) {
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (cord()) {
+                        if (currentToken?.symbol == Symbol.COMMA) {
+                            currentToken = scanner.getToken()
+                            if (currentToken?.symbol == Symbol.REAL) {
+                                currentToken = scanner.getToken()
+                                if (currentToken?.symbol == Symbol.RPAREN) {
+                                    currentToken = scanner.getToken()
+                                    if (currentToken?.symbol == Symbol.SEMICOLON) {
+                                        currentToken = scanner.getToken()
+                                    }
+                                    return true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun track(): Boolean {
+        if (currentToken?.symbol == Symbol.TRACK) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.NAME) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (trackTmp()) {
+                        if (currentToken?.symbol == Symbol.COMMA) {
+                            currentToken = scanner.getToken()
+                            if (trackTmp()) {
+                                if (currentToken?.symbol == Symbol.LCURLY) {
+                                    currentToken = scanner.getToken()
+                                    if (shapes1dMul()) {
+                                        if (currentToken?.symbol == Symbol.RCURLY) {
+                                            currentToken = scanner.getToken()
+                                            return true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun trackTmp(): Boolean {
+        if (currentToken?.symbol == Symbol.VAR) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.ARROW) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.REAL) {
+                    currentToken = scanner.getToken()
+                    if (currentToken?.symbol == Symbol.ARROW) {
+                        currentToken = scanner.getToken()
+                        if (currentToken?.symbol == Symbol.REAL) {
+                            currentToken = scanner.getToken()
+                            return true
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+
+    private fun shapes1dMul(): Boolean {
+        if (shapes1d()) {
+            while (shapes1d()) {
+                // Zanka za preverjanje več shapes1d
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun switch(): Boolean {
+        if (currentToken?.symbol == Symbol.SWITCH) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.VAR) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (currentToken?.symbol == Symbol.VAR) {
+                        currentToken = scanner.getToken()
+                        if (currentToken?.symbol == Symbol.LCURLY) {
+                            currentToken = scanner.getToken()
+                            if (shapes1dMulOpt()) {
+                                if (currentToken?.symbol == Symbol.RCURLY) {
+                                    currentToken = scanner.getToken()
+                                    return true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun shapes1dMulOpt(): Boolean {
+        if (!shapes1d())
+            return true
+        while (shapes1d()) {
+            // Zanka za preverjanje več shapes1d
+        }
+        return true
+    }
+
+    private fun tunnel(): Boolean {
+        if (currentToken?.symbol == Symbol.TUNNEL) {
+            currentToken = scanner.getToken()
+            if (tbcTemplate())
+                return true
+        }
+        return false
+    }
+
+    private fun array(): Boolean {
+        if (currentToken?.symbol == Symbol.LSQUARE) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.VAR) {
+                currentToken = scanner.getToken()
+                if (array1()) {
+                    if (currentToken?.symbol == Symbol.RSQUARE) {
+                        currentToken = scanner.getToken()
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun array1(): Boolean {
+        while (currentToken?.symbol == Symbol.COMMA) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.VAR) {
+                currentToken = scanner.getToken()
+            } else {
+                return false
+            }
+        }
+        return true
+    }
+
+
+    private fun bridge(): Boolean {
+        if (currentToken?.symbol == Symbol.BRIDGE) {
+            currentToken = scanner.getToken()
+            if (tbcTemplate()) {
+                return true
+            }
+        }
+        return false
+    }
+
+
+    private fun crossing(): Boolean {
+        if (currentToken?.symbol == Symbol.CROSSING) {
+            currentToken = scanner.getToken()
+            if (tbcTemplate()) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun tbcTemplate(): Boolean {
+        if (currentToken?.symbol == Symbol.NAME) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.COMMA) {
+                currentToken = scanner.getToken()
+                if (array()) {
+                    if (currentToken?.symbol == Symbol.LCURLY) {
+                        currentToken = scanner.getToken()
+                        if (shapesmul()) {
+                            if (currentToken?.symbol == Symbol.RCURLY) {
+                                currentToken = scanner.getToken()
+                                return true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun train(): Boolean {
+        if (currentToken?.symbol == Symbol.TRAIN) {
+            currentToken = scanner.getToken()
+            if (currentToken?.symbol == Symbol.NAME) {
+                currentToken = scanner.getToken()
+                if (currentToken?.symbol == Symbol.COMMA) {
+                    currentToken = scanner.getToken()
+                    if (currentToken?.symbol == Symbol.VAR) {
+                        currentToken = scanner.getToken()
+                        if (currentToken?.symbol == Symbol.COMMA) {
+                            currentToken = scanner.getToken()
+                            if (currentToken?.symbol == Symbol.REAL) {
+                                currentToken = scanner.getToken()
+                                if (currentToken?.symbol == Symbol.LCURLY) {
+                                    currentToken = scanner.getToken()
+                                    if (shapesmul()) {
+                                        if (currentToken?.symbol == Symbol.RCURLY) {
+                                            currentToken = scanner.getToken()
+                                            return true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+
+}
 
 fun printTokens(scanner: Scanner) {
     val tmpToken = scanner.getToken()
@@ -488,5 +939,13 @@ fun printTokens(scanner: Scanner) {
 fun main(args: Array<String>) {
 
     val input = File(args[0])
-    printTokens(Scanner(RailwayAutomaton, input.readText().byteInputStream()))
+    //printTokens(Scanner(RailwayAutomaton, input.readText().byteInputStream()))
+
+    val parser = Parser(Scanner(RailwayAutomaton, input.readText().byteInputStream()))
+    val status: Boolean = parser.parse()
+    if (status) {
+        println("accept")
+    } else {
+        println("reject")
+    }
 }
