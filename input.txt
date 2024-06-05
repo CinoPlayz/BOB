@@ -2,10 +2,10 @@ infrastructure "Celje-Maribor" {
     let celjePostaja = station "Celje" {
         box((3,2), (5,3));
         platform 1, 2 {
-            box((4,2), (2,2))
+            box((4,2), (2,2));
         }
         platform 2, 2 {
-            box((4,2), (3,2))
+            box((4,2), (3,2));
         }
     }
 
@@ -18,8 +18,8 @@ infrastructure "Celje-Maribor" {
 
     let celjeTir = track "Celje-Maribor", celjePostaja->1->1, mariborPostaja->1->2 {
         line(null, (2,5));
-        bend((2,3), (5,4), 20)
-        line((2,4), null)
+        bend((2,3), (5,4), 20);
+        line((2,4), null);
     }
 
     let mariborTir = track "Maribor-Celje", Maribor->1->1, Celje->2->1{
@@ -44,7 +44,7 @@ infrastructure "Celje-Maribor" {
     }
 
     train "IC 311", celjeTir, 20 {
-        circ((5,2), 2)
+        circ((5,2), 2);
         box((3,4), (3,5));
     }
 }

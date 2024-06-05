@@ -596,8 +596,8 @@ class Parser(private val scanner: Scanner) {
                             currentToken = scanner.getToken()
                             if (currentToken?.symbol == Symbol.SEMICOLON) {
                                 currentToken = scanner.getToken()
+                                return true
                             }
-                            return true
                         }
                     }
                 }
@@ -619,8 +619,8 @@ class Parser(private val scanner: Scanner) {
                             currentToken = scanner.getToken()
                             if (currentToken?.symbol == Symbol.SEMICOLON) {
                                 currentToken = scanner.getToken()
+                                return true
                             }
-                            return true
                         }
                     }
                 }
@@ -682,8 +682,8 @@ class Parser(private val scanner: Scanner) {
                             currentToken = scanner.getToken()
                             if (currentToken?.symbol == Symbol.SEMICOLON) {
                                 currentToken = scanner.getToken()
+                                return true
                             }
-                            return true
                         }
                     }
                 }
@@ -708,8 +708,8 @@ class Parser(private val scanner: Scanner) {
                                     currentToken = scanner.getToken()
                                     if (currentToken?.symbol == Symbol.SEMICOLON) {
                                         currentToken = scanner.getToken()
+                                        return true
                                     }
-                                    return true
                                 }
                             }
                         }
