@@ -13,48 +13,74 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.CustomDropdownMenuInt
-import gui.generateData.engine.generateStations
-import gui.generateData.engine.insertAllStationsFromGeneratedListToDB
-import gui.generateData.parts.StationGenerateItem
+import gui.generateData.engine.generateRoutes
+import gui.generateData.engine.insertAllRoutesFromGeneratedListToDB
+import gui.generateData.parts.RouteGenerateItem
+import gui.toNameIDPairs
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import models.StationInsert
+import kotlinx.coroutines.withContext
+import models.RouteInsert
+import models.Station
+import utils.api.dao.getAllStations
 
 @Composable
-fun GenerateDataStationView(
+fun GenerateDataRouteView(
     modifier: Modifier = Modifier
 ){
     val coroutineScope = rememberCoroutineScope()
-    val isLoading = remember { mutableStateOf(false) }
+    val isLoading = remember { mutableStateOf(true) }
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 
     var numberToGenerate by remember { mutableStateOf(1) }
 
-    var stations by remember { mutableStateOf<List<StationInsert>>(emptyList()) } // generated stations
+    var routes by remember { mutableStateOf<List<RouteInsert>>(emptyList()) }
+    var allStations by remember { mutableStateOf<List<Station>>(emptyList()) } // for start/end/middle stations list
+    var allStationsPairs by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
 
-    fun updateStation(newStation: StationInsert, index: Int) {
-        val updatedList = stations.toMutableList()
+    val trainTypes = listOf(
+        "AVT", "BUS", "EC", "EN", "IC", "ICS",
+        "LP", "LPV", "LRG", "MO", "MV", "RG"
+    )
+
+    fun updateRoute(newRoute: RouteInsert, index: Int) {
+        val updatedList = routes.toMutableList()
         if (index in updatedList.indices) {
-            updatedList[index] = newStation
-            stations = updatedList
+            updatedList[index] = newRoute
+            routes = updatedList
         }
     }
 
-    fun insertStation(success: Boolean, index: Int) {
+    fun insertRoute(success: Boolean, index: Int) {
         if (success) {
-            val updatedList = stations.toMutableList()
+            val updatedList = routes.toMutableList()
             if (index in updatedList.indices) {
                 updatedList.removeAt(index)
-                stations = updatedList
-                feedbackMessage = "Station successfully inserted in the database."
+                routes = updatedList
+                feedbackMessage = "Route successfully inserted in the database."
             }
         }
     }
 
-    fun removeStation(index: Int) {
-        val updatedList = stations.toMutableList()
+    fun removeRoute(index: Int) {
+        val updatedList = routes.toMutableList()
         if (index in updatedList.indices) {
             updatedList.removeAt(index)
-            stations = updatedList
+            routes = updatedList
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            isLoading.value = true
+            try {
+                allStations = withContext(Dispatchers.IO) { getAllStations() }
+                allStationsPairs = allStations.toNameIDPairs()
+            } catch (e: Exception) {
+                feedbackMessage = "Error: ${e.message}"
+            } finally {
+                isLoading.value = false
+            }
         }
     }
 
@@ -72,7 +98,7 @@ fun GenerateDataStationView(
                 CircularProgressIndicator()
             }
         }
-    } else if (stations.isEmpty()) {
+    } else if (routes.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,7 +107,7 @@ fun GenerateDataStationView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Choose number of Stations to generate",
+                "Choose number of Routes to generate",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -110,12 +136,14 @@ fun GenerateDataStationView(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        val (feedback, generatedStations) = generateStations(
-                            stations = stations,
+                        val (feedback, generatedRoutes) = generateRoutes(
+                            routes = routes,
+                            trainTypes = trainTypes,
                             numberToGenerate = numberToGenerate,
+                            allStations = allStationsPairs,
                             isLoading = isLoading
                         )
-                        stations = generatedStations
+                        routes = generatedRoutes
                         if (feedback != "") {
                             feedbackMessage = feedback
                         }
@@ -123,7 +151,7 @@ fun GenerateDataStationView(
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text(text = "Generate Stations")
+                Text(text = "Generate Routes")
             }
         }
     } else {
@@ -144,20 +172,19 @@ fun GenerateDataStationView(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Generated Stations",
+                            text = "Generated Routes",
                             style = MaterialTheme.typography.h6,
                             modifier = Modifier
-                                //.padding(bottom = 8.dp)
                                 .align(Alignment.CenterHorizontally)
                         )
                         Button(
                             onClick = {
                                 coroutineScope.launch {
-                                    val (feedback, insertedStations) = insertAllStationsFromGeneratedListToDB(
-                                        stations = stations,
+                                    val (feedback, insertedRoutes) = insertAllRoutesFromGeneratedListToDB(
+                                        routes = routes,
                                         isLoading = isLoading
                                     )
-                                    stations = insertedStations
+                                    routes = insertedRoutes
                                     feedbackMessage = feedback
                                 }
                             },
@@ -167,7 +194,7 @@ fun GenerateDataStationView(
                         }
                         Button(
                             onClick = {
-                                stations = emptyList()
+                                routes = emptyList()
                             },
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
@@ -175,18 +202,20 @@ fun GenerateDataStationView(
                         }
                     }
                 }
-                itemsIndexed(stations) { index, station ->
-                    StationGenerateItem(
-                        station = station,
+                itemsIndexed(routes) { index, route ->
+                    RouteGenerateItem(
+                        route = route,
                         index = index,
-                        onInsertStation = { success, index ->
-                            insertStation(success, index)
+                        trainTypes = trainTypes,
+                        allStations = allStationsPairs,
+                        onInsertRoute = { success, index ->
+                            insertRoute(success, index)
                         },
-                        onUpdateStation = { stationToUpdate, index ->
-                            updateStation(stationToUpdate, index)
+                        onUpdateRoute = { routeToUpdate, index ->
+                            updateRoute(routeToUpdate, index)
                         },
-                        onRemoveStation = { index ->
-                            removeStation(index)
+                        onRemoveRoute = { index ->
+                            removeRoute(index)
                         }
                     )
                 }
