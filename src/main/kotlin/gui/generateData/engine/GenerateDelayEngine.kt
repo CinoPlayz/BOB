@@ -1,4 +1,4 @@
-package gui.generateData
+package gui.generateData.engine
 
 import androidx.compose.runtime.MutableState
 import kotlinx.coroutines.Dispatchers

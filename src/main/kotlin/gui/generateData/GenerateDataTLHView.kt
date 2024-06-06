@@ -13,6 +13,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.CustomDropdownMenuInt
+import gui.generateData.engine.generateTLHs
+import gui.generateData.engine.insertAllTLHsFromGeneratedListToDB
 import gui.generateData.parts.TLHGenerateItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

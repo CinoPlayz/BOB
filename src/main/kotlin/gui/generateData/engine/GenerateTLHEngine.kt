@@ -1,4 +1,4 @@
-package gui.generateData
+package gui.generateData.engine
 
 import androidx.compose.runtime.MutableState
 import kotlinx.coroutines.Dispatchers
@@ -31,23 +31,6 @@ suspend fun generateTLHs(
             val startDate = LocalDateTime.of(2024, 4, 1, 0, 0)
             val endDate = LocalDateTime.of(2024, 5, 31, 23, 59)
             val daysBetween = ChronoUnit.DAYS.between(startDate, endDate).toInt()
-
-            fun generateRandomCoordinates(): Coordinates {
-                val lat = Random.nextFloat() * (47.000000f - 45.000000f) + 45.000000f
-                val lng = Random.nextFloat() * (17.000000f - 13.000000f) + 13.000000f
-                return Coordinates(lat, lng)
-            }
-
-            fun generateRandomTime(): String {
-                val randomHour = random.nextInt(24)
-                val randomMinute = random.nextInt(60)
-                val randomSecond = random.nextInt(60)
-
-                val randomTime = LocalTime.of(randomHour, randomMinute, randomSecond)
-                val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-
-                return randomTime.format(formatter)
-            }
 
             repeat(numberToGenerate) {
                 val randomDate = startDate.plusDays(random.nextLong(daysBetween.toLong())).plusHours(random.nextInt(24).toLong()).plusMinutes(random.nextInt(60).toLong())

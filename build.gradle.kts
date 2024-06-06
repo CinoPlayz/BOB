@@ -35,6 +35,7 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.13") // Logger for MongoDB Driver
     implementation("com.fleeksoft.ksoup:ksoup:0.1.2") //HTML extracter
     implementation("org.apache.pdfbox:pdfbox:3.0.2") //PDF Parser
+    implementation("io.github.serpro69:kotlin-faker:2.0.0-rc.4") // Kotlin Faker
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0") // Test coroutines
 }
 

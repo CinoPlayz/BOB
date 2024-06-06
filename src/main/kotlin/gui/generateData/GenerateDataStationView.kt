@@ -13,76 +13,48 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gui.CustomDropdownMenuInt
-import gui.generateData.engine.generateDelays
-import gui.generateData.engine.insertAllDelaysFromGeneratedListToDB
-import gui.generateData.parts.DelayGenerateItem
-import gui.toNameIDPairs
-import gui.toNumberIDPairs
-import kotlinx.coroutines.Dispatchers
+import gui.generateData.engine.generateStations
+import gui.generateData.engine.insertAllStationsFromGeneratedListToDB
+import gui.generateData.parts.StationGenerateItem
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import models.DelayInsert
-import models.Route
-import models.Station
-import utils.api.dao.getAllRoutes
-import utils.api.dao.getAllStations
+import models.StationInsert
 
 @Composable
-fun GenerateDataDelayView(
+fun GenerateDataStationView(
     modifier: Modifier = Modifier
-) {
+){
     val coroutineScope = rememberCoroutineScope()
-    val isLoading = remember { mutableStateOf(true) }
+    val isLoading = remember { mutableStateOf(false) }
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
 
     var numberToGenerate by remember { mutableStateOf(1) }
 
-    var delays by remember { mutableStateOf<List<DelayInsert>>(emptyList()) } // generated delays (DelayInsert)
-    var allStations by remember { mutableStateOf<List<Station>>(emptyList()) } // generator - pick one at random
-    var allStationsPairs by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
-    var allRoutes by remember { mutableStateOf<List<Route>>(emptyList()) } // generator - pick one at random
-    var allRoutesPairs by remember { mutableStateOf<List<Pair<Int, String>>>(emptyList()) }
+    var stations by remember { mutableStateOf<List<StationInsert>>(emptyList()) } // generated stations
 
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            isLoading.value = true
-            try {
-                allStations = withContext(Dispatchers.IO) { getAllStations() }
-                allRoutes = withContext(Dispatchers.IO) { getAllRoutes() }
-                allStationsPairs = allStations.toNameIDPairs()
-                allRoutesPairs = allRoutes.toNumberIDPairs()
-            } catch (e: Exception) {
-                feedbackMessage = "Error: ${e.message}"
-            } finally {
-                isLoading.value = false
-            }
-        }
-    }
-
-    fun updateDelay(newDelay: DelayInsert, index: Int) {
-        val updatedList = delays.toMutableList()
+    fun updateStation(newStation: StationInsert, index: Int) {
+        val updatedList = stations.toMutableList()
         if (index in updatedList.indices) {
-            updatedList[index] = newDelay
-            delays = updatedList
+            updatedList[index] = newStation
+            stations = updatedList
         }
     }
 
-    fun insertDelay(success: Boolean, index: Int) {
+    fun insertStation(success: Boolean, index: Int) {
         if (success) {
-            val updatedList = delays.toMutableList()
+            val updatedList = stations.toMutableList()
             if (index in updatedList.indices) {
                 updatedList.removeAt(index)
-                delays = updatedList
-                feedbackMessage = "Delay datapoint successfully inserted in the database."
+                stations = updatedList
+                feedbackMessage = "Station successfully inserted in the database."
             }
         }
     }
 
-    fun removeDelay(index: Int) {
-        val updatedList = delays.toMutableList()
+    fun removeStation(index: Int) {
+        val updatedList = stations.toMutableList()
         if (index in updatedList.indices) {
             updatedList.removeAt(index)
-            delays = updatedList
+            stations = updatedList
         }
     }
 
@@ -100,7 +72,7 @@ fun GenerateDataDelayView(
                 CircularProgressIndicator()
             }
         }
-    } else if (delays.isEmpty()) {
+    } else if (stations.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -138,14 +110,12 @@ fun GenerateDataDelayView(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        val (feedback, generatedDelays) = generateDelays(
-                            delays = delays,
+                        val (feedback, generatedStations) = generateStations(
+                            stations = stations,
                             numberToGenerate = numberToGenerate,
-                            allStations = allStationsPairs,
-                            allRoutes = allRoutesPairs,
                             isLoading = isLoading
                         )
-                        delays = generatedDelays
+                        stations = generatedStations
                         if (feedback != "") {
                             feedbackMessage = feedback
                         }
@@ -153,7 +123,7 @@ fun GenerateDataDelayView(
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text(text = "Generate Delays")
+                Text(text = "Generate Stations")
             }
         }
     } else {
@@ -183,11 +153,11 @@ fun GenerateDataDelayView(
                         Button(
                             onClick = {
                                 coroutineScope.launch {
-                                    val (feedback, insertedDelays) = insertAllDelaysFromGeneratedListToDB(
-                                        delays = delays,
+                                    val (feedback, insertedStations) = insertAllStationsFromGeneratedListToDB(
+                                        stations = stations,
                                         isLoading = isLoading
                                     )
-                                    delays = insertedDelays
+                                    stations = insertedStations
                                     feedbackMessage = feedback
                                 }
                             },
@@ -197,7 +167,7 @@ fun GenerateDataDelayView(
                         }
                         Button(
                             onClick = {
-                                delays = emptyList()
+                                stations = emptyList()
                             },
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
@@ -205,20 +175,18 @@ fun GenerateDataDelayView(
                         }
                     }
                 }
-                itemsIndexed(delays) { index, delay ->
-                    DelayGenerateItem(
-                        delay = delay,
+                itemsIndexed(stations) { index, station ->
+                    StationGenerateItem(
+                        station = station,
                         index = index,
-                        allStations = allStationsPairs,
-                        allRoutes = allRoutesPairs,
-                        onInsertDelay = { success, index ->
-                            insertDelay(success, index)
+                        onInsertStation = { success, index ->
+                            insertStation(success, index)
                         },
-                        onUpdateDelay = { delayToUpdate, index ->
-                            updateDelay(delayToUpdate, index)
+                        onUpdateStation = { stationToUpdate, index ->
+                            updateStation(stationToUpdate, index)
                         },
-                        onRemoveDelay = { index ->
-                            removeDelay(index)
+                        onRemoveStation = { index ->
+                            removeStation(index)
                         }
                     )
                 }
