@@ -301,6 +301,17 @@ object RailwayAutomaton : DFA {
         setTransition(1, '[', 91)
         setTransition(1, ']', 92)
 
+
+        setTransition(1, numberCharSet, 75)
+        setTransition(75, numberCharSet, 75)
+        setTransition(75, '.', 76)
+        setTransition(76, numberCharSet, 77)
+        setTransition(77, numberCharSet, 77)
+
+        // Končna stanja
+        setSymbol(75, Symbol.REAL)
+        setSymbol(77, Symbol.REAL)
+
         setTransition(1, EOF, 95)
 
         setSymbol(5, Symbol.BEND)
@@ -319,6 +330,7 @@ object RailwayAutomaton : DFA {
 
         setSymbol(68, Symbol.VAR)
         setSymbol(72, Symbol.NULL)
+        setSymbol(73, Symbol.MINUS)
         setSymbol(74, Symbol.ARROW)
         setSymbol(75, Symbol.REAL)
         setSymbol(77, Symbol.REAL)
@@ -445,7 +457,11 @@ class Parser(private val scanner: Scanner) {
 
     fun parse(): Boolean {
         currentToken = scanner.getToken()
-        return infra() && currentToken?.symbol == Symbol.EOF
+        return program() && currentToken?.symbol == Symbol.EOF
+    }
+
+    private fun program(): Boolean {
+        return infra()
     }
 
     private fun infra(): Boolean {
@@ -493,7 +509,7 @@ class Parser(private val scanner: Scanner) {
     }
 
     private fun comp(): Boolean {
-        return station() || track() || switch() || tunnel() || bridge() || crossing() || train()
+        return station() || track() || switch() || tunnel() || bridge() || crossing() || train() || additive()
 
     }
 
@@ -661,10 +677,12 @@ class Parser(private val scanner: Scanner) {
                 currentToken = scanner.getToken()
                 return line()
             }
+
             Symbol.BEND -> {
                 currentToken = scanner.getToken()
                 return bend()
             }
+
             else -> {
                 false
             }
@@ -925,6 +943,102 @@ class Parser(private val scanner: Scanner) {
         return false
     }
 
+    private fun additive(): Boolean {
+        return multiplicative() && additiveTwo()
+    }
+
+    private fun additiveTwo(): Boolean {
+        return when (currentToken?.symbol) {
+            Symbol.PLUS -> {
+                currentToken = scanner.getToken()
+                multiplicative() && additiveTwo()
+            }
+
+            Symbol.MINUS -> {
+                currentToken = scanner.getToken()
+                multiplicative() && additiveTwo()
+            }
+
+            else -> true
+        }
+    }
+
+    private fun multiplicative(): Boolean {
+        return exponential() && multiplicativeTwo()
+    }
+
+    private fun multiplicativeTwo(): Boolean {
+        return when (currentToken?.symbol) {
+            Symbol.TIMES -> {
+                currentToken = scanner.getToken()
+                exponential() && multiplicativeTwo()
+            }
+
+            Symbol.DIVIDES -> {
+                currentToken = scanner.getToken()
+                exponential() && multiplicativeTwo()
+            }
+
+            Symbol.INTDIVIDES -> {
+                currentToken = scanner.getToken()
+                exponential() && multiplicativeTwo()
+            }
+
+            else -> true
+        }
+    }
+
+    private fun exponential(): Boolean {
+        return unary() && exponentialTwo()
+    }
+
+    private fun exponentialTwo(): Boolean {
+        return when (currentToken?.symbol) {
+            Symbol.POW -> {
+                currentToken = scanner.getToken()
+                unary() && exponentialTwo()
+            }
+
+            else -> true
+        }
+    }
+
+    private fun unary(): Boolean {
+        return when (currentToken?.symbol) {
+            Symbol.PLUS -> {
+                currentToken = scanner.getToken()
+                primary()
+            }
+
+            Symbol.MINUS -> {
+                currentToken = scanner.getToken()
+                primary()
+            }
+
+            else -> primary()
+        }
+    }
+
+    private fun primary(): Boolean {
+        return when (currentToken?.symbol) {
+            Symbol.REAL, Symbol.VAR -> {
+                currentToken = scanner.getToken()
+                true
+            }
+
+            Symbol.LPAREN -> {
+                currentToken = scanner.getToken()
+                if (additive()) {
+                    if (currentToken?.symbol == Symbol.RPAREN) {
+                        currentToken = scanner.getToken()
+                        true
+                    } else false
+                } else false
+            }
+
+            else -> false
+        }
+    }
 
 }
 
