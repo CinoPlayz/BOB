@@ -30,6 +30,8 @@ import gui.login.logoutUserBackend
 import gui.manageData.ManageDataMenu
 import gui.scraper.Scraper
 import kotlinx.coroutines.launch
+import utils.context.AppContext
+import utils.context.appContextGlobal
 
 enum class MenuState(val customName: String) {
     ADD_DATA("Add Data"),
@@ -191,6 +193,28 @@ fun Menu(
                 )
             }
             Spacer(modifier = Modifier.weight(1f)) // Push About to the bottom
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = Color.Transparent)
+                    .padding(vertical = buttonPadding.dp)
+                    .offset(x = textOffset.dp)
+            ) {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = "Username",
+                    modifier = Modifier
+                        .size(size = iconSize.dp)
+                        .align(Alignment.CenterVertically)
+                )
+                Spacer(modifier = Modifier.width(iconTextSpace.dp))
+                Text(
+                    text = appContextGlobal.get().username,
+                    textAlign = TextAlign.Center,
+                    fontSize = fontSize.sp,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

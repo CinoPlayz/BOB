@@ -1,7 +1,6 @@
 package gui.generateData.engine
 
 import androidx.compose.runtime.MutableState
-import gui.addData.MiddleStop
 import gui.addLeadingZero
 import gui.daysOfWeek
 import kotlinx.coroutines.Dispatchers
@@ -9,10 +8,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import models.*
 import utils.api.dao.insertRandRoute
-import utils.api.dao.insertRoute
 import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
-import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
 suspend fun generateRoutes(

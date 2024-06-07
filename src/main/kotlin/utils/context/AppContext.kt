@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 data class AppContext(
     val url: String,
+    var username: String,
     var token: String, // update after successful login
     val officialUrl: String,
     val vlakSiUrl: String,
@@ -70,6 +71,7 @@ private suspend fun readConfiguration(): AppContext? = withContext(Dispatchers.I
 
         AppContext(
             url = url,
+            username = "",
             token = "",
             vlakSiUrl = vlakSiUrl,
             officialUrl = officialUrl,

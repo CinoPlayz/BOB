@@ -29,7 +29,7 @@ fun LoginScreen(
     fun onLoginSuccess(token: String) {
         errorMessage = ""
         val currentContext = appContextGlobal.get()
-        val updatedContext = currentContext.copy(token = token)
+        val updatedContext = currentContext.copy(token = token, username = username)
         appContextGlobal.set(updatedContext)
         onLoginSuccess()
     }
@@ -42,7 +42,6 @@ fun LoginScreen(
         errorMessage = ""
         enterTwoFATOTP = true
         twoFATokenLogin = tokenLogin
-
     }
 
     if (enterTwoFATOTP) {

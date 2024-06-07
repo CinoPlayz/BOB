@@ -23,13 +23,13 @@ suspend fun logoutUserBackend() {
         when (result) {
             is Result.Failure -> {
                 val currentContext = appContextGlobal.get()
-                val updatedContext = currentContext.copy(token = "")
+                val updatedContext = currentContext.copy(token = "", username = "")
                 appContextGlobal.set(updatedContext)
             }
 
             is Result.Success -> {
                 val currentContext = appContextGlobal.get()
-                val updatedContext = currentContext.copy(token = "")
+                val updatedContext = currentContext.copy(token = "", username = "")
                 appContextGlobal.set(updatedContext)
             }
 
