@@ -68,6 +68,35 @@ module.exports = {
         }
     },
 
+    /**
+     * Naključno generiramo podatke na način, da se vpisuje ID postaje v RouteStopInsert objekt - ni potrebno pretvarjati.
+     * Uporaba pri shranjevanju nove NAKLJUČNO GENERIRANE žlezniške smeri (route) preko aplikacije.
+     */
+    createWithIDs: async function (req, res) {
+        try {
+            console.log(req.body)
+
+            const newRoute = new RouteModel({
+                trainType: req.body.trainType,
+                trainNumber: req.body.trainNumber,
+                validFrom: req.body.validFrom,
+                validUntil: req.body.validUntil,
+                canSupportBikes: req.body.canSupportBikes,
+                drivesOn: req.body.drivesOn,
+                start: req.body.start,
+                end: req.body.end,
+                middle: req.body.middle
+            });
+
+            const savedRoute = await newRoute.save();
+
+            return res.status(201).json(savedRoute);
+        } catch (err) {
+            console.log(err)
+            return shared.handleError(res, 500, "Error when creating route", err);
+        }
+    },
+
     // Create new route (POST)
     /* create: async function (req, res) {
         const newRoute = new RouteModel({

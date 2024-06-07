@@ -11,6 +11,7 @@ router.get('/:id', routeController.show);
 
 // POST (create)
 router.post('/', extractToken, getRoleFromToken, isReqRole("admin"), routeController.create);
+router.post('/createWithIDs', extractToken, getRoleFromToken, isReqRole("admin"), routeController.createWithIDs);
 
 // PUT (update)
 router.put('/:id/updateFromApp', extractToken, getRoleFromToken, isReqRole("admin"), routeController.updateFromApp);
