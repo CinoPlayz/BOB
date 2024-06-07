@@ -670,7 +670,9 @@ fun RouteGenerateItem(
                                     onSuccess = onUpdateRouteSuccess
                                 )
 
-                                feedbackMessage = feedback
+                                if (feedback.isNotEmpty()) {
+                                    feedbackMessage = feedback
+                                }
                             }
                         } else {
                             editMode = true

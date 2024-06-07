@@ -8,10 +8,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apartment
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.Train
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +22,7 @@ enum class GenerateDataMenuState(val customName: String) {
     TLH("TLH"),
     DELAY("Delay"),
     STATION("Station"),
+    ROUTE("Route"),
     RESET("Reset")
 }
 
@@ -119,6 +117,30 @@ fun GenerateData(
                 }
                 Row(
                     modifier = Modifier
+                        .weight(1f)
+                        .clickable { generateDataMenuState.value = GenerateDataMenuState.ROUTE }
+                        .background(if (generateDataMenuState.value == GenerateDataMenuState.ROUTE) Color.LightGray else Color.Transparent)
+                        .padding(vertical = buttonPadding.dp)
+                        .align(Alignment.CenterVertically)
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+
+                ) {
+                    Icon(
+                        Icons.Default.Route,
+                        contentDescription = GenerateDataMenuState.ROUTE.name,
+                        modifier = Modifier
+                            .size(size = iconSize.dp)
+                            .align(Alignment.CenterVertically)
+                    )
+                    Spacer(modifier = Modifier.width(iconTextSpace.dp))
+                    Text(
+                        text = GenerateDataMenuState.ROUTE.customName,
+                        textAlign = TextAlign.Center,
+                        fontSize = fontSize.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
                         .width(50.dp)
                         .clickable { generateDataMenuState.value = GenerateDataMenuState.RESET }
                         .background(Color.Transparent)
@@ -158,6 +180,7 @@ fun GenerateData(
                 GenerateDataMenuState.TLH -> GenerateDataTLHView()
                 GenerateDataMenuState.DELAY -> GenerateDataDelayView()
                 GenerateDataMenuState.STATION -> GenerateDataStationView()
+                GenerateDataMenuState.ROUTE -> GenerateDataRouteView()
                 GenerateDataMenuState.RESET -> GenerateDataReset()
             }
         }

@@ -66,6 +66,33 @@ suspend fun insertRoute(route: RouteInsert): Boolean {
     }
 }
 
+suspend fun insertRandRoute(route: RouteInsert): Boolean {
+    val url = "${appContextGlobal.get().url}/routes/createWithIDs"
+    val body = Json.encodeToString(route)
+
+    val (_, response, result) = Fuel.post(url)
+        .header("Accept-Language", "en")
+        .header(
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+        )
+        .header(Headers.AUTHORIZATION, "Bearer ${appContextGlobal.get().token}")
+        .header(Headers.CONTENT_TYPE, "application/json")
+        .jsonBody(body)
+        .responseString()
+
+    return when (result) {
+        is Result.Success -> {
+            val statusCode = response.statusCode
+            statusCode in 200..299 // Check for successful status code
+        }
+
+        is Result.Failure -> {
+            println(response.body().toString())
+            throw IllegalStateException("Error Code: ${response.statusCode}")
+        }
+    }
+}
+
 suspend fun updateRoute(route: RouteUpdate): Route {
     val id = route.id
     val url = "${appContextGlobal.get().url}/routes/${id}/updateFromApp"

@@ -3,12 +3,9 @@ package gui.generateData.engine
 import androidx.compose.runtime.MutableState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import models.Coordinates
 import models.TrainLocHistoryInsert
 import utils.api.dao.insertTrainLocHistory
 import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
@@ -48,7 +45,7 @@ suspend fun generateTLHs(
                     trainNumber = randomRoute.toString(),
                     routeFrom = randomStationFrom,
                     routeTo = randomStationTo,
-                    routeStartTime = generateRandomTime(),
+                    routeStartTime = generateRandomTimeWithSecondsString(),
                     nextStation = randomStationNext,
                     delay = randomDelay,
                     coordinates = randomCoordinates

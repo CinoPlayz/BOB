@@ -8,16 +8,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import models.*
+import utils.api.dao.insertRandRoute
 import utils.api.dao.insertRoute
 import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
 suspend fun generateRoutes(
     routes: List<RouteInsert>,
     trainTypes: List<String>,
     numberToGenerate: Int,
-    allStations: List<Pair<String, String>>,
+    allStations: List<Pair<String, String>>, // name, id
     isLoading: MutableState<Boolean>
 ): Pair<String, List<RouteInsert>> {
     return withContext(Dispatchers.Default) {
@@ -28,11 +30,28 @@ suspend fun generateRoutes(
 
             val random = Random(System.currentTimeMillis())
 
+            repeat(numberToGenerate) {
+                val randomTrainType = trainTypes[random.nextInt(trainTypes.size)]
+                val randomTrainNumber = random.nextInt(10, 99999)
+                val (randomFromDate, randomUntilDate) = generateRandomDates(/*startDate, endDate*/)
+                val randomSize = random.nextInt(1, 8) // at least one day
+                val randomMiddlesSize = random.nextInt(0, 10)
+                val (start, end, middle) = generateRouteStops(allStations, randomMiddlesSize)
 
+                val routeInsert = RouteInsert(
+                    trainType = randomTrainType,
+                    trainNumber = randomTrainNumber,
+                    validFrom = randomFromDate,
+                    validUntil = randomUntilDate,
+                    canSupportBikes = Random.nextBoolean(),
+                    drivesOn = generateUniqueRandomList(randomSize),
+                    start = start,
+                    end = end,
+                    middle = middle
+                )
 
-
-
-
+                mutableRoutes.add(routeInsert)
+            }
 
             isLoading.value = false
             "" to mutableRoutes
@@ -40,23 +59,6 @@ suspend fun generateRoutes(
             isLoading.value = false
             "Error: ${e.message}" to routes
         }
-    }
-}
-
-suspend fun insertRouteFromGeneratedListToDB(
-    route: RouteInsert,
-    index: Int,
-    onSuccess: (Boolean, Int) -> Unit
-): String {
-    return try {
-        var success: Boolean
-        coroutineScope {
-            success = insertRoute(route)
-        }
-        onSuccess(success, index)
-        ""
-    } catch (e: Exception) {
-        "Error inserting route to the database. ${e.message}"
     }
 }
 
@@ -217,6 +219,23 @@ suspend fun updateRouteInGeneratedList(
     }
 }
 
+suspend fun insertRouteFromGeneratedListToDB(
+    route: RouteInsert,
+    index: Int,
+    onSuccess: (Boolean, Int) -> Unit
+): String {
+    return try {
+        var success: Boolean
+        coroutineScope {
+            success = insertRandRoute(route)
+        }
+        onSuccess(success, index)
+        ""
+    } catch (e: Exception) {
+        "Error inserting route to the database. ${e.message}"
+    }
+}
+
 suspend fun insertAllRoutesFromGeneratedListToDB(
     routes: List<RouteInsert>,
     isLoading: MutableState<Boolean>
@@ -233,7 +252,7 @@ suspend fun insertAllRoutesFromGeneratedListToDB(
         while (iterator.hasNext()) {
             val route = iterator.next()
             try {
-                insertRoute(route)
+                insertRandRoute(route)
                 successCount++
                 iterator.remove()
             } catch (e: Exception) {
