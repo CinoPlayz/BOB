@@ -74,7 +74,7 @@ module.exports = {
      */
     createWithIDs: async function (req, res) {
         try {
-            console.log(req.body)
+            // console.log(req.body)
 
             const newRoute = new RouteModel({
                 trainType: req.body.trainType,
