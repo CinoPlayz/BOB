@@ -179,18 +179,42 @@ module.exports = {
                 label: `${user.username} Login`
             });
 
-            user['2faSecret'] = secret.base32;
-            user['2faEnabled'] = true;
-            await user.save();
-
             const uri = totp.toString();
-            return res.json({ uri });
+            return res.json({ uri, secret: secret.base32 });
         } catch (err) {
             return shared.handleError(res, 500, "Error in TwoFaSetup", err);
         }
-
     },
 
+    verify2Fa: async function (req, res, next) {
+        try {
+            const user = req.user;
+            const { otpCode, secret } = req.body;
+            
+            if (!user) {
+                return shared.handleError(res, 404, "User not found", null);
+            }
+
+            const totp = new OTPAuth.TOTP({
+                secret: OTPAuth.Secret.fromBase32(secret),
+                issuer: "BOB",
+                label: `${user.username} Login`
+            });
+
+            const isValid = totp.validate({ token: otpCode });
+
+            if (isValid !== null) {
+                user['2faSecret'] = secret;
+                user['2faEnabled'] = true;
+                await user.save();
+                return res.json({ message: '2FA enabled successfully' });
+            } else {
+                return shared.handleError(res, 400, "Invalid OTP code", null);
+            }
+        } catch (err) {
+            return shared.handleError(res, 500, "Error in verify2Fa", err);
+        }
+    },
 
 
     /**
@@ -199,43 +223,62 @@ module.exports = {
     twoFaLogin: async function (req, res) {
         try {
             const { loginToken, otpCode } = req.body;
-
+    
+            console.log(loginToken);
+            console.log(otpCode);
+    
             if (!loginToken || !otpCode) {
                 return shared.handleError(res, 400, "Missing login token or OTP code", null);
             }
-
+    
             //Finds user by login token
             const user = await UserModel.findOne({ 'tokens.token': loginToken, 'tokens.expiresOn': { $gt: new Date() }, 'tokens.type': 'login' });
             if (!user) {
                 return shared.handleError(res, 401, "Invalid or expired login token", null);
             }
-
+    
             const totp = new OTPAuth.TOTP({
                 secret: OTPAuth.Secret.fromBase32(user['2faSecret']),
                 issuer: "BOB",
                 label: `${user.username} Login`
             });
-
+    
             const delta = totp.validate({ token: otpCode, window: 1 });
             if (delta === null) {
                 return shared.handleError(res, 401, "Invalid OTP code", null);
             }
-
+    
             const allToken = {
                 token: crypto.randomBytes(32).toString('hex'),
                 expiresOn: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14 days
                 type: 'all'
             };
-
+    
             user.tokens.push(allToken);
             await user.save();
-
+    
             return res.json({ token: allToken.token });
         } catch (err) {
             return shared.handleError(res, 500, "Invalid OTP code", err);
         }
     },
 
+
+    isTwoFaEnabled: async function (req, res) {
+        try {
+            const user = req.user;
+    
+            if (!user) {
+                return shared.handleError(res, 404, "User not found", null);
+            }
+    
+            const is2FAEnabled = user['2faEnabled'] || false;
+    
+            return res.json({ is2FAEnabled });
+        } catch (err) {
+            return shared.handleError(res, 500, "Error checking 2FA status", err);
+        }
+    },
     /**
     * userController.2faLogin()
     */

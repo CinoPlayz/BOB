@@ -47,7 +47,7 @@ app.use(cors(corsOptions));
 
 
 // Cron job za posodobitev piškotkov 
-cron.schedule('*/10 * * * *', () => {
+cron.schedule('*/5 * * * *', () => {
     //console.log('Začenjam posodobitev piškotkov...');
     exec('node updateCookies.js', (error, stdout, stderr) => {
         if (error) {

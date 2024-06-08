@@ -18,7 +18,8 @@ router.post('/', userController.create);
 router.post('/createFromApp', extractToken, getRoleAndUserFromToken, isReqRole("admin"), userController.createFromApp);
 router.post('/login', userController.login);
 router.post('/twoFaSetup', extractToken, getRoleAndUserFromToken, userController.twoFaSetup);
-router.post('/twoFaLogin', extractToken, userController.twoFaLogin);
+router.post('/twoFaLogin', userController.twoFaLogin);
+router.post('/verify2Fa', extractToken, getRoleAndUserFromToken, userController.verify2Fa);
 router.post('/delays', extractToken, getRoleAndUserFromToken, userController.createUserDelay);
 
 /*
