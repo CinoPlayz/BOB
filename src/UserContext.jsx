@@ -5,6 +5,10 @@ import { createContext } from 'react';
      token: null,
      setUserContext: () => {},
      login: () => {},
-     verifyTOTP: () => {}
+     verifyTOTP: () => {},
+     clickedEnable2fa: false,
+     twoFaEnabled: false,
+     setTwoFaEnabled: false,
+     setClickedEnable2fa: false,
  });
 

@@ -9,7 +9,7 @@ function Logout() {
             const token = localStorage.getItem('token'); // get token before reseting userContext
             userContext.setUserContext(null);
             localStorage.removeItem('token');
-
+          
             //console.log("token: " + token)
 
             await fetch("http://localhost:3001/users/token", {
@@ -17,8 +17,7 @@ function Logout() {
                 credentials: "include",
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Authorization': `Bearer ${token}`                }
             });
         };
         logout();
