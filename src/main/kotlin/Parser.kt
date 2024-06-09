@@ -1,5 +1,6 @@
 class Parser(private val scanner: Scanner) {
     private var currentToken: Token? = null
+    private var variables: MutableMap<String, RailwayTypesData> = mutableMapOf()
 
     fun parse(): Pair<Boolean, RailwayAST.Expr> {
         currentToken = scanner.getToken()
@@ -49,11 +50,29 @@ class Parser(private val scanner: Scanner) {
         if (currentToken?.symbol == Symbol.DEFINE) {
             currentToken = scanner.getToken()
             if (currentToken?.symbol == Symbol.VAR) {
+                val varName = currentToken?.lexeme ?: ""
                 currentToken = scanner.getToken()
                 if (currentToken?.symbol == Symbol.ASSIGN) {
                     currentToken = scanner.getToken()
-                    var tmp = comp()
-                    return tmp
+
+                    val component = comp()
+
+                    //Sets variable
+                    when (component.second.type) {
+                        RailwayAST.RailwayTypes.STATION -> variables[varName] =
+                            RailwayTypesData(station = component.second as RailwayAST.Station)
+
+                        RailwayAST.RailwayTypes.PLATFORM -> variables[varName] =
+                            RailwayTypesData(platform = component.second as RailwayAST.Platform)
+
+                        RailwayAST.RailwayTypes.TRACK -> variables[varName] =
+                            RailwayTypesData(track = component.second as RailwayAST.Track)
+
+                        else -> {}
+                    }
+
+
+                    return component
                 }
             }
         }
@@ -64,7 +83,17 @@ class Parser(private val scanner: Scanner) {
     private fun comp(): Pair<Boolean, RailwayAST.Expr> {
         //return station().first || track() || switch() || tunnel() || bridge() || crossing() || train() || additive()
         val station = station()
-        return Pair(station.first, station.second)
+        if(station.first){
+            return Pair(true, station.second)
+        }
+
+        val track = track()
+        if(track.first){
+            return Pair(true, track.second)
+        }
+
+        return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
+
     }
 
     private fun station(): Pair<Boolean, RailwayAST.Expr> {
@@ -76,19 +105,31 @@ class Parser(private val scanner: Scanner) {
                 currentToken = scanner.getToken()
                 if (currentToken?.symbol == Symbol.LCURLY) {
                     currentToken = scanner.getToken()
-                    val shapesStatus = shapesmul(0.0f)
+
+                    val shapesStatus = shapesmul(RailwayAST.Coordinates(0.0f, 0.0f))
                     val platformStatus = platformmul(name ?: "")
                     if (shapesStatus.first && platformStatus.first) {
 
                         while (currentToken?.symbol != Symbol.RCURLY) {
-                            if (!shapesmul(0.0f).first && !platformmul(name ?: "").first) {
+                            if (!shapesmul(RailwayAST.Coordinates(0.0f, 0.0f)).first && !platformmul(
+                                    name ?: ""
+                                ).first
+                            ) {
                                 break
                             }
                         }
 
                         if (currentToken?.symbol == Symbol.RCURLY) {
                             currentToken = scanner.getToken()
-                            return Pair(true, RailwayAST.Station(name ?: "", shapesStatus.second, *platformStatus.second.toTypedArray()))
+
+                            return Pair(
+                                true,
+                                RailwayAST.Station(
+                                    name ?: "",
+                                    shapesStatus.second,
+                                    *platformStatus.second.toTypedArray()
+                                )
+                            )
                         }
                     }
                 }
@@ -126,11 +167,19 @@ class Parser(private val scanner: Scanner) {
                         if (currentToken?.symbol == Symbol.LCURLY) {
                             currentToken = scanner.getToken()
 
-                            val shapesMul = shapesmul(0.0f)
+                            val shapesMul = shapesmul(RailwayAST.Coordinates(0.0f, 0.0f))
                             if (shapesMul.first) {
                                 if (currentToken?.symbol == Symbol.RCURLY) {
                                     currentToken = scanner.getToken()
-                                    return Pair(true, RailwayAST.Platform(number ?: "1", countOfTrack ?: "1", stationName, shapesMul.second))
+                                    return Pair(
+                                        true,
+                                        RailwayAST.Platform(
+                                            number ?: "1",
+                                            countOfTrack ?: "1",
+                                            stationName,
+                                            shapesMul.second
+                                        )
+                                    )
                                 }
                             }
                         }
@@ -141,7 +190,7 @@ class Parser(private val scanner: Scanner) {
         return Pair(false, RailwayAST.Platform("", "", stationName, errorshapesmul().second))
     }
 
-    private fun shapesmul(inLinkValue: Float): Pair<Boolean, RailwayAST.ShapesMul> {
+    private fun shapesmul(inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.ShapesMul> {
         var shape = shapes(inLinkValue)
         val listOfShapes = mutableListOf<RailwayAST.Shape>()
         if (shape.first) {
@@ -159,7 +208,7 @@ class Parser(private val scanner: Scanner) {
         return Pair(false, RailwayAST.ShapesMul())
     }
 
-    private fun shapes(inLinkValue: Float): Pair<Boolean, RailwayAST.Shape> {
+    private fun shapes(inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Shape> {
         return when (currentToken?.symbol) {
 
             Symbol.BOX -> {
@@ -180,7 +229,7 @@ class Parser(private val scanner: Scanner) {
         return Pair(false, RailwayAST.ErrorShape())
     }
 
-    private fun box(inLinkValue: Float): Pair<Boolean, RailwayAST.Shape> {
+    private fun box(inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Shape> {
         if (currentToken?.symbol == Symbol.LPAREN) {
             currentToken = scanner.getToken()
             val cord1 = cord(inLinkValue)
@@ -197,15 +246,33 @@ class Parser(private val scanner: Scanner) {
                                 //Checks if lat or lng are the same (if they are then they cannot be a polygon, they are a line)
                                 val boxCord1 = cord1.second as RailwayAST.Coordinates
                                 val boxCord2 = cord2.second as RailwayAST.Coordinates
-                                if(boxCord1.lat == boxCord2.lat){
-                                    return Pair(false, RailwayAST.Box(RailwayAST.Coordinates(0.0f, 0.0f), RailwayAST.Coordinates(0.0f, 0.0f)))
+                                if (boxCord1.lat == boxCord2.lat) {
+                                    return Pair(
+                                        false,
+                                        RailwayAST.Box(
+                                            RailwayAST.Coordinates(0.0f, 0.0f),
+                                            RailwayAST.Coordinates(0.0f, 0.0f)
+                                        )
+                                    )
                                 }
 
-                                if(boxCord1.lng == boxCord2.lng){
-                                    return Pair(false, RailwayAST.Box(RailwayAST.Coordinates(0.0f, 0.0f), RailwayAST.Coordinates(0.0f, 0.0f)))
+                                if (boxCord1.lng == boxCord2.lng) {
+                                    return Pair(
+                                        false,
+                                        RailwayAST.Box(
+                                            RailwayAST.Coordinates(0.0f, 0.0f),
+                                            RailwayAST.Coordinates(0.0f, 0.0f)
+                                        )
+                                    )
                                 }
 
-                                return Pair(true, RailwayAST.Box(cord1.second as RailwayAST.Coordinates, cord2.second as RailwayAST.Coordinates))
+                                return Pair(
+                                    true,
+                                    RailwayAST.Box(
+                                        cord1.second as RailwayAST.Coordinates,
+                                        cord2.second as RailwayAST.Coordinates
+                                    )
+                                )
                             }
                         }
                     }
@@ -238,107 +305,88 @@ class Parser(private val scanner: Scanner) {
         return false
     }*/
 
-    private fun cord(inLinkValue: Float): Pair<Boolean, RailwayAST.Expr> {
+    private fun cord(inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Expr> {
         if (currentToken?.symbol == Symbol.LPAREN) {
             currentToken = scanner.getToken()
 
-            val real1: String?
-
             if (currentToken?.symbol == Symbol.REAL) {
-                real1 = currentToken?.lexeme
-                currentToken = scanner.getToken()
-            }
-            else if (currentToken?.symbol == Symbol.NULL) {
-                real1 = null
-                currentToken = scanner.getToken()
-            }
-            else {
-                return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
-            }
-
-            val real2: String?
-
-            if (currentToken?.symbol == Symbol.COMMA) {
+                val real1 = currentToken?.lexeme ?: "0.0"
                 currentToken = scanner.getToken()
 
-                if (currentToken?.symbol == Symbol.REAL) {
-                    real2 = currentToken?.lexeme
+                if (currentToken?.symbol == Symbol.COMMA) {
                     currentToken = scanner.getToken()
-                }
-                else if(currentToken?.symbol == Symbol.NULL){
-                    real2 = null
-                    currentToken = scanner.getToken()
-                }
-                else {
-                    return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
-                }
 
-                if (currentToken?.symbol == Symbol.RPAREN) {
-                    currentToken = scanner.getToken()
-                    if (real1 != null &&  real2 != null) {
-                        return Pair(true, RailwayAST.Coordinates(real1.toFloat(), real2.toFloat()))
-                    }
-                    else if(real1 == null && real2 != null){
-                        return Pair(true, RailwayAST.Coordinates(inLinkValue, real2.toFloat()))
-                    }
-                    else if(real1 != null && real2 == null){
-                        return Pair(true, RailwayAST.Coordinates(real1.toFloat(), inLinkValue))
-                    }
-                    else {
-                        return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
+                    if (currentToken?.symbol == Symbol.REAL) {
+                        val real2 = currentToken?.lexeme ?: "0.0"
+                        currentToken = scanner.getToken()
+
+                        if (currentToken?.symbol == Symbol.RPAREN) {
+                            currentToken = scanner.getToken()
+                            return Pair(true, RailwayAST.Coordinates(real1.toFloat(), real2.toFloat()))
+                        }
                     }
                 }
-
             }
+        } else if (currentToken?.symbol == Symbol.NULL) {
+            currentToken = scanner.getToken()
+            return Pair(true, inLinkValue)
         }
 
         return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
     }
 
 
-    /*private fun shapes1d(): Boolean {
+    private fun shapes1d(vararg inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Shape> {
         return when (currentToken?.symbol) {
             Symbol.LINE -> {
                 currentToken = scanner.getToken()
-                return line()
+                return line(*inLinkValue)
             }
 
-            Symbol.BEND -> {
+            /*Symbol.BEND -> {
                 currentToken = scanner.getToken()
-                return bend()
-            }
+                return bend(inLinkValue)
+            }*/
 
             else -> {
-                false
+                errorShape()
             }
         }
     }
 
-    private fun line(inLinkValue: Float): Pair<Boolean, RailwayAST.Expr> {
+    private fun line(vararg inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Shape> {
         if (currentToken?.symbol == Symbol.LPAREN) {
             currentToken = scanner.getToken()
-            val cord1 = cord(inLinkValue)
+            val cord1 = cord(inLinkValue[0])
             if (cord1.first) {
+
                 if (currentToken?.symbol == Symbol.COMMA) {
                     currentToken = scanner.getToken()
-                    val cord2 = cord(inLinkValue)
+                    val cord2 = cord(inLinkValue[1])
+
                     if (cord2.first) {
                         if (currentToken?.symbol == Symbol.RPAREN) {
                             currentToken = scanner.getToken()
                             if (currentToken?.symbol == Symbol.SEMICOLON) {
                                 currentToken = scanner.getToken()
-                                return Pair(true, )
+                                return Pair(
+                                    true,
+                                    RailwayAST.Line(
+                                        cord1.second as RailwayAST.Coordinates,
+                                        cord2.second as RailwayAST.Coordinates
+                                    )
+                                )
                             }
                         }
                     }
                 }
             }
         }
-        return false
+        return Pair(false, RailwayAST.Line(RailwayAST.Coordinates(0.0f, 0.0f), RailwayAST.Coordinates(0.0f, 0.0f)))
     }
 
 
-    private fun bend(): Boolean {
+    /*private fun bend(): Boolean {
         if (currentToken?.symbol == Symbol.LPAREN) {
             currentToken = scanner.getToken()
             if (cord()) {
@@ -363,25 +411,47 @@ class Parser(private val scanner: Scanner) {
             }
         }
         return false
-    }
+    } */
 
-    private fun track(): Boolean {
+    private fun track(): Pair<Boolean, RailwayAST.Expr> {
         if (currentToken?.symbol == Symbol.TRACK) {
             currentToken = scanner.getToken()
             if (currentToken?.symbol == Symbol.NAME) {
+                val trackName = currentToken?.lexeme ?: ""
                 currentToken = scanner.getToken()
+
                 if (currentToken?.symbol == Symbol.COMMA) {
                     currentToken = scanner.getToken()
-                    if (trackTmp()) {
+                    val trackPlatform1 = trackPlatform()
+
+                    if (trackPlatform1.first) {
                         if (currentToken?.symbol == Symbol.COMMA) {
                             currentToken = scanner.getToken()
-                            if (trackTmp()) {
+
+                            val trackPlatform2 = trackPlatform()
+
+                            if (trackPlatform2.first) {
                                 if (currentToken?.symbol == Symbol.LCURLY) {
                                     currentToken = scanner.getToken()
-                                    if (shapes1dMul()) {
+
+                                    //Link track to platform
+                                    val shapesMul = shapes1dMul(
+                                        trackPlatform1.second.coordinates,
+                                        trackPlatform2.second.coordinates
+                                    )
+
+                                    if (shapesMul.first) {
                                         if (currentToken?.symbol == Symbol.RCURLY) {
                                             currentToken = scanner.getToken()
-                                            return true
+                                            return Pair(
+                                                true,
+                                                RailwayAST.Track(
+                                                    trackName,
+                                                    shapesMul.second,
+                                                    trackPlatform1.second,
+                                                    trackPlatform2.second
+                                                )
+                                            )
                                         }
                                     }
                                 }
@@ -391,41 +461,64 @@ class Parser(private val scanner: Scanner) {
                 }
             }
         }
-        return false
+        return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
     }
 
-    private fun trackTmp(): Boolean {
+    private fun trackPlatform(): Pair<Boolean, RailwayAST.Platform> {
         if (currentToken?.symbol == Symbol.VAR) {
+            val varName = currentToken?.lexeme ?: ""
             currentToken = scanner.getToken()
+
             if (currentToken?.symbol == Symbol.ARROW) {
                 currentToken = scanner.getToken()
+
                 if (currentToken?.symbol == Symbol.REAL) {
+                    val number = currentToken?.lexeme ?: ""
                     currentToken = scanner.getToken()
+
                     if (currentToken?.symbol == Symbol.ARROW) {
                         currentToken = scanner.getToken()
+
                         if (currentToken?.symbol == Symbol.REAL) {
+                            val trackNumber = currentToken?.lexeme ?: ""
                             currentToken = scanner.getToken()
-                            return true
+
+                            //Checks if variable was saved
+                            if (variables[varName] == null) {
+                                return Pair(false, RailwayAST.Platform("0", "0", "0", errorshapesmul().second))
+                            }
+
+                            //println("$number.$trackNumber")
+
+                            if(variables[varName]!!.station?.platforms?.get("$number.$trackNumber") == null) {
+                                return Pair(false, RailwayAST.Platform("0", "0", "0", errorshapesmul().second))
+                            }
+
+                            return Pair(true, variables[varName]!!.station?.platforms?.get("$number.$trackNumber")!!)
                         }
                     }
                 }
             }
         }
-        return false
+        return Pair(false, RailwayAST.Platform("0", "0", "0", errorshapesmul().second))
     }
 
 
-    private fun shapes1dMul(): Boolean {
-        if (shapes1d()) {
-            while (shapes1d()) {
-                // Zanka za preverjanje več shapes1d
+    private fun shapes1dMul(vararg inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.ShapesMul> {
+        var shape = shapes1d(*inLinkValue)
+        val listOfShapes = mutableListOf<RailwayAST.Shape>()
+        if (shape.first) {
+            while (shape.first) {
+                //Loop to check if there are more 1d shapes
+                listOfShapes.add(shape.second)
+                shape = shapes1d(*inLinkValue)
             }
-            return true
+            return Pair(true, RailwayAST.ShapesMul(*listOfShapes.toTypedArray()))
         }
-        return false
+        return errorshapesmul()
     }
 
-    private fun switch(): Boolean {
+    /*private fun switch(): Boolean {
         if (currentToken?.symbol == Symbol.SWITCH) {
             currentToken = scanner.getToken()
             if (currentToken?.symbol == Symbol.VAR) {

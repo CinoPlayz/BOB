@@ -1,5 +1,3 @@
-import java.io.OutputStreamWriter
-
 class RailwayAST {
 
     interface Arithmetic : Expr
@@ -7,11 +5,31 @@ class RailwayAST {
         val shapeCoordinate: Coordinates
     }
 
+    interface Var: Expr
+
+    enum class RailwayTypes{
+        INFRASTRUCTURE,
+        STATION,
+        PLATFORM,
+        TRACK,
+        SHAPESMUL,
+        BOX,
+        LINE,
+        ERRORSHAPE,
+        COORDINATES
+
+
+    }
+
     interface Expr {
+        val type: RailwayTypes
         fun eval(variables: MutableMap<String, RailwayTypes>): String
     }
 
     class Infrastructure(private val name: String, vararg val expr: Expr) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.INFRASTRUCTURE
+
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             val stringBuilderComponents = StringBuilder()
 
@@ -33,19 +51,38 @@ class RailwayAST {
     }
 
     class Station(private val name: String, private val shapes: ShapesMul, vararg val platformIn: Platform) : Expr {
-        val platforms = mutableMapOf<String, Coordinates>()
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
-            val platformsGeoJson: StringBuilder = StringBuilder()
+        val platforms = mutableMapOf<String, Platform>()
+        override val type: RailwayTypes
+            get() = RailwayTypes.STATION
 
+        init {
             //Sets coordinates of tracks outside the platform
             platformIn.forEachIndexed { index, platform ->
                 for (i in 1..platform.countOfTracks.toInt()) {
-                    platforms["${platform.number}.$i"] = Coordinates(
-                        platform.coordinates.lat.plus(0.2f),
-                        platform.coordinates.lng.plus(0.2f)
-                    )
-                }
 
+                    val platformClone = platform.clone()
+
+                    if(i == 1){
+                        platformClone.coordinates = Coordinates(platform.coordinates.lat + 0.2f, platform.coordinates.lng + 0.2f)
+                    }
+                    else {
+                        platformClone.coordinates = Coordinates(platform.coordinates.lat - 0.2f, platform.coordinates.lng - 0.2f)
+                    }
+
+
+
+                    platforms["${platform.number}.$i"] = platformClone
+
+                    println("platform ${platforms["${platform.number}.$i"]!!.coordinates.lat} ${platforms["${platform.number}.$i"]!!.coordinates.lng}")
+                }
+            }
+        }
+
+        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+            val platformsGeoJson: StringBuilder = StringBuilder()
+
+            //Gets GeoJson of each platform
+            platformIn.forEachIndexed { index, platform ->
                 platformsGeoJson.append(platform.eval(variables))
                 if(index != platformIn.size - 1){
                     platformsGeoJson.append(",")
@@ -74,8 +111,11 @@ class RailwayAST {
 
     }
 
-    class Platform(val number: String, val countOfTracks: String, private val stationName: String, private val shapes: ShapesMul) : Expr {
-        val coordinates = shapes.lastCoordinates
+    class Platform(val number: String, val countOfTracks: String, val stationName: String, private val shapes: ShapesMul) : Expr {
+        var coordinates = shapes.lastCoordinates
+        override val type: RailwayTypes
+            get() = RailwayTypes.PLATFORM
+
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
 
 
@@ -93,10 +133,51 @@ class RailwayAST {
             """.trimIndent()
         }
 
+        fun clone(): Platform{
+            return Platform(number, countOfTracks, stationName, shapes)
+        }
+
+    }
+
+
+    class Track(private val name: String, private val shapes: ShapesMul, val platform1: Platform, val platform2: Platform) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.TRACK
+
+        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+
+           return """
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "track",
+                    "name": "$name",
+                    "startPlatformStationName": "${platform1.stationName}",
+                    "startPlatformNumber": "${platform1.number}",
+                    "startPlatformCountOfTracks": "${platform1.countOfTracks}",
+                    "endPlatformStationName": "${platform2.stationName}",
+                    "endPlatformNumber": "${platform2.number}",
+                    "endPlatformCountOfTracks": "${platform2.countOfTracks}"
+                  }, 
+                  ${shapes.eval(variables)}
+                }
+            """.trimIndent()
+        }
+
     }
 
     class ShapesMul(vararg val shape: Shape) : Expr {
         var lastCoordinates = Coordinates(0.0f, 0.0f)
+        override val type: RailwayTypes
+            get() = RailwayTypes.SHAPESMUL
+
+        init {
+            if(shape.isNotEmpty()){
+                lastCoordinates = shape.last().shapeCoordinate
+            }
+
+        }
+
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             val stringBuilder = StringBuilder()
 
@@ -125,6 +206,9 @@ class RailwayAST {
     }
 
     class ErrorShapesMul() : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ERRORSHAPE
+
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             return ""
         }
@@ -134,6 +218,8 @@ class RailwayAST {
     class Box(val cord1: Coordinates, val cord2: Coordinates) : Shape {
         override val shapeCoordinate: Coordinates
             get() = cord1
+        override val type: RailwayTypes
+            get() = RailwayTypes.BOX
 
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             return """
@@ -151,10 +237,32 @@ class RailwayAST {
         }
     }
 
+
+    class Line(val cord1: Coordinates, val cord2: Coordinates) : Shape {
+        override val shapeCoordinate: Coordinates
+            get() = cord1
+        override val type: RailwayTypes
+            get() = RailwayTypes.LINE
+
+        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+            return """
+                  {
+                     "type": "LineString",
+                     "coordinates": [                      
+                        ${cord1.eval(variables)},                       
+                        ${cord2.eval(variables)}
+                     ]
+                  }                     
+                """.trimIndent()
+        }
+    }
+
     //Used to represent syntax error
     class ErrorShape : Shape {
         override val shapeCoordinate: Coordinates
             get() = Coordinates(0.0f, 0.0f)
+        override val type: RailwayTypes
+            get() = RailwayTypes.ERRORSHAPE
 
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             return ""
@@ -162,6 +270,9 @@ class RailwayAST {
     }
 
     class Coordinates(val lat: Float, val lng: Float) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.COORDINATES
+
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             return "[$lng, $lat]"
         }
@@ -169,4 +280,8 @@ class RailwayAST {
     }
 }
 
-typealias RailwayTypes = RailwayAST.Station
+//interface RailwayTypes : RailwayAST.Station, RailwayTypes.
+
+data class RailwayTypesData(val station: RailwayAST.Station? = null, val track: RailwayAST.Track? = null, val platform: RailwayAST.Platform? = null)
+
+//typealias RailwayTypes = RailwayAST.Station|Rail
