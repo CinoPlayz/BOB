@@ -240,7 +240,7 @@ class RailwayAST {
 
     class Line(val cord1: Coordinates, val cord2: Coordinates) : Shape {
         override val shapeCoordinate: Coordinates
-            get() = cord1
+            get() = cord2
         override val type: RailwayTypes
             get() = RailwayTypes.LINE
 

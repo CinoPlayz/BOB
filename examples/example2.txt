@@ -23,6 +23,7 @@ infrastructure "Celje-Maribor" {
 
      let mariborTir = track "Maribor-Celje", mariborPostaja->1->1, celjePostaja->2->1{
             line(null, (4,3));
+            line(null, (5, 7));
             line(null, null);
      }
 

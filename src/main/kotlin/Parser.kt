@@ -505,13 +505,19 @@ class Parser(private val scanner: Scanner) {
 
 
     private fun shapes1dMul(vararg inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.ShapesMul> {
-        var shape = shapes1d(*inLinkValue)
+        val listOfLinkValue = mutableListOf<RailwayAST.Coordinates>(*inLinkValue)
+
+        var shape = shapes1d(*listOfLinkValue.toTypedArray())
         val listOfShapes = mutableListOf<RailwayAST.Shape>()
         if (shape.first) {
+            listOfLinkValue.removeFirst()
+            listOfLinkValue.addFirst(shape.second.shapeCoordinate)
             while (shape.first) {
                 //Loop to check if there are more 1d shapes
                 listOfShapes.add(shape.second)
-                shape = shapes1d(*inLinkValue)
+                listOfLinkValue.removeFirst()
+                listOfLinkValue.addFirst(shape.second.shapeCoordinate)
+                shape = shapes1d(*listOfLinkValue.toTypedArray())
             }
             return Pair(true, RailwayAST.ShapesMul(*listOfShapes.toTypedArray()))
         }
