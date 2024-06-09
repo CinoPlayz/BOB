@@ -77,11 +77,11 @@ class Parser(private val scanner: Scanner) {
                 if (currentToken?.symbol == Symbol.LCURLY) {
                     currentToken = scanner.getToken()
                     val shapesStatus = shapesmul(0.0f)
-                    val platformStatus = platformmul()
+                    val platformStatus = platformmul(name ?: "")
                     if (shapesStatus.first && platformStatus.first) {
 
                         while (currentToken?.symbol != Symbol.RCURLY) {
-                            if (!shapesmul(0.0f).first && !platformmul().first) {
+                            if (!shapesmul(0.0f).first && !platformmul(name ?: "").first) {
                                 break
                             }
                         }
@@ -97,22 +97,22 @@ class Parser(private val scanner: Scanner) {
         return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
     }
 
-    private fun platformmul(): Pair<Boolean, List<RailwayAST.Platform>> {
-        var platform = platform()
+    private fun platformmul(stationName: String): Pair<Boolean, List<RailwayAST.Platform>> {
+        var platform = platform(stationName)
         val listOfPlatforms = mutableListOf<RailwayAST.Platform>()
 
         if (platform.first) {
             while (platform.first) {
                 //Loop for checking if there are more platforms
                 listOfPlatforms.add(platform.second)
-                platform = platform()
+                platform = platform(stationName)
             }
             return Pair(true, listOfPlatforms)
         }
         return Pair(false, listOf())
     }
 
-    private fun platform(): Pair<Boolean, RailwayAST.Platform> {
+    private fun platform(stationName: String): Pair<Boolean, RailwayAST.Platform> {
         if (currentToken?.symbol == Symbol.PLATFORM) {
             currentToken = scanner.getToken()
             if (currentToken?.symbol == Symbol.REAL) {
@@ -130,7 +130,7 @@ class Parser(private val scanner: Scanner) {
                             if (shapesMul.first) {
                                 if (currentToken?.symbol == Symbol.RCURLY) {
                                     currentToken = scanner.getToken()
-                                    return Pair(true, RailwayAST.Platform(number ?: "1", countOfTrack ?: "1", shapesMul.second))
+                                    return Pair(true, RailwayAST.Platform(number ?: "1", countOfTrack ?: "1", stationName, shapesMul.second))
                                 }
                             }
                         }
@@ -138,7 +138,7 @@ class Parser(private val scanner: Scanner) {
                 }
             }
         }
-        return Pair(false, RailwayAST.Platform("", "", errorshapesmul().second))
+        return Pair(false, RailwayAST.Platform("", "", stationName, errorshapesmul().second))
     }
 
     private fun shapesmul(inLinkValue: Float): Pair<Boolean, RailwayAST.ShapesMul> {
@@ -193,6 +193,18 @@ class Parser(private val scanner: Scanner) {
                             currentToken = scanner.getToken()
                             if (currentToken?.symbol == Symbol.SEMICOLON) {
                                 currentToken = scanner.getToken()
+
+                                //Checks if lat or lng are the same (if they are then they cannot be a polygon, they are a line)
+                                val boxCord1 = cord1.second as RailwayAST.Coordinates
+                                val boxCord2 = cord2.second as RailwayAST.Coordinates
+                                if(boxCord1.lat == boxCord2.lat){
+                                    return Pair(false, RailwayAST.Box(RailwayAST.Coordinates(0.0f, 0.0f), RailwayAST.Coordinates(0.0f, 0.0f)))
+                                }
+
+                                if(boxCord1.lng == boxCord2.lng){
+                                    return Pair(false, RailwayAST.Box(RailwayAST.Coordinates(0.0f, 0.0f), RailwayAST.Coordinates(0.0f, 0.0f)))
+                                }
+
                                 return Pair(true, RailwayAST.Box(cord1.second as RailwayAST.Coordinates, cord2.second as RailwayAST.Coordinates))
                             }
                         }

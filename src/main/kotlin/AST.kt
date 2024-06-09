@@ -15,8 +15,11 @@ class RailwayAST {
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             val stringBuilderComponents = StringBuilder()
 
-            for (item in expr) {
+            expr.forEachIndexed { index, item ->
                 stringBuilderComponents.append(item.eval(variables))
+                if(index != expr.size - 1){
+                    stringBuilderComponents.append(",")
+                }
             }
 
             return """{
@@ -32,6 +35,7 @@ class RailwayAST {
     class Station(private val name: String, private val shapes: ShapesMul, vararg val platformIn: Platform) : Expr {
         val platforms = mutableMapOf<String, Coordinates>()
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+            val platformsGeoJson: StringBuilder = StringBuilder()
 
             //Sets coordinates of tracks outside the platform
             platformIn.forEachIndexed { index, platform ->
@@ -42,32 +46,49 @@ class RailwayAST {
                     )
                 }
 
+                platformsGeoJson.append(platform.eval(variables))
+                if(index != platformIn.size - 1){
+                    platformsGeoJson.append(",")
+                }
+
             }
 
-            return """
+            val stationGeoJson = """
                 {
-                  "type": "FeatureCollection",
-                  "features": [${shapes.eval(variables)}],
-                  "metadata": {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "station",
                     "name": "$name"
-                  }
+                  }, 
+                  ${shapes.eval(variables)}
                 }
-           """.trimIndent()
+            """.trimIndent()
+
+            return if(platformIn.isNotEmpty()){
+                "$stationGeoJson,$platformsGeoJson"
+            }
+            else {
+                stationGeoJson
+            }
         }
 
     }
 
-    class Platform(val number: String, val countOfTracks: String, private val shapes: ShapesMul) : Expr {
+    class Platform(val number: String, val countOfTracks: String, private val stationName: String, private val shapes: ShapesMul) : Expr {
         val coordinates = shapes.lastCoordinates
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+
+
             return """
                 {
-                  "type": "FeatureCollection",
-                  "features": [${shapes.eval(variables)}],
-                  "metadata": {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "platform",
                     "number": "$number",
-                    "countOfTracks": "$countOfTracks"
-                  }
+                    "countOfTracks": "$countOfTracks",
+                    "stationName": "$stationName"
+                  }, 
+                  ${shapes.eval(variables)}
                 }
             """.trimIndent()
         }
@@ -81,12 +102,25 @@ class RailwayAST {
 
             shape.forEachIndexed { index, shapeInner ->
                 stringBuilder.append(shapeInner.eval(variables))
-                if (index != shape.count() - 1) {
+                if (index != shape.size - 1) {
                     stringBuilder.append(",")
                     lastCoordinates = shapeInner.shapeCoordinate
                 }
             }
-            return stringBuilder.toString()
+
+
+            return if(shape.size != 1){
+                """
+                    "geometry": {
+                        "type": "GeometryCollection",
+                        "geometries": [$stringBuilder]
+                    }
+                  """
+            } else {
+                """
+                    "geometry": $stringBuilder
+                """.trimIndent()
+            }
         }
     }
 
@@ -103,16 +137,16 @@ class RailwayAST {
 
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
             return """
-                {
-                  "type": "Feature",
-                  "geometry": {
+                  {
                      "type": "Polygon",
-                     "coordinates": [                      
+                     "coordinates": [[                      
                         ${cord1.eval(variables)},
-                        ${cord2.eval(variables)}                      
-                     ]
-                  }
-                }     
+                        [${cord2.lng}, ${cord1.lat}],
+                        ${cord2.eval(variables)},          
+                        [${cord1.lng}, ${cord2.lat}],
+                        ${cord1.eval(variables)}
+                     ]]
+                  }                     
                 """.trimIndent()
         }
     }
@@ -129,7 +163,7 @@ class RailwayAST {
 
     class Coordinates(val lat: Float, val lng: Float) : Expr {
         override fun eval(variables: MutableMap<String, RailwayTypes>): String {
-            return "[$lat, $lng]"
+            return "[$lng, $lat]"
         }
 
     }
