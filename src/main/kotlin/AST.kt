@@ -73,7 +73,7 @@ class RailwayAST {
 
                     platforms["${platform.number}.$i"] = platformClone
 
-                    println("platform ${platforms["${platform.number}.$i"]!!.coordinates.lat} ${platforms["${platform.number}.$i"]!!.coordinates.lng}")
+                    //println("platform ${platforms["${platform.number}.$i"]!!.coordinates.lat} ${platforms["${platform.number}.$i"]!!.coordinates.lng}")
                 }
             }
         }
@@ -140,7 +140,7 @@ class RailwayAST {
     }
 
 
-    class Track(private val name: String, private val shapes: ShapesMul, val platform1: Platform, val platform2: Platform) : Expr {
+    class Track(val name: String, private val shapes: ShapesMul, val platform1: Platform, val platform2: Platform) : Expr {
         override val type: RailwayTypes
             get() = RailwayTypes.TRACK
 
@@ -158,6 +158,27 @@ class RailwayAST {
                     "endPlatformStationName": "${platform2.stationName}",
                     "endPlatformNumber": "${platform2.number}",
                     "endPlatformCountOfTracks": "${platform2.countOfTracks}"
+                  }, 
+                  ${shapes.eval(variables)}
+                }
+            """.trimIndent()
+        }
+
+    }
+
+    class Switch(private val shapes: ShapesMul, val track1: Track, val track2: Track) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.TRACK
+
+        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+
+            return """
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "switch",
+                    "trackOneName": "${track1.name}",
+                    "trackTwoName": "${track2.name}"
                   }, 
                   ${shapes.eval(variables)}
                 }
