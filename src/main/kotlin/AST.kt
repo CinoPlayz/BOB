@@ -1,3 +1,6 @@
+import kotlin.math.pow
+import kotlin.math.roundToInt
+
 class RailwayAST {
 
     interface Arithmetic : Expr
@@ -16,21 +19,22 @@ class RailwayAST {
         BOX,
         LINE,
         ERRORSHAPE,
-        COORDINATES
+        COORDINATES,
+        ARITHMETIC
 
 
     }
 
     interface Expr {
         val type: RailwayTypes
-        fun eval(variables: MutableMap<String, RailwayTypes>): String
+        fun eval(variables: MutableMap<String, RailwayTypesData>): String
     }
 
     class Infrastructure(private val name: String, vararg val expr: Expr) : Expr {
         override val type: RailwayTypes
             get() = RailwayTypes.INFRASTRUCTURE
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             val stringBuilderComponents = StringBuilder()
 
             expr.forEachIndexed { index, item ->
@@ -78,7 +82,7 @@ class RailwayAST {
             }
         }
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             val platformsGeoJson: StringBuilder = StringBuilder()
 
             //Gets GeoJson of each platform
@@ -116,7 +120,7 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.PLATFORM
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
 
 
             return """
@@ -144,7 +148,7 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.TRACK
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
 
            return """
                 {
@@ -170,7 +174,7 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.TRACK
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
 
             return """
                 {
@@ -199,7 +203,7 @@ class RailwayAST {
 
         }
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             val stringBuilder = StringBuilder()
 
             shape.forEachIndexed { index, shapeInner ->
@@ -230,7 +234,7 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.ERRORSHAPE
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             return ""
         }
     }
@@ -242,7 +246,7 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.BOX
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             return """
                   {
                      "type": "Polygon",
@@ -265,7 +269,7 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.LINE
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             return """
                   {
                      "type": "LineString",
@@ -285,7 +289,7 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.ERRORSHAPE
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             return ""
         }
     }
@@ -294,8 +298,99 @@ class RailwayAST {
         override val type: RailwayTypes
             get() = RailwayTypes.COORDINATES
 
-        override fun eval(variables: MutableMap<String, RailwayTypes>): String {
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
             return "[$lng, $lat]"
+        }
+
+    }
+
+    class Plus(private val arithmetic1: Arithmetic, private val arithmetic2: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return (arithmetic1.eval(variables).toFloat() + arithmetic2.eval(variables).toFloat()).toString()
+        }
+
+    }
+
+    class Minus(private val arithmetic1: Arithmetic, private val arithmetic2: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return (arithmetic1.eval(variables).toFloat() - arithmetic2.eval(variables).toFloat()).toString()
+        }
+
+    }
+
+    class Times(private val arithmetic1: Arithmetic, private val arithmetic2: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return (arithmetic1.eval(variables).toFloat() * arithmetic2.eval(variables).toFloat()).toString()
+        }
+
+    }
+
+    class Divides(private val arithmetic1: Arithmetic, private val arithmetic2: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return (arithmetic1.eval(variables).toFloat() / arithmetic2.eval(variables).toFloat()).toString()
+        }
+
+    }
+
+    class IntegerDivides(private val arithmetic1: Arithmetic, private val arithmetic2: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            val resultInt =  arithmetic1.eval(variables).toFloat().roundToInt() / arithmetic2.eval(variables).toFloat().roundToInt()
+            return resultInt.toString()
+        }
+
+    }
+
+    class Pow(private val arithmetic1: Arithmetic, private val arithmetic2: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return (arithmetic1.eval(variables).toFloat().pow(arithmetic2.eval(variables).toFloat())).toString()
+        }
+
+    }
+
+    class UnaryPlus(private val arithmetic: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return arithmetic.eval(variables)
+        }
+
+    }
+
+    class UnaryMinus(private val arithmetic: Arithmetic) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return (-1 * arithmetic.eval(variables).toFloat()).toString()
+        }
+
+    }
+
+    class Real(private val real: Float) : Arithmetic {
+        override val type: RailwayTypes
+            get() = RailwayTypes.ARITHMETIC
+
+        override fun eval( variables: MutableMap<String, RailwayTypesData>): String {
+            return real.toString()
         }
 
     }

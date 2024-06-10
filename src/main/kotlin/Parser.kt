@@ -677,20 +677,18 @@ class Parser(private val scanner: Scanner) {
         if (currentToken?.symbol == Symbol.LPAREN) {
             currentToken = scanner.getToken()
 
-            if (currentToken?.symbol == Symbol.REAL) {
-                val real1 = currentToken?.lexeme ?: "0.0"
-                currentToken = scanner.getToken()
+            val real1 = add()
+            if (real1.first) {
 
                 if (currentToken?.symbol == Symbol.COMMA) {
                     currentToken = scanner.getToken()
 
-                    if (currentToken?.symbol == Symbol.REAL) {
-                        val real2 = currentToken?.lexeme ?: "0.0"
-                        currentToken = scanner.getToken()
+                    val real2 = add()
+                    if (real2.first) {
 
                         if (currentToken?.symbol == Symbol.RPAREN) {
                             currentToken = scanner.getToken()
-                            return Pair(true, RailwayAST.Coordinates(real1.toFloat(), real2.toFloat()))
+                            return Pair(true, RailwayAST.Coordinates(real1.second.eval(variables).toFloat(), real2.second.eval(variables).toFloat()))
                         }
                     }
                 }
@@ -701,6 +699,102 @@ class Parser(private val scanner: Scanner) {
         }
 
         return Pair(false, RailwayAST.Coordinates(0.0f, 0.0f))
+    }
+
+    private fun add(): Pair<Boolean, RailwayAST.Arithmetic> {
+        val mul = mul()
+        val add2 = add2(mul.second)
+        return Pair(mul.first && add2.first, add2.second)
+    }
+
+    private fun add2(inVal: RailwayAST.Arithmetic): Pair<Boolean, RailwayAST.Arithmetic> {
+        if (currentToken?.symbol == Symbol.PLUS) {
+            currentToken = scanner.getToken()
+            val plus = RailwayAST.Plus(inVal, mul().second)
+            return add2(plus)
+        } else if (currentToken?.symbol == Symbol.MINUS) {
+            currentToken = scanner.getToken()
+            val minus = RailwayAST.Minus(inVal, mul().second)
+            return add2(minus)
+        } else {
+            return Pair(true, inVal)
+        }
+    }
+
+    private fun mul(): Pair<Boolean, RailwayAST.Arithmetic> {
+        val expon = expon()
+        val mul2 = mul2(expon.second)
+        return Pair(expon.first && mul2.first, mul2.second)
+    }
+
+    private fun mul2(inVal: RailwayAST.Arithmetic): Pair<Boolean, RailwayAST.Arithmetic> {
+        if (currentToken?.symbol == Symbol.TIMES) {
+            currentToken = scanner.getToken()
+            val times = RailwayAST.Times(inVal, expon().second)
+            return mul2(times)
+        } else if (currentToken?.symbol == Symbol.DIVIDES) {
+            currentToken = scanner.getToken()
+            val divides = RailwayAST.Divides(inVal, expon().second)
+            return mul2(divides)
+        } else if (currentToken?.symbol == Symbol.INTDIVIDES) {
+            currentToken = scanner.getToken()
+            val intDivides = RailwayAST.IntegerDivides(inVal, expon().second)
+            return mul2(intDivides)
+        } else {
+            return Pair(true, inVal)
+        }
+    }
+
+    private fun expon(): Pair<Boolean, RailwayAST.Arithmetic> {
+        val unary = unary()
+        val expon2 = expon2(unary.second)
+        return Pair(unary.first && expon2.first, expon2.second)
+    }
+
+    private fun expon2(inVal: RailwayAST.Arithmetic): Pair<Boolean, RailwayAST.Arithmetic> {
+        if (currentToken?.symbol == Symbol.POW) {
+            currentToken = scanner.getToken()
+            val exp = expon2(unary().second)
+            val pow = RailwayAST.Pow(inVal, exp.second)
+            return expon2(pow)
+        } else {
+            return Pair(true, inVal)
+        }
+    }
+
+    private fun unary(): Pair<Boolean, RailwayAST.Arithmetic> {
+        if (currentToken?.symbol == Symbol.PLUS) {
+            currentToken = scanner.getToken()
+            val primary = primary()
+            return Pair(primary.first, RailwayAST.UnaryPlus(primary.second))
+        } else if (currentToken?.symbol == Symbol.MINUS) {
+            currentToken = scanner.getToken()
+            val primary = primary()
+            return Pair(primary.first, RailwayAST.UnaryMinus(primary.second))
+        } else {
+            return primary()
+        }
+    }
+
+    private fun primary(): Pair<Boolean, RailwayAST.Arithmetic> {
+        if (currentToken?.symbol == Symbol.REAL) {
+
+            val real = RailwayAST.Real(currentToken?.lexeme?.toFloat() ?: 0.0f)
+            currentToken = scanner.getToken()
+            return Pair(true, real)
+        }
+        else if (currentToken?.symbol == Symbol.LPAREN) {
+            currentToken = scanner.getToken()
+            val add = add()
+            if (add.first) {
+                if (currentToken?.symbol == Symbol.RPAREN) {
+                    currentToken = scanner.getToken()
+                    return Pair(true, add.second)
+                }
+            }
+        }
+
+        return Pair(false, RailwayAST.Real(0.0f))
     }
 
    /* private fun additive(): Boolean {
