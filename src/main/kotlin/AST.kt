@@ -1,5 +1,4 @@
-import kotlin.math.pow
-import kotlin.math.roundToInt
+import kotlin.math.*
 
 class RailwayAST {
 
@@ -20,7 +19,8 @@ class RailwayAST {
         LINE,
         ERRORSHAPE,
         COORDINATES,
-        ARITHMETIC
+        ARITHMETIC,
+        BEND,
 
 
     }
@@ -276,6 +276,121 @@ class RailwayAST {
                      "coordinates": [                      
                         ${cord1.eval(variables)},                       
                         ${cord2.eval(variables)}
+                     ]
+                  }                     
+                """.trimIndent()
+        }
+    }
+
+    class Bend(val cord1: Coordinates, val cord2: Coordinates, val angle: Float) : Shape {
+        override val shapeCoordinate: Coordinates
+            get() = cord2
+        override val type: RailwayTypes
+            get() = RailwayTypes.BEND
+
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
+            /*val x: Float
+            val y: Float
+
+            if(angle == 0f){
+                x = cord2.lng
+                y = cord2.lat
+            }
+            else{
+                val x1=cord1.lat; val y1= cord1.lng;val x2= cord2.lat; val y2=cord2.lng;
+                println("$x1 $y1   $x2 $y2")
+                val alp1 =angle * Math.PI.toFloat() / 180; val alp2=angle * Math.PI.toFloat() / 180;
+                val u=x2-x1;val v=y2-y1;val a3=sqrt(u.pow(2)+v.pow(2));
+
+                println(a3)
+
+                val alp3=Math.PI.toFloat() - alp1-alp2;
+                println("alp3 $alp3")
+
+                println("a3 $a3")
+
+
+                var a2=(a3*(sin(alp2)))/(sin(alp3))
+                if(a2 < 0) {
+                    a2 *= -1
+                }
+                if(a2.isInfinite() || a2.isNaN()){
+                    a2 = 0f
+                }
+
+                println("a2 $a2")
+
+                var a1=(a3*(sin(alp1)))/(sin(alp3))
+                if(a1 < 0) {
+                    a1 *= -1
+                }
+                if(a1.isInfinite() || a1.isNaN()){
+                    a1 = 0f
+                }
+
+                println("a1 $a1")
+
+
+                x = if(a1 > 0){
+                    ((a3*a3 - a2*a2 + a1*a1) / (2*a1));
+                }
+                else {
+                    0f
+                }
+
+                //y = sqrt(a3*a3 - x*x);
+                y = (cord1.lng + cord2.lng) / 2
+            }*/
+
+
+            val latlng1 = arrayOf(cord1.lat, cord1.lng)
+            val latlng2 =  arrayOf(cord2.lat, cord2.lng)
+
+            val offsetX = latlng2[1] - latlng1[1]
+            val offsetY = latlng2[0] - latlng1[0]
+
+            val r = sqrt( offsetX.pow(2) + offsetY.pow(2) )
+            val theta = atan2(offsetY, offsetX)
+
+            val thetaOffset = (angle * 3.14/ 180f)
+
+            val r2 = (r/2)/(cos(thetaOffset))
+            val theta2 = theta + thetaOffset
+
+            val midpointX = (r2 * cos(theta2)) + latlng1[1]
+            val midpointY = (r2 * sin(theta2)) + latlng1[0]
+
+            val x = midpointX
+            val y = midpointY
+
+            //Bezier-curve
+            var t = 0.05f
+            val listOfBezierPoints = mutableListOf<Coordinates>()
+
+            while(t < 1f){
+                val bezierPointX = (1f- t).pow(2) * latlng1[0] + 2f * t * (1f- t) * x + t.pow(2f) * latlng2[0]
+                val bezierPointY = (1f- t).pow(2) * latlng1[1] + 2f * t * (1f- t) * y + t.pow(2f) * latlng2[1]
+
+                listOfBezierPoints.add(Coordinates(bezierPointX.toFloat(), bezierPointY.toFloat()))
+                t += 0.05f
+            }
+
+            val bezierpointStringBuilder: StringBuilder = StringBuilder()
+            listOfBezierPoints.forEach {
+                bezierpointStringBuilder.appendLine("${it.eval(variables)},")
+            }
+
+
+
+
+            return """
+                  {
+                     "type": "LineString",
+                     "coordinates": [                      
+                        ${cord1.eval(variables)},   
+                        $bezierpointStringBuilder
+                        ${cord2.eval(variables)}
+                        
                      ]
                   }                     
                 """.trimIndent()

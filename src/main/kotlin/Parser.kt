@@ -484,10 +484,10 @@ class Parser(private val scanner: Scanner) {
                 return line(*inLinkValue)
             }
 
-            /*Symbol.BEND -> {
+            Symbol.BEND -> {
                 currentToken = scanner.getToken()
-                return bend(inLinkValue)
-            }*/
+                return bend(*inLinkValue)
+            }
 
             else -> {
                 errorShape()
@@ -589,22 +589,36 @@ class Parser(private val scanner: Scanner) {
        return false
    }*/
 
-    /*private fun bend(): Boolean {
+    private fun bend(vararg inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Shape> {
        if (currentToken?.symbol == Symbol.LPAREN) {
            currentToken = scanner.getToken()
-           if (cord()) {
+           val cord1 = if (inLinkValue.isNotEmpty()) cord(inLinkValue[0]) else cord(RailwayAST.Coordinates(0f, 0f))
+
+           if (cord1.first) {
                if (currentToken?.symbol == Symbol.COMMA) {
                    currentToken = scanner.getToken()
-                   if (cord()) {
+                   val cord2 = if (inLinkValue.size > 1) cord(inLinkValue[1]) else cord(RailwayAST.Coordinates(0f, 0f))
+
+                   if (cord2.first) {
                        if (currentToken?.symbol == Symbol.COMMA) {
                            currentToken = scanner.getToken()
-                           if (currentToken?.symbol == Symbol.REAL) {
-                               currentToken = scanner.getToken()
+
+                           val arith = add()
+                           if (arith.first) {
+                               val angle = arith.second.eval(variables)
+
                                if (currentToken?.symbol == Symbol.RPAREN) {
                                    currentToken = scanner.getToken()
                                    if (currentToken?.symbol == Symbol.SEMICOLON) {
                                        currentToken = scanner.getToken()
-                                       return true
+                                       return Pair(
+                                           true,
+                                           RailwayAST.Bend(
+                                               cord1.second as RailwayAST.Coordinates,
+                                               cord2.second as RailwayAST.Coordinates,
+                                               angle.toFloat()
+                                           )
+                                       )
                                    }
                                }
                            }
@@ -613,8 +627,15 @@ class Parser(private val scanner: Scanner) {
                }
            }
        }
-       return false
-   } */
+       return Pair(
+           false,
+           RailwayAST.Bend(
+               RailwayAST.Coordinates(0f, 0f),
+               RailwayAST.Coordinates(0f, 0f),
+               20f
+           )
+       )
+   }
 
 
 
@@ -797,101 +818,6 @@ class Parser(private val scanner: Scanner) {
         return Pair(false, RailwayAST.Real(0.0f))
     }
 
-   /* private fun additive(): Boolean {
-        return multiplicative() && additiveTwo()
-    }
 
-    private fun additiveTwo(): Boolean {
-        return when (currentToken?.symbol) {
-            Symbol.PLUS -> {
-                currentToken = scanner.getToken()
-                multiplicative() && additiveTwo()
-            }
-
-            Symbol.MINUS -> {
-                currentToken = scanner.getToken()
-                multiplicative() && additiveTwo()
-            }
-
-            else -> true
-        }
-    }
-
-    private fun multiplicative(): Boolean {
-        return exponential() && multiplicativeTwo()
-    }
-
-    private fun multiplicativeTwo(): Boolean {
-        return when (currentToken?.symbol) {
-            Symbol.TIMES -> {
-                currentToken = scanner.getToken()
-                exponential() && multiplicativeTwo()
-            }
-
-            Symbol.DIVIDES -> {
-                currentToken = scanner.getToken()
-                exponential() && multiplicativeTwo()
-            }
-
-            Symbol.INTDIVIDES -> {
-                currentToken = scanner.getToken()
-                exponential() && multiplicativeTwo()
-            }
-
-            else -> true
-        }
-    }
-
-    private fun exponential(): Boolean {
-        return unary() && exponentialTwo()
-    }
-
-    private fun exponentialTwo(): Boolean {
-        return when (currentToken?.symbol) {
-            Symbol.POW -> {
-                currentToken = scanner.getToken()
-                unary() && exponentialTwo()
-            }
-
-            else -> true
-        }
-    }
-
-    private fun unary(): Boolean {
-        return when (currentToken?.symbol) {
-            Symbol.PLUS -> {
-                currentToken = scanner.getToken()
-                primary()
-            }
-
-            Symbol.MINUS -> {
-                currentToken = scanner.getToken()
-                primary()
-            }
-
-            else -> primary()
-        }
-    }
-
-    private fun primary(): Boolean {
-        return when (currentToken?.symbol) {
-            Symbol.REAL, Symbol.VAR -> {
-                currentToken = scanner.getToken()
-                true
-            }
-
-            Symbol.LPAREN -> {
-                currentToken = scanner.getToken()
-                if (additive()) {
-                    if (currentToken?.symbol == Symbol.RPAREN) {
-                        currentToken = scanner.getToken()
-                        true
-                    } else false
-                } else false
-            }
-
-            else -> false
-        }
-    }*/
 
 }
