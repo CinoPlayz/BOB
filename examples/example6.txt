@@ -1,6 +1,6 @@
 infrastructure "Celje-Maribor" {
      let celjePostaja = station "Celje" {
-        circ((3,2), 2);
+        box((3,2), (5,3));
         platform 1, 2 {
             box((4,2), (2,3));
         }
@@ -29,5 +29,22 @@ infrastructure "Celje-Maribor" {
 
     switch celjeTir, mariborTir {
         line((3,2), (4,2));
+    }
+
+    tunnel "Celje tunel", [celjeTir, MariborTir]{
+        box((4,3), (2,4));
+    }
+
+    bridge "Maribor železniški most", [celjeTir, MariborTir]{
+        box((3,1), (4,2));
+    }
+
+    crossing "Šentjur Prehod", [celjeTir, MariborTir] {
+        box((2,1), (3,2));
+    }
+
+    train "IC 311", celjeTir, 20 {
+        circ((5,2), 2);
+        box((3,4), (3,5));
     }
 }

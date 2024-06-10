@@ -464,12 +464,12 @@ class Parser(private val scanner: Scanner) {
                 return box(inLinkValue)
             }
 
-            /*Symbol.CIRC -> {
+            Symbol.CIRC -> {
                 currentToken = scanner.getToken()
                 return circ(inLinkValue)
-            }*/
+            }
 
-            else -> errorShape()    //shapes1d()
+            else -> shapes1d(inLinkValue)
         }
     }
 
@@ -567,27 +567,28 @@ class Parser(private val scanner: Scanner) {
         return Pair(false, RailwayAST.Line(RailwayAST.Coordinates(0.0f, 0.0f), RailwayAST.Coordinates(0.0f, 0.0f)))
     }
 
-    /*private fun circ(inLinkValue: Float): Boolean {
+    private fun circ(inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Shape> {
        if (currentToken?.symbol == Symbol.LPAREN) {
            currentToken = scanner.getToken()
-           if (cord()) {
+           val cord = cord(inLinkValue)
+           if (cord.first) {
                if (currentToken?.symbol == Symbol.COMMA) {
                    currentToken = scanner.getToken()
-                   if (currentToken?.symbol == Symbol.REAL) {
-                       currentToken = scanner.getToken()
+                   val arith = add()
+                   if (arith.first) {
                        if (currentToken?.symbol == Symbol.RPAREN) {
                            currentToken = scanner.getToken()
                            if (currentToken?.symbol == Symbol.SEMICOLON) {
                                currentToken = scanner.getToken()
-                               return true
+                               return Pair(true, RailwayAST.Circ(cord.second as RailwayAST.Coordinates, arith.second.eval(variables).toFloat()))
                            }
                        }
                    }
                }
            }
        }
-       return false
-   }*/
+       return Pair(false, RailwayAST.Circ(RailwayAST.Coordinates(0f, 0f), 0f))
+   }
 
     private fun bend(vararg inLinkValue: RailwayAST.Coordinates): Pair<Boolean, RailwayAST.Shape> {
        if (currentToken?.symbol == Symbol.LPAREN) {
