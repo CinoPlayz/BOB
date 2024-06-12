@@ -21,7 +21,11 @@ class RailwayAST {
         COORDINATES,
         ARITHMETIC,
         BEND,
-        CIRC
+        CIRC,
+        BRIDGE,
+        TUNNEL,
+        CROSSING,
+        TRAIN
 
 
     }
@@ -184,6 +188,127 @@ class RailwayAST {
                     "type": "switch",
                     "trackOneName": "${track1.name}",
                     "trackTwoName": "${track2.name}"
+                  }, 
+                  ${shapes.eval(variables)}
+                }
+            """.trimIndent()
+        }
+
+    }
+
+    class Tunnel(private val shapes: ShapesMul, val name: String, val tracks: List<Track>) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.TUNNEL
+
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
+            val tracksString = StringBuilder()
+
+            tracksString.append("[")
+            tracks.forEachIndexed { index, track ->
+                tracksString.append("\"${track.name}\"")
+                if(index != tracks.size-1){
+                    tracksString.appendLine(",")
+                }
+                else {
+                    tracksString.append("]")
+                }
+            }
+
+            return """
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "tunnel",
+                    "name": "$name",
+                    "tracks": $tracksString
+                  }, 
+                  ${shapes.eval(variables)}
+                }
+            """.trimIndent()
+        }
+
+    }
+
+
+    class Bridge(private val shapes: ShapesMul, val name: String, val tracks: List<Track>) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.BRIDGE
+
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
+            val tracksString = StringBuilder()
+
+            tracksString.append("[")
+            tracks.forEachIndexed { index, track ->
+                tracksString.append("\"${track.name}\"")
+                if(index != tracks.size-1){
+                    tracksString.appendLine(",")
+                }
+                else {
+                    tracksString.append("]")
+                }
+            }
+
+            return """
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "bridge",
+                    "name": "$name",
+                    "tracks": $tracksString
+                  }, 
+                  ${shapes.eval(variables)}
+                }
+            """.trimIndent()
+        }
+
+    }
+
+    class Crossing(private val shapes: ShapesMul, val name: String, val tracks: List<Track>) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.CROSSING
+
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
+            val tracksString = StringBuilder()
+
+            tracksString.append("[")
+            tracks.forEachIndexed { index, track ->
+                tracksString.append("\"${track.name}\"")
+                if(index != tracks.size-1){
+                    tracksString.appendLine(",")
+                }
+                else {
+                    tracksString.append("]")
+                }
+            }
+
+            return """
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "crossing",
+                    "name": "$name",
+                    "tracks": $tracksString
+                  }, 
+                  ${shapes.eval(variables)}
+                }
+            """.trimIndent()
+        }
+
+    }
+
+    class Train(private val shapes: ShapesMul, val name: String, val track: Track, val percent: Float) : Expr {
+        override val type: RailwayTypes
+            get() = RailwayTypes.TRAIN
+
+        override fun eval(variables: MutableMap<String, RailwayTypesData>): String {
+           return """
+                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "train",
+                    "name": "$name",
+                    "track": "${track.name}",
+                    "percent": $percent
                   }, 
                   ${shapes.eval(variables)}
                 }
