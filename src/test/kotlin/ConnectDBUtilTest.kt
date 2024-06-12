@@ -5,16 +5,18 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import utils.DatabaseUtil.connectDB
+import utils.context.initializeAppContext
 
 class ConnectDBUtilTest {
     @Test
     @DisplayName("Test MongoDB Connection")
     fun testMongoDBConnection() = runTest { // for local database
+        initializeAppContext()
         val mongoClient = connectDB()
 
-        val database = mongoClient!!.getDatabase("vaja3")
+        val database = mongoClient!!.getDatabase("ZP")
 
-        val collection = database.getCollection("logs")
+        val collection = database.getCollection("users")
 
         val documents = collection.find()
 
@@ -24,7 +26,7 @@ class ConnectDBUtilTest {
             documentCount++
         }
 
-        val expectedCount = 24
+        val expectedCount = 2 // number of users in the database
         assertEquals(expectedCount, documentCount)
 
         mongoClient.close()
