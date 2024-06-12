@@ -34,4 +34,10 @@ infrastructure "Celje-Maribor" {
     tunnel "Celje tunel", [celjeTir, mariborTir]{
         box((4,3), (2,4));
     }
+
+    bridge "Maribor zelezniski most", [celjeTir, mariborTir]{
+        box((3,1), (4,2));
+    }
+
+
 }
