@@ -137,6 +137,7 @@ fun ScraperStations(
                                             )
 
                                             feedbackMessage = feedback
+                                            resultStations.value = resultStations.value.copy(listOfStations = emptyList())
                                         }
                                     },
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
