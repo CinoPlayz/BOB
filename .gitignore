@@ -43,3 +43,4 @@ bin/
 
 ### Custom ###
 /config/config.env
+/src/test/config/config.env
