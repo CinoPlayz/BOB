@@ -1,0 +1,133 @@
+{
+                  "type": "FeatureCollection",
+                  "features": [                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "station",
+                    "name": "Celje"
+                  },
+                                      "geometry": {
+   "type": "Polygon",
+   "coordinates": [[
+      [2.0, 3.0],
+      [3.0, 3.0],
+      [3.0, 5.0],
+      [2.0, 5.0],
+      [2.0, 3.0]
+   ]]
+}
+                },                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "platform",
+                    "number": "1",
+                    "countOfTracks": "2",
+                    "stationName": "Celje"
+                  },
+                                      "geometry": {
+   "type": "Polygon",
+   "coordinates": [[
+      [2.0, 4.0],
+      [3.0, 4.0],
+      [3.0, 2.0],
+      [2.0, 2.0],
+      [2.0, 4.0]
+   ]]
+}
+                },                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "platform",
+                    "number": "2",
+                    "countOfTracks": "2",
+                    "stationName": "Celje"
+                  },
+                                      "geometry": {
+   "type": "Polygon",
+   "coordinates": [[
+      [3.0, 6.0],
+      [5.0, 6.0],
+      [5.0, 3.0],
+      [3.0, 3.0],
+      [3.0, 6.0]
+   ]]
+}
+                },                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "station",
+                    "name": "Maribor"
+                  },
+                                      "geometry": {
+   "type": "Polygon",
+   "coordinates": [[
+      [4.0, 6.0],
+      [3.0, 6.0],
+      [3.0, 5.0],
+      [4.0, 5.0],
+      [4.0, 6.0]
+   ]]
+}
+                },                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "platform",
+                    "number": "1",
+                    "countOfTracks": "2",
+                    "stationName": "Maribor"
+                  },
+                                      "geometry": {
+   "type": "Polygon",
+   "coordinates": [[
+      [2.0, 5.0],
+      [3.0, 5.0],
+      [3.0, 4.0],
+      [2.0, 4.0],
+      [2.0, 5.0]
+   ]]
+}
+                },                {
+                  "type": "Feature",
+                  "properties": {
+                    "type": "track",
+                    "name": "Celje-Maribor",
+                    "startPlatformStationName": "Celje",
+                    "startPlatformNumber": "1",
+                    "startPlatformCountOfTracks": "2",
+                    "endPlatformStationName": "Maribor",
+                    "endPlatformNumber": "1",
+                    "endPlatformCountOfTracks": "2"
+                  },
+                                      "geometry":                   {
+                     "type": "LineString",
+                     "coordinates": [
+                        [4.0, 2.0],
+                        [4.179672, 1.7594701],
+[4.3456936, 1.5758381],
+[4.4980664, 1.4491042],
+[4.636789, 1.379268],
+[4.761862, 1.3663296],
+[4.8732853, 1.4102892],
+[4.971059, 1.5111467],
+[5.055183, 1.668902],
+[5.1256576, 1.8835553],
+[5.1824822, 2.1551065],
+[5.2256575, 2.4835556],
+[5.255183, 2.8689027],
+[5.271059, 3.3111475],
+[5.2732854, 3.8102903],
+[5.261862, 4.366331],
+[5.2367887, 4.9792695],
+[5.1980658, 5.6491065],
+[5.145694, 6.3758407],
+[5.0796714, 7.159473],
+
+                        [5.0, 8.0]
+
+                     ]
+                  }
+                }],
+                  "metadata": {
+                    "name": "Celje-Maribor"
+                  }
+                }
