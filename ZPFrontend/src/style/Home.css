@@ -1,0 +1,55 @@
+.home-container {
+    display: flex;
+    height: 89vh;
+    background-color: white;
+    color: black;
+    position: relative;
+}
+
+.left-side {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.left-side {
+    position: relative;
+}
+
+.right-side {
+    padding-right: 10%;
+    width: 50%;
+    font-size: 1.6rem;
+    line-height: 1.8;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 89;
+    flex-direction: column;
+}
+
+.right-side h1 {
+    line-height: 1.4;
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+
+.overlapping-image {
+    position: absolute;
+    right: 8%;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+@media (prefers-color-scheme: dark) {
+    .home-container {
+        background-color: #f0f3f7;
+    }
+
+    .right-side p {
+        color: rgb(70, 66, 66);
+    }
+}
