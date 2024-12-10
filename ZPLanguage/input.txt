@@ -1,0 +1,10 @@
+infrastructure "Celje-Maribor" {
+
+
+
+(2 - 3) (6 + 5)
+
+
+let zz = (6 + 5)
+zz + 1
+}

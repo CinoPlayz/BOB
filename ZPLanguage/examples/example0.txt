@@ -1,0 +1,8 @@
+infrastructure "Celje-Maribor" {
+    let mariborPostaja = station "Maribor" {
+        box((6+2,4), (-63,3));
+        platform 1, 2 {
+            box((5,2), (4,3));
+        }
+    }
+}
