@@ -66,6 +66,7 @@ cron.schedule('*/5 * * * *', () => {
 var indexRouter = require('./routes/index');
 var testRouter = require('./routes/testRoutes');
 const trainLocHistoryRouter = require('./routes/trainLocHistoryRoutes');
+var userRouter = require('./routes/userRoutes');
 const stationRouter = require('./routes/stationRoutes');
 const delayRouter = require('./routes/delayRoutes');
 const routeRouter = require('./routes/routeRoutes');
@@ -73,6 +74,7 @@ const routeRouter = require('./routes/routeRoutes');
 app.use('/', indexRouter);
 app.use('/tests', testRouter);
 app.use('/trainLocHistories', trainLocHistoryRouter);
+app.use('/users', userRouter);
 app.use('/stations', stationRouter);
 app.use('/delays', delayRouter);
 app.use('/routes', routeRouter);
