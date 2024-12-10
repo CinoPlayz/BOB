@@ -34,7 +34,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t cinoplayz/bob-zpbackend:latest .
+          docker build -t cinoplayz/bob-zpbackend:latest ./ZPBackend
 
       - name: Push to Docker Hub
         run: |
