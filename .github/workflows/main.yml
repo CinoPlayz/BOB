@@ -32,10 +32,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Set Permission Gradle
-        run: chmod +x ./gradlew
+        run: chmod +x ./ZPLanguage/gradlew
 
       - name: Build
-        run: ./gradlew installdist
+        run: ./ZPLanguage/gradlew installdist
 
       - name: Set Permission test.sh and run.sh
         run: chmod +x ./test.sh ./run.sh
