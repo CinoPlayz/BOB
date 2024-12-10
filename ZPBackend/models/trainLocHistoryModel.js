@@ -8,9 +8,6 @@ const trainLocHistorySchema = new mongoose.Schema({
     trainType: {
         type: String,
         required: true,
-
-        //enum: ['x', 'y']    omejitve vrst vlakov po potrebi
-
     },
     trainNumber: {
         type: String,

@@ -5,17 +5,17 @@
                   "properties": {
                     "type": "station",
                     "name": "Celje"
-                  },
+                  }, 
                                       "geometry": {
    "type": "Polygon",
-   "coordinates": [[
+   "coordinates": [[                      
       [2.0, 3.0],
       [3.0, 3.0],
-      [3.0, 5.0],
+      [3.0, 5.0],          
       [2.0, 5.0],
       [2.0, 3.0]
    ]]
-}
+}                     
                 },                {
                   "type": "Feature",
                   "properties": {
@@ -23,17 +23,17 @@
                     "number": "1",
                     "countOfTracks": "2",
                     "stationName": "Celje"
-                  },
+                  }, 
                                       "geometry": {
    "type": "Polygon",
-   "coordinates": [[
+   "coordinates": [[                      
       [2.0, 4.0],
       [3.0, 4.0],
-      [3.0, 2.0],
+      [3.0, 2.0],          
       [2.0, 2.0],
       [2.0, 4.0]
    ]]
-}
+}                     
                 },                {
                   "type": "Feature",
                   "properties": {
@@ -41,33 +41,33 @@
                     "number": "2",
                     "countOfTracks": "2",
                     "stationName": "Celje"
-                  },
+                  }, 
                                       "geometry": {
    "type": "Polygon",
-   "coordinates": [[
+   "coordinates": [[                      
       [2.0, 4.0],
       [5.0, 4.0],
-      [5.0, 3.0],
+      [5.0, 3.0],          
       [2.0, 3.0],
       [2.0, 4.0]
    ]]
-}
+}                     
                 },                {
                   "type": "Feature",
                   "properties": {
                     "type": "station",
                     "name": "Maribor"
-                  },
+                  }, 
                                       "geometry": {
    "type": "Polygon",
-   "coordinates": [[
+   "coordinates": [[                      
       [4.0, 6.0],
       [3.0, 6.0],
-      [3.0, 5.0],
+      [3.0, 5.0],          
       [4.0, 5.0],
       [4.0, 6.0]
    ]]
-}
+}                     
                 },                {
                   "type": "Feature",
                   "properties": {
@@ -75,17 +75,17 @@
                     "number": "1",
                     "countOfTracks": "2",
                     "stationName": "Maribor"
-                  },
+                  }, 
                                       "geometry": {
    "type": "Polygon",
-   "coordinates": [[
+   "coordinates": [[                      
       [2.0, 5.0],
       [3.0, 5.0],
-      [3.0, 4.0],
+      [3.0, 4.0],          
       [2.0, 4.0],
       [2.0, 5.0]
    ]]
-}
+}                     
                 }],
                   "metadata": {
                     "name": "Celje-Maribor"

@@ -9,6 +9,8 @@ function Logout() {
             const token = localStorage.getItem('token'); // get token before reseting userContext
             userContext.setUserContext(null);
             localStorage.removeItem('token');
+            localStorage.removeItem('twoFaEnabled');
+            localStorage.removeItem('isTwoFaSetupComplete');
           
             //console.log("token: " + token)
 
