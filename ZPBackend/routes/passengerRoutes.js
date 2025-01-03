@@ -11,6 +11,9 @@ const upload = multer({ dest: 'uploads/' });
 // GET all
 //router.get('/stats', delayController.listJoined);
 
+// GET seats by train type and wagon
+router.get('/seats/:type/:num', passengersController.getSeats);
+
 // GET by ID
 //router.get('/:id', delayController.show);
 

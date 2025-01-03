@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const passangersSchema = new mongoose.Schema({
+const passengersSchema = new mongoose.Schema({
     timeOfRequest: {
         type: Date,
         required: true
@@ -23,4 +23,4 @@ const passangersSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('passangers', passangersSchema);
+module.exports = mongoose.model('passengers', passengersSchema);

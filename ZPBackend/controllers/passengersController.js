@@ -1,4 +1,5 @@
 const PassengersModel = require('../models/PassengersModel.js');
+const SeatsModel = require('../models/seatsModel.js');
 const shared = require('./shared.js');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
@@ -11,6 +12,25 @@ module.exports = {
         try {
             const delays = await PassengersModel.find();
             return res.json(delays);
+        } catch (err) {
+            return shared.handleError(res, 500, "Error when getting all delays", err);
+        }
+    },
+
+    // Get seats by train type and wagon (GET)
+    getSeats: async function (req, res) {
+        const type = req.params.type;
+        const num = req.params.num;
+        
+        const newDelay = new SeatsModel({type: "ICS", wagonNumber: 1, countOfSeats: 41});
+       
+
+        try {
+            const savedDelay = await newDelay.save();
+            return res.status(201).json(savedDelay);
+
+            /*const num = await PassengersModel.find();
+            return res.json(delays);*/
         } catch (err) {
             return shared.handleError(res, 500, "Error when getting all delays", err);
         }
