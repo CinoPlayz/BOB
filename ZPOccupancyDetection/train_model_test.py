@@ -144,17 +144,17 @@ def detect_people(image_path, model_path, confidence_threshold=0.5):
         
         used_indices.add(i)
     
-    fig, ax = plt.subplots(1, figsize=(12, 12))
-    ax.imshow(original_image)
+    #fig, ax = plt.subplots(1, figsize=(12, 12))
+    #ax.imshow(original_image)
     
     for box in boxes_to_keep:
         x1, y1, x2, y2 = box
         rect = Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor='red', facecolor='none')
-        ax.add_patch(rect)
+        #ax.add_patch(rect)
     
-    plt.title(f'Zaznane osebe: {len(boxes_to_keep)}')
-    plt.axis('off')
-    plt.show()
+    #plt.title(f'Zaznane osebe: {len(boxes_to_keep)}')
+    #plt.axis('off')
+    #plt.show()
     
     return len(boxes_to_keep)
 
@@ -164,11 +164,11 @@ def detect_people(image_path, model_path, confidence_threshold=0.5):
 #image_path = 'train_resized/4_png.rf.88e001383a485ee8f983adbb4630dd5c.jpg'
 #image_path = 'train_resized/image_1704690827350_png.rf.7427d60bac36dc17960ea15c46d5e60a.jpg'#Samo glava
 #image_path = 'train_resized/Orang-48-_png.rf.30f708ce36835e036c6b05009ee0adce.jpg'#LAžja
-image_path = 'train_resized/Orang-24-_png.rf.3ec32b8b1634e41814a9b486b799449f.jpg'#Težja
+#image_path = 'train_resized/Orang-24-_png.rf.3ec32b8b1634e41814a9b486b799449f.jpg'#Težja
 
 
 
 
-model_path = 'fasterrcnn_model.pth'
-num_people = detect_people(image_path, model_path, confidence_threshold=0.5)
-print(f'Število zaznanih oseb: {num_people}')
+#model_path = 'fasterrcnn_model.pth'
+#num_people = detect_people(image_path, model_path, confidence_threshold=0.5)
+#print(f'Število zaznanih oseb: {num_people}')

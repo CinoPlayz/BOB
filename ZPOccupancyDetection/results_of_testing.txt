@@ -6,3 +6,8 @@ Model: FasterRCNN_ResNet50_FPN_Weights
 Pravilno ugotovljenih:  16 
 Napačno ugotovljenih:  37  
 Natančnost:  30.18867924528302
+
+Model: Naš
+Pravilno ugotovljenih:  4 
+Napačno ugotovljenih:  49  
+Natančnost:  7.547169811320755
