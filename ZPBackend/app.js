@@ -70,6 +70,7 @@ var userRouter = require('./routes/userRoutes');
 const stationRouter = require('./routes/stationRoutes');
 const delayRouter = require('./routes/delayRoutes');
 const routeRouter = require('./routes/routeRoutes');
+const passengerRouter = require('./routes/passengerRoutes');
 
 app.use('/', indexRouter);
 app.use('/tests', testRouter);
@@ -78,5 +79,6 @@ app.use('/users', userRouter);
 app.use('/stations', stationRouter);
 app.use('/delays', delayRouter);
 app.use('/routes', routeRouter);
+app.use('/passengers', passengerRouter);
 
 module.exports = app;

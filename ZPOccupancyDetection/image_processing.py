@@ -9,6 +9,7 @@ from matplotlib.patches import Rectangle
 import torchvision
 from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights
 import os
+import sys
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
@@ -90,16 +91,15 @@ def detect_people(image_path, confidence_threshold=0.5, visualize=False):
 
     return num_people
 
-
-
-
-#image_path = 'train_resized/8_png.rf.de91d32ce2dcbb4fe2d21e2d7fdf1b0a.jpg'
-#image_path = "test_image.jpg"
-"""
-Primer klica
-total_seats = 10
-occupancy_rate = calculate_occupancy_rate(image_path, total_seats, confidence_threshold=0.5, visualize=True)
-
-print(f'Zsedenost: {occupancy_rate}')
-
-"""
+if len(sys.argv) == 3 and sys.argv[1] == "count":
+    filename=sys.argv[2]
+    print(detect_people(filename, 0.9, False))
+elif len(sys.argv) == 4 and sys.argv[1] == "occupancy":
+    filename=sys.argv[2]
+    seats=int(sys.argv[3])
+    print(calculate_occupancy_rate(filename, seats, 0.9, False))
+else:
+    print("Invalid usage of args.")
+    print("Usages:")
+    print("count <path_to_file>")
+    print("occupancy <path_to_file> <num_of_total_seats>")
