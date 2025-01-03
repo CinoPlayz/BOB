@@ -14,7 +14,6 @@ router.get('/trainLocByDate', trainLocHistoryController.getTrainHistoryByDateRan
  */
 router.get('/:id', trainLocHistoryController.show);
 
-
 /*
  * POST
  */
