@@ -2,10 +2,18 @@ Imamo skripto, ki gre skozi testne slike ter jih poda v skirpto za štetje ljudi
 iz imena datoteke vemo kakšen je pravilni rezultat 
 (vzorec za imena datotek {ISO koda države}_{poljubno ime (neobvezno)}_{število ljudi}).
 
+Pri testnih slikah smo bili zelo natančni glede števila oseb, kar pomeni npr. da če so se
+vidli samo lasi števili kot osebo
+
 Model: FasterRCNN_ResNet50_FPN_Weights
 Pravilno ugotovljenih:  16 
 Napačno ugotovljenih:  37  
 Natančnost:  30.18867924528302
+
+Model: YOLOv11
+Pravilno ugotovljenih:  5 
+Napačno ugotovljenih:  48  
+Natančnost:  9.433962264150944
 
 Model: Naš
 Pravilno ugotovljenih:  4 
