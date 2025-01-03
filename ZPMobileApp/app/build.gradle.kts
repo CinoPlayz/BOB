@@ -17,12 +17,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+    println(env.BASE_URL.value)
+
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            buildConfigField("String", "BASE_URL", "\"${env.BASE_URL.value}\"")
+            buildConfigField("String", "AUTH_TOKEN", "\"${env.AUTH_TOKEN.value}\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            buildConfigField("String", "BASE_URL", "\"${env.BASE_URL.value}\"")
+            buildConfigField("String", "AUTH_TOKEN", "\"${env.AUTH_TOKEN.value}\"")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -36,7 +49,7 @@ android {
 }
 
 dependencies {
-
+    implementation(libs.okhttp)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
