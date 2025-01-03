@@ -10,6 +10,11 @@ Pravilno ugotovljenih:  16
 Napačno ugotovljenih:  37  
 Natančnost:  30.18867924528302
 
+Model: Single shot
+Pravilno ugotovljenih:  7
+Napačno ugotovljenih:  46  
+Natančnost:  13.20754716981132
+
 Model: YOLOv11
 Pravilno ugotovljenih:  5 
 Napačno ugotovljenih:  48  
