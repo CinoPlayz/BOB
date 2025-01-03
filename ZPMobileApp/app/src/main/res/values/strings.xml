@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">ZPMobileApp</string>
+    <string name="app_name">BoB</string>
     <string name="title_home">Home</string>
+    <string name="title_imageprocessor">Image Processor</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
 </resources>
