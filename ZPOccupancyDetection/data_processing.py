@@ -206,6 +206,17 @@ def resize_dataset_with_annotations(input_dir, output_dir, annotations_path, tar
 
 
 
-
+def collate_fn(batch):
+    """funkcija za pripravo batch-a. Prejet seznam razdeli na tri ločene sezname images, boxes in labels. """
+    images = []
+    boxes = []
+    labels = []
+    
+    for image, box, label in batch:
+        images.append(image)
+        boxes.append(box)
+        labels.append(label)
+    
+    return images, boxes, labels
 
 
