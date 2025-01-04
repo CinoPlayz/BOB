@@ -5,6 +5,10 @@ const seatsSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    trainName: {
+        type: String,
+        required: true
+    },
     wagonNumber: {
         type: Number,
         required: true

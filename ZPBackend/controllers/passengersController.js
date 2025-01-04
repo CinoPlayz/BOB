@@ -6,38 +6,25 @@ const exec = util.promisify(require('child_process').exec);
 const fs = require('fs');
 
 module.exports = {
-
-    // Get all passangers (GET)
-    list: async function (req, res) {
-        try {
-            const delays = await PassengersModel.find();
-            return res.json(delays);
-        } catch (err) {
-            return shared.handleError(res, 500, "Error when getting all delays", err);
-        }
-    },
-
     // Get seats by train type and wagon (GET)
     getSeats: async function (req, res) {
         const type = req.params.type;
-        const num = req.params.num;
-        
-        const newDelay = new SeatsModel({type: "ICS", wagonNumber: 1, countOfSeats: 41});
-       
+        const num = req.params.num;       
 
         try {
-            const savedDelay = await newDelay.save();
-            return res.status(201).json(savedDelay);
-
-            /*const num = await PassengersModel.find();
-            return res.json(delays);*/
+            const seats = await SeatsModel.find({type: type, wagonNumber: num});
+            return res.json(seats);
         } catch (err) {
-            return shared.handleError(res, 500, "Error when getting all delays", err);
+            return shared.handleError(res, 500, "Error when getting seats", err);
         }
     },
 
-    // Create new delay (POST)
-    countPassengers: async function (req, res) {       
+    // count the number of people in the picture (POST)
+    countPassengers: async function (req, res) {    
+        if (!req.file){
+            return shared.handleError(res, 400, "Missing required fields", null);
+        } 
+
         try {
             const { stdout, stderr } = await exec('conda run -n PRO --live-stream python .\\..\\ZPOccupancyDetection\\image_processing.py count uploads\\'+req.file.filename);
             
@@ -46,36 +33,63 @@ module.exports = {
 
             return res.status(200).json(numOfPeople);
         } catch (err) {
-            return shared.handleError(res, 500, "Error when counting passangers", err);
+            return shared.handleError(res, 500, "Error when counting passengers", err);
         }
     },
 
-    // Create new delay (POST)
+    // Get all passengers (GET)
+    list: async function (req, res) {
+        try {
+            const passengers = await PassengersModel.find();
+            return res.json(passengers);
+        } catch (err) {
+            return shared.handleError(res, 500, "Error when getting all passengers records", err);
+        }
+    },    
+
+    // Create new passengers (POST)
     create: async function (req, res) {
-        const newDelay = new PassengersModel(req.body);
+        const user = req.user;
+        if (!user) {
+            return shared.handleError(res, 404, "User not found", null);
+        }
+
+        const timeOfRequest = req.body.timeOfRequest;
+        const coordinatesOfRequest = req.body.coordinatesOfRequest;
+        const guessedOccupancyRate = req.body.guessedOccupancyRate;
+        const realOccupancyRate = req.body.realOccupancyRate;
+        const route = req.body.route;
+
+        if(!timeOfRequest || !coordinatesOfRequest || !guessedOccupancyRate || !route) {
+            return shared.handleError(res, 400, "Missing required fields", null);
+        }
+
+        const newPassengers = new PassengersModel({timeOfRequest: timeOfRequest, coordinatesOfRequest: coordinatesOfRequest,
+            guessedOccupancyRate: guessedOccupancyRate, realOccupancyRate: realOccupancyRate, route: route, postedByUser: user._id});
 
         try {
-            const savedDelay = await newDelay.save();
-            return res.status(201).json(savedDelay);
+            const savedPassenger = await newPassengers.save();
+            return res.status(201).json(savedPassenger);
         } catch (err) {
-            return shared.handleError(res, 500, "Error when creating delay", err);
+            return shared.handleError(res, 500, "Error when creating passengers record", err);
         }
     },
 
-    // Delete delay by ID (DELETE)
+    // Delete passengers by ID (DELETE)
     remove: async function (req, res) {
         const id = req.params.id;
+        const user = req.user;
 
         try {
-            const delay = await PassengersModel.findByIdAndDelete(id);
+            const passengers = await PassengersModel.findOneAndDelete({_id: id, postedByUser: user._id});
 
-            if (!delay) {
-                return shared.handleError(res, 404, "Delay not found", null);
+            if (!passengers) {
+                return shared.handleError(res, 404, "Passengers record not found or not yours", null);
             }
 
             return res.status(204).json();
         } catch (err) {
-            return shared.handleError(res, 500, "Error when deleting delay", err);
+            return shared.handleError(res, 500, "Error when deleting passengers record", err);
         }
     }
 };
