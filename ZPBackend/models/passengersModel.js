@@ -5,18 +5,32 @@ const passengersSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    coordinatesOfRequest: {
+        lat: {
+            type: Number,
+            required: true
+        },
+        lng: {
+            type: Number,
+            required: true
+        }
+    },
+    guessedOccupancyRate: {
+        type: Number,
+        required: true
+    },
+    realOccupancyRate: {
+        type: Number,
+        default: null
+    },    
     route: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'route',
         required: true
     },
-    currentStation: {
+    postedByUser: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'station',
-        required: true
-    },
-    delay: {
-        type: Number, // in minutes
+        ref: 'user',
         required: true
     }
 }, {
