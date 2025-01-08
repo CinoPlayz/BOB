@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 android {
@@ -49,6 +50,10 @@ android {
 }
 
 dependencies {
+    implementation(libs.fuel)
+    implementation(libs.fuel.coroutines)
+    implementation(libs.dotenv.kotlin)
+    implementation (libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
