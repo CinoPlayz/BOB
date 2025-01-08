@@ -4,4 +4,9 @@
     <string name="title_imageprocessor">Image Processor</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_profile">User Profile</string>
+
+    <string name="username_password_empty">Username or Password is empty</string>
+    <string name="tfa_empty">TFA Code is empty.</string>
+    <string name="no_login_token">No login token found. Please try again.</string>
+    <string name="profile_welcome_message">Welcome, %1$s!</string>
 </resources>

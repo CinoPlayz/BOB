@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import si.bob.zpmobileapp.MyApp
+import si.bob.zpmobileapp.R
 import si.bob.zpmobileapp.databinding.FragmentProfileBinding
 import si.bob.zpmobileapp.utils.backendAuth.logoutUserBackend
 import si.bob.zpmobileapp.utils.backendAuth.loginUser
@@ -61,7 +62,7 @@ class ProfileFragment : Fragment() {
             val password = binding.passwordInput.text.toString().trim()
 
             if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(requireContext(), "Username or Password is empty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.username_password_empty), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -91,12 +92,12 @@ class ProfileFragment : Fragment() {
             val totp = binding.tfaInput.text.toString().trim()
 
             if (totp.isEmpty()) {
-                Toast.makeText(requireContext(), "TFA Code is empty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.tfa_empty), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (loginToken == null) {
-                Toast.makeText(requireContext(), "No login token found. Please try again.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.no_login_token), Toast.LENGTH_SHORT).show()
                 resetLoginScreen()
                 return@setOnClickListener
             }
@@ -133,7 +134,7 @@ class ProfileFragment : Fragment() {
         binding.loginForm.visibility = View.GONE
         binding.tfaForm.visibility = View.GONE
         binding.profileInfo.visibility = View.VISIBLE
-        binding.profileWelcomeText.text = "Welcome to your profile, ${app.sharedPrefs.getString(MyApp.USERNAME_KEY, "")}!"
+        binding.profileWelcomeText.text = getString(R.string.profile_welcome_message, app.sharedPrefs.getString(MyApp.USERNAME_KEY, ""))
     }
 
     private fun showTFAScreen() {
