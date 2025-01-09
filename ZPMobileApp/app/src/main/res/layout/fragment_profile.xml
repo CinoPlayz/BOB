@@ -20,21 +20,82 @@
             android:id="@+id/username_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Username"
+            android:hint="@string/username"
             android:inputType="text" />
 
         <EditText
             android:id="@+id/password_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"
+            android:hint="@string/password"
             android:inputType="textPassword" />
 
         <Button
             android:id="@+id/login_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Login" />
+            android:text="@string/login" />
+
+        <Button
+            android:id="@+id/register_button_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:text="@string/register" />
+    </LinearLayout>
+
+    <!-- Register Form -->
+    <LinearLayout
+        android:id="@+id/register_form"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <EditText
+            android:id="@+id/email_input_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/email"
+            android:inputType="textEmailAddress" />
+
+        <EditText
+            android:id="@+id/username_input_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/username"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/password_input_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/password"
+            android:inputType="textPassword" />
+
+        <EditText
+            android:id="@+id/password_input_repeat_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/repeat_password"
+            android:inputType="textPassword" />
+
+        <Button
+            android:id="@+id/register_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/register" />
+
+        <Button
+            android:id="@+id/login_button_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:text="@string/login" />
     </LinearLayout>
 
     <!-- TFA Form -->
@@ -53,14 +114,14 @@
             android:id="@+id/tfa_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter TFA Code"
+            android:hint="@string/enter_tfa_code"
             android:inputType="number" />
 
         <Button
             android:id="@+id/tfa_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Verify" />
+            android:text="@string/verify" />
     </LinearLayout>
 
     <!-- Profile Info -->
@@ -79,7 +140,7 @@
             android:id="@+id/profile_welcome_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Welcome!"
+            android:text="@string/welcome"
             android:textAlignment="center"
             android:textSize="24sp" />
 
@@ -87,6 +148,6 @@
             android:id="@+id/logout_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Logout" />
+            android:text="@string/logout" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

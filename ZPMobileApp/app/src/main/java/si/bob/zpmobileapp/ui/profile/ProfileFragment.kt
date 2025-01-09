@@ -14,6 +14,7 @@ import si.bob.zpmobileapp.databinding.FragmentProfileBinding
 import si.bob.zpmobileapp.utils.backendAuth.logoutUserBackend
 import si.bob.zpmobileapp.utils.backendAuth.loginUser
 import si.bob.zpmobileapp.utils.backendAuth.loginUserTwoFA
+import si.bob.zpmobileapp.utils.backendAuth.registerUser
 
 class ProfileFragment : Fragment() {
 
@@ -56,6 +57,17 @@ class ProfileFragment : Fragment() {
     }
 
     private fun setupUI() {
+
+        // Switch to Register view
+        binding.registerButtonSwitch.setOnClickListener {
+            showRegisterView()
+        }
+
+        // Switch to Login view
+        binding.loginButtonSwitch.setOnClickListener {
+            showLoginView()
+        }
+
         // Login button click listener
         binding.loginButton.setOnClickListener {
             val username = binding.usernameInput.text.toString().trim()
@@ -119,6 +131,41 @@ class ProfileFragment : Fragment() {
             }
         }
 
+        // Register button click listener
+        binding.registerButton.setOnClickListener {
+            val email = binding.emailInputRegister.text.toString().trim()
+            val username = binding.usernameInputRegister.text.toString().trim()
+            val password = binding.passwordInputRegister.text.toString().trim()
+            val repeatPassword = binding.passwordInputRepeatRegister.text.toString().trim()
+
+            if (email.isEmpty() || username.isEmpty() || password.isEmpty() || repeatPassword.isEmpty()) {
+                Toast.makeText(requireContext(), getString(R.string.fill_all_fields), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (password != repeatPassword) {
+                Toast.makeText(requireContext(), getString(R.string.passwords_do_not_match), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Call the registerUser function
+            viewLifecycleOwner.lifecycleScope.launch {
+                registerUser(
+                    app = app,
+                    email = email,
+                    username = username,
+                    password = password,
+                    onSuccess = {
+                        Toast.makeText(requireContext(), getString(R.string.registration_successful), Toast.LENGTH_SHORT).show()
+                        showLoginView()
+                    },
+                    onFailure = { error ->
+                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        }
+
         // Logout button click listener
         binding.logoutButton.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
@@ -128,6 +175,20 @@ class ProfileFragment : Fragment() {
                 resetLoginScreen()
             }
         }
+    }
+
+    private fun showLoginView() {
+        binding.loginForm.visibility = View.VISIBLE
+        binding.registerForm.visibility = View.GONE
+        binding.tfaForm.visibility = View.GONE
+        binding.profileInfo.visibility = View.GONE
+    }
+
+    private fun showRegisterView() {
+        binding.registerForm.visibility = View.VISIBLE
+        binding.loginForm.visibility = View.GONE
+        binding.tfaForm.visibility = View.GONE
+        binding.profileInfo.visibility = View.GONE
     }
 
     private fun showProfileScreen(app: MyApp) {

@@ -9,4 +9,17 @@
     <string name="tfa_empty">TFA Code is empty.</string>
     <string name="no_login_token">No login token found. Please try again.</string>
     <string name="profile_welcome_message">Welcome, %1$s!</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="repeat_password">Repeat Password</string>
+    <string name="register">Register</string>
+    <string name="enter_tfa_code">Enter TFA Code</string>
+    <string name="verify">Verify</string>
+    <string name="welcome">Welcome!</string>
+    <string name="logout">Logout</string>
+    <string name="fill_all_fields">Please fill all fields.</string>
+    <string name="passwords_do_not_match">Entered passwords do not match.</string>
+    <string name="registration_successful">Registration successful. You can login!</string>
 </resources>
