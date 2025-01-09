@@ -17,6 +17,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -25,6 +27,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
 import si.bob.zpmobileapp.BuildConfig
+import si.bob.zpmobileapp.MyApp
+import si.bob.zpmobileapp.R
 import si.bob.zpmobileapp.databinding.FragmentImageprocessorBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -39,87 +43,67 @@ class ImageProcessorFragment : Fragment() {
     private var _binding: FragmentImageprocessorBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var imageView: ImageView
-    private lateinit var loadImageButton: Button
-    private lateinit var takePictureButton: Button
-    private lateinit var numSeatsInput: EditText
-    private lateinit var submitButton: Button
     private var photoUri: Uri? = null
-
-    private val pickImageLauncher =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let {
-                loadImageFromUri(it)
-            }
-        }
-
-    // Register for permission request
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                openGallery()
-            } else {
-                Toast.makeText(requireContext(), "Error: Storage permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-    private val takePictureLauncher =
-        registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
-            if (isSuccess) {
-                photoUri?.let {
-                    loadImageFromUri(it)
-                }
-            } else {
-                Toast.makeText(requireContext(), "Failed to capture image", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-    private val requestCameraPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                launchCamera()
-            } else {
-                Toast.makeText(requireContext(), "Error: Camera permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
+    private lateinit var app: MyApp
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val imageprocessorViewModel =
-            ViewModelProvider(this)[ImageProcessorViewModel::class.java]
+        app = requireActivity().application as MyApp
 
         _binding = FragmentImageprocessorBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        // Initialize UI elements
-        imageView = binding.imageView
-        loadImageButton = binding.loadImageButton
-        takePictureButton = binding.takePictureButton
-        submitButton = binding.submitButton
-        numSeatsInput = binding.numSeatsInput
+        checkUserCredentials()
 
-        loadImageButton.setOnClickListener {
+        return root
+    }
+
+
+    private fun checkUserCredentials() {
+        val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null)
+        val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
+
+        if (!username.isNullOrEmpty() && !token.isNullOrEmpty()) {
+            // Both username and token are present --> show the profile screen
+            showSubmitImage()
+            setupUI()
+        } else {
+            // Clear username and token if they are not valid
+            app.sharedPrefs.edit().apply {
+                remove(MyApp.USERNAME_KEY)
+                remove(MyApp.TOKEN_KEY)
+                apply()
+            }
+            showLoginLayout()
+            setupUIMinimal()
+        }
+    }
+
+    private fun setupUI() {
+        binding.loadImageButton.setOnClickListener {
             checkStoragePermissionAndOpenGallery()
         }
 
-        takePictureButton.setOnClickListener {
+        binding.takePictureButton.setOnClickListener {
             checkCameraPermissionAndLaunchCamera()
         }
 
-        submitButton.setOnClickListener {
+        binding.submitButton.setOnClickListener {
             photoUri?.let {
                 sendImageToServer(it)
-            } ?: Toast.makeText(requireContext(), "No image selected", Toast.LENGTH_SHORT).show()
+            } ?: Toast.makeText(requireContext(), getString(R.string.no_image_selected), Toast.LENGTH_SHORT).show()
         }
 
-        val textView: TextView = binding.textImageprocessor
-        imageprocessorViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
+        binding.textImageprocessor.text = getString(R.string.image_processor_top_text)
+    }
 
-        return root
+    private fun setupUIMinimal() {
+        binding.navigateToLoginButton.setOnClickListener {
+            val bottomNavigationView = requireActivity().findViewById<BottomNavigationView>(R.id.nav_view)
+            bottomNavigationView.selectedItemId = R.id.navigation_profile
+        }
     }
 
     private fun sendImageToServer(imageUri: Uri) {
@@ -246,10 +230,52 @@ class ImageProcessorFragment : Fragment() {
     }
 
     private fun loadImageFromUri(uri: Uri) {
-        imageView.setImageURI(uri)
+        binding.imageView.setImageURI(uri)
         photoUri = uri
         // Enable submit button after loading the image
-        submitButton.isEnabled = true
+        binding.submitButton.isEnabled = true
+    }
+
+    private fun showSubmitImage() {
+        binding.layoutSubmitImage.visibility = View.VISIBLE
+        binding.layoutLogin.visibility = View.GONE
+    }
+
+    private fun showLoginLayout() {
+        binding.layoutSubmitImage.visibility = View.GONE
+        binding.layoutLogin.visibility = View.VISIBLE
+    }
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            loadImageFromUri(it)
+        }
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            openGallery()
+        } else {
+            Toast.makeText(requireContext(), "Error: Storage permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+        if (isSuccess) {
+            photoUri?.let {
+                loadImageFromUri(it)
+            }
+        } else {
+            Toast.makeText(requireContext(), "Failed to capture image", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            Toast.makeText(requireContext(), "Error: Camera permission denied", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {

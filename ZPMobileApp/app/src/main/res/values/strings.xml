@@ -22,4 +22,11 @@
     <string name="fill_all_fields">Please fill all fields.</string>
     <string name="passwords_do_not_match">Entered passwords do not match.</string>
     <string name="registration_successful">Registration successful. You can login!</string>
+    <string name="image_processor">Image Processor</string>
+    <string name="load_image_from_device">Load Image from Device</string>
+    <string name="take_a_picture">Take a Picture</string>
+    <string name="submit">Submit</string>
+    <string name="please_login_to_use_this_function">Please login to use this function</string>
+    <string name="no_image_selected">No image selected</string>
+    <string name="image_processor_top_text">Choose or take an image to send for processing.\nSelect train and enter your wagon number.</string>
 </resources>
