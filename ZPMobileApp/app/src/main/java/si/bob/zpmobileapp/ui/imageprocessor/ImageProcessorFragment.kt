@@ -1,7 +1,9 @@
 package si.bob.zpmobileapp.ui.imageprocessor
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
+import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -16,10 +18,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import okhttp3.Call
 import okhttp3.Callback
@@ -28,6 +33,7 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONException
@@ -40,6 +46,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -54,6 +61,7 @@ class ImageProcessorFragment : Fragment() {
     private var trainType: String? = null // For sending seat occupancy data
     private var numOfPeople: Int? = null
     private var numOfSeats: Int? = null
+    private var guessedOccupancyRate: Double? = null
 
     private lateinit var app: MyApp
 
@@ -66,9 +74,7 @@ class ImageProcessorFragment : Fragment() {
         _binding = FragmentImageprocessorBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        // toggleLoading(true)
         checkUserCredentials()
-        // toggleLoading(false)
 
         return root
     }
@@ -111,6 +117,10 @@ class ImageProcessorFragment : Fragment() {
         }
 
         binding.textImageprocessor.text = getString(R.string.image_processor_top_text)
+
+        binding.buttonSubmitOccupancy.setOnClickListener {
+            submitOccupancy()
+        }
     }
 
     private fun setupUIMinimal() {
@@ -298,25 +308,21 @@ class ImageProcessorFragment : Fragment() {
                     override fun onResponse(call: okhttp3.Call, response: Response) {
                         if (!response.isSuccessful) {
                             requireActivity().runOnUiThread {
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Failed: ${response.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(requireContext(), "Failed: ${response.message}", Toast.LENGTH_SHORT).show()
                             }
                             return
                         }
 
-                        val responseBody = response.body?.string()
+                        val detectPeopleResponse = response.body?.string()
                         numOfPeople = try {
-                            val json = JSONObject(responseBody ?: "{}")
+                            val json = JSONObject(detectPeopleResponse ?: "{}")
                             json.optInt("numOfPeople", -1).takeIf { it != -1 }
                         } catch (e: JSONException) {
                             Log.e("ImageProcessor", "Error parsing passenger count response", e)
                             null
                         }
                         requireActivity().runOnUiThread {
-                            Toast.makeText(requireContext(), "Passenger count success: $numOfPeople", Toast.LENGTH_SHORT).show()
+                            //Toast.makeText(requireContext(), "Passenger count success: $numOfPeople", Toast.LENGTH_SHORT).show()
                         }
 
                         // Proceed with the second request
@@ -337,25 +343,26 @@ class ImageProcessorFragment : Fragment() {
                             override fun onResponse(call: okhttp3.Call, response: Response) {
                                 if (!response.isSuccessful) {
                                     requireActivity().runOnUiThread {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Failed to fetch wagon: ${response.message}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        Toast.makeText(requireContext(), "Failed to fetch wagon: ${response.message}", Toast.LENGTH_SHORT).show()
                                     }
-                                    toggleLoading (false)
+                                    toggleLoading(false)
                                     binding.submitButton.isEnabled = true
                                     return
                                 }
 
                                 val wagonResponse = response.body?.string()
+                                numOfSeats = try {
+                                    val jsonArray = JSONArray(wagonResponse ?: "[]")
+                                    val jsonObject = jsonArray.optJSONObject(0) // Get the first object from the array
+                                    jsonObject?.optInt("countOfSeats", -1)?.takeIf { it != -1 }
+                                } catch (e: JSONException) {
+                                    Log.e("ImageProcessor", "Error parsing seats count response", e)
+                                    null
+                                }
                                 requireActivity().runOnUiThread {
-                                    Toast.makeText(
-                                        requireContext(),
-                                        "Success: Passenger Count: $numOfPeople, Wagon: $wagonResponse",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                    toggleLoading (false)
+                                    //Toast.makeText(requireContext(), "Success: Passenger Count: $numOfPeople, Seat Count: $numOfSeats", Toast.LENGTH_LONG).show()
+                                    showOccupancyData()
+                                    toggleLoading(false)
                                     binding.submitButton.isEnabled = true
                                 }
                             }
@@ -372,6 +379,98 @@ class ImageProcessorFragment : Fragment() {
         }
     }
 
+    private fun showOccupancyData() {
+        if (numOfPeople != null || numOfSeats != null) {
+            guessedOccupancyRate = (numOfPeople?.times(100.0))?.div(numOfSeats!!.toDouble())
+
+            binding.detectedPeopleValue.text = "$numOfPeople"
+            binding.seatsOnWagonValue.text = "$numOfSeats"
+            binding.percentageOccupiedValue.text = String.format("%.1f%%", guessedOccupancyRate)
+
+            // Percentage spinner
+            val percentages = (0..100 step 10).map { "$it%" }
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, percentages)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.percentageSpinner.adapter = adapter
+
+            binding.layoutSubmitOccupancy.visibility = View.VISIBLE
+            binding.layoutSubmitImage.visibility = View.GONE
+        } else {
+            Toast.makeText(requireContext(), "Error: Data not available", Toast.LENGTH_SHORT).show()
+            return
+        }
+    }
+
+    private fun submitOccupancy() {
+        val context = requireContext()
+
+        // Check location permission
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 100)
+            Toast.makeText(context, "Please grant location permissions", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Get current location
+        val locationProvider = LocationServices.getFusedLocationProviderClient(context)
+        locationProvider.lastLocation.addOnSuccessListener { location: Location? ->
+            if (location == null) {
+                Toast.makeText(context, "Failed to get location", Toast.LENGTH_SHORT).show()
+                return@addOnSuccessListener
+            }
+
+            // Prepare data for POST request
+            val realOccupancyRate = binding.percentageSpinner.selectedItem.toString().removeSuffix("%").toFloat()
+            val timeOfRequest = DateTimeFormatter.ISO_INSTANT.format(java.time.Instant.now())
+            val jsonBody = JSONObject().apply {
+                put("timeOfRequest", timeOfRequest)
+                put("coordinatesOfRequest", JSONObject().apply {
+                    put("lat", location.latitude)
+                    put("lng", location.longitude)
+                })
+                put("guessedOccupancyRate", guessedOccupancyRate)
+                put("realOccupancyRate", realOccupancyRate)
+                put("route", routeId)
+            }
+
+            // Create and send POST request
+            val baseUrl = app.sharedPrefs.getString(MyApp.BACKEND_URL_KEY, null)
+            val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
+            val client = OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build()
+            val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaTypeOrNull())
+            val request = Request.Builder()
+                .url("$baseUrl/passengers")
+                .addHeader("Authorization", "Bearer $token")
+                .post(requestBody)
+                .build()
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    requireActivity().runOnUiThread {
+                        Toast.makeText(context, "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Log.e("OccupancySubmit", "Error sending occupancy data", e)
+                    }
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    requireActivity().runOnUiThread {
+                        if (response.isSuccessful) {
+                            Toast.makeText(context, "Occupancy submitted successfully", Toast.LENGTH_SHORT).show()
+                            reset()
+                        } else {
+                            Toast.makeText(context, "Submission failed: ${response.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            })
+        }.addOnFailureListener { e ->
+            Toast.makeText(context, "Location error: ${e.message}", Toast.LENGTH_SHORT).show()
+            Log.e("OccupancySubmit", "Error getting location", e)
+        }
+    }
 
     private fun uriToFile(uri: Uri): File? {
         val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
@@ -487,6 +586,15 @@ class ImageProcessorFragment : Fragment() {
         } else {
             Toast.makeText(requireContext(), "Error: Camera permission denied", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun reset() {
+        binding.layoutSubmitImage.visibility = View.VISIBLE
+        binding.layoutLogin.visibility = View.GONE
+        binding.layoutSubmitOccupancy.visibility = View.GONE
+        fetchAndPopulateRoutes()
+        binding.imageView.setImageDrawable(null)
+        photoUri = null
     }
 
     override fun onDestroyView() {
