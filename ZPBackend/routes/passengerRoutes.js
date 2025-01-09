@@ -14,6 +14,8 @@ router.get('/', passengersController.list);
 // GET seats by train type and wagon
 router.get('/seats/:type/:num', passengersController.getSeats);
 
+router.get('/seats/:type', passengersController.getNumberOfWAgons);
+
 // GET by ID
 //router.get('/:id', delayController.show);
 
