@@ -19,6 +19,18 @@ module.exports = {
         }
     },
 
+    getNumberOfWAgons: async function (req, res) {
+        const type = req.params.type;
+
+        try {
+            const count = await SeatsModel.countDocuments({ type: type });
+            console.log("count:", count);
+            res.status(200).json({ numberOfWagons: count });
+        } catch (err) {
+            res.status(500).json({ error: "Internal server error" });
+        }
+    },
+
     // count the number of people in the picture (POST)
     countPassengers: async function (req, res) {    
         if (!req.file){
