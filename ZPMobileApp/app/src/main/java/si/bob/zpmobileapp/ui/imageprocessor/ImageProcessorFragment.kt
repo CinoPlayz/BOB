@@ -8,6 +8,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -19,6 +21,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -26,6 +29,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 import si.bob.zpmobileapp.BuildConfig
 import si.bob.zpmobileapp.MyApp
 import si.bob.zpmobileapp.R
@@ -44,6 +50,11 @@ class ImageProcessorFragment : Fragment() {
     private val binding get() = _binding!!
 
     private var photoUri: Uri? = null
+    private var routeId: String? = null // For sending seat occupancy data
+    private var trainType: String? = null // For sending seat occupancy data
+    private var numOfPeople: Int? = null
+    private var numOfSeats: Int? = null
+
     private lateinit var app: MyApp
 
     override fun onCreateView(
@@ -55,7 +66,9 @@ class ImageProcessorFragment : Fragment() {
         _binding = FragmentImageprocessorBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        // toggleLoading(true)
         checkUserCredentials()
+        // toggleLoading(false)
 
         return root
     }
@@ -69,6 +82,7 @@ class ImageProcessorFragment : Fragment() {
             // Both username and token are present --> show the profile screen
             showSubmitImage()
             setupUI()
+            fetchAndPopulateRoutes()
         } else {
             // Clear username and token if they are not valid
             app.sharedPrefs.edit().apply {
@@ -92,7 +106,7 @@ class ImageProcessorFragment : Fragment() {
 
         binding.submitButton.setOnClickListener {
             photoUri?.let {
-                sendImageToServer(it)
+                sendImageToServer()
             } ?: Toast.makeText(requireContext(), getString(R.string.no_image_selected), Toast.LENGTH_SHORT).show()
         }
 
@@ -106,11 +120,151 @@ class ImageProcessorFragment : Fragment() {
         }
     }
 
-    private fun sendImageToServer(imageUri: Uri) {
+    private fun toggleLoading(isLoading: Boolean) {
+        binding.loadingCircle.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+
+    private fun fetchAndPopulateRoutes() {
+        val baseUrl = app.sharedPrefs.getString(MyApp.BACKEND_URL_KEY, null) ?: run {
+            Toast.makeText(requireContext(), "Base URL not found!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val url = "$baseUrl/routes"
+
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                requireActivity().runOnUiThread {
+                    Toast.makeText(requireContext(), "Failed to fetch routes: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: Response) {
+                if (response.isSuccessful) {
+                    response.body?.string()?.let { jsonString ->
+                        try {
+                            val routesList = mutableListOf<Pair<String, String>>() // Pair of `_id` and display string
+                            val jsonArray = JSONArray(jsonString)
+
+                            for (i in 0 until jsonArray.length()) {
+                                val routeObject = jsonArray.getJSONObject(i)
+                                val trainNumber = routeObject.getInt("trainNumber")
+                                val trainType = routeObject.getString("trainType")
+                                val id = routeObject.getString("_id")
+
+                                // Format: trainNumber (trainType)
+                                val displayString = "$trainNumber ($trainType)"
+                                routesList.add(Pair(id, displayString))
+                            }
+
+                            requireActivity().runOnUiThread {
+                                populateDropdown(routesList)
+                            }
+                        } catch (e: Exception) {
+                            requireActivity().runOnUiThread {
+                                Toast.makeText(requireContext(), "Error parsing routes data", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                } else {
+                    requireActivity().runOnUiThread {
+                        Toast.makeText(requireContext(), "Failed to fetch routes: ${response.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun populateDropdown(routes: List<Pair<String, String>>) {
+        val spinner = binding.routesSpinner // Replace with your Spinner ID
+        val adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            routes.map { it.second } // Extract only the display strings for the dropdown
+        )
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                routeId = routes[position].first // Access the `_id` for the selected item
+                trainType = routes[position].second.substringAfter("(").substringBefore(")") // "LP", "IC", ... Retrieving number of seats
+                // Toast.makeText(requireContext(), "Train Type: $trainType", Toast.LENGTH_SHORT).show()
+                // Toast.makeText(requireContext(), "Route ID: $routeId", Toast.LENGTH_SHORT).show()
+                getNumberOfWagons()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                // Nothing
+            }
+        }
+    }
+
+    private fun getNumberOfWagons() {
+        val baseUrl = app.sharedPrefs.getString(MyApp.BACKEND_URL_KEY, null)
+        val url = "$baseUrl/passengers/seats/$trainType"
+
+        val client = OkHttpClient()
+        val request = Request.Builder().url(url).build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+
+                    // Parse the response JSON
+                    val jsonResponse = responseBody?.let { JSONObject(it) }
+                    val numberOfWagons = jsonResponse?.getInt("numberOfWagons")
+
+                    // Now populate the wagon spinner
+                    activity?.runOnUiThread {
+                        // Now populate the wagon spinner
+                        if (numberOfWagons != null) {
+                            populateWagonSpinner(numberOfWagons)
+                        }
+                    }
+                } else {
+                    // Handle the failure (e.g., show a toast or log the error)
+                    Log.e("Error", "Failed to retrieve number of wagons")
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                // Handle failure
+                Log.e("Error", "Network error: ${e.message}")
+            }
+        })
+    }
+
+    private fun populateWagonSpinner(numberOfWagons: Int) {
+        // Get the wagon spinner
+        val wagonList = (1..numberOfWagons).map { "$it. wagon" } // Create a list of wagon numbers
+
+        val adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            wagonList // Use the generated list of numbers (1 to numberOfWagons)
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.wagonNumber.adapter = adapter
+    }
+
+    private fun sendImageToServer() {
+        toggleLoading(true)
+        binding.submitButton.isEnabled = false
         try {
-            val imageFile = uriToFile(imageUri) ?: return
-            val baseUrl = BuildConfig.BASE_URL
-            val token = BuildConfig.AUTH_TOKEN
+            val imageFile = photoUri?.let { uriToFile(it) } ?: return
+            val baseUrl = app.sharedPrefs.getString(MyApp.BACKEND_URL_KEY, null)
+            val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
+            //val trainType = this.trainType ?: return
+            val wagonNumber = binding.wagonNumber.selectedItem?.toString()?.substringBefore(".")?.toIntOrNull() ?: return
 
             val client = OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
@@ -126,41 +280,98 @@ class ImageProcessorFragment : Fragment() {
                 )
                 .build()
 
-            val request = Request.Builder()
+            val passengerCountRequest = Request.Builder()
                 .url("$baseUrl/passengers/countPassengers")
                 .addHeader("Authorization", "Bearer $token")
                 .post(requestBody)
                 .build()
 
-            client.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: okhttp3.Call, e: IOException) {
-                    requireActivity().runOnUiThread {
-                        Toast.makeText(requireContext(), "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                        Log.e("ImageProcessor", "Request failed", e)
-                    }
-                }
-
-                override fun onResponse(call: okhttp3.Call, response: Response) {
-                    requireActivity().runOnUiThread {
-                        if (response.isSuccessful) {
-                            val responseJson = response.body?.string()
-                            Toast.makeText(requireContext(), "Success: $responseJson", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed: ${response.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
+            client.newCall(passengerCountRequest).enqueue(
+                object : Callback {
+                    override fun onFailure(call: okhttp3.Call, e: IOException) {
+                        requireActivity().runOnUiThread {
+                            Toast.makeText(requireContext(), "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Log.e("ImageProcessor", "Passenger count request failed", e)
                         }
                     }
-                }
-            })
 
+                    override fun onResponse(call: okhttp3.Call, response: Response) {
+                        if (!response.isSuccessful) {
+                            requireActivity().runOnUiThread {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed: ${response.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            return
+                        }
+
+                        val responseBody = response.body?.string()
+                        numOfPeople = try {
+                            val json = JSONObject(responseBody ?: "{}")
+                            json.optInt("numOfPeople", -1).takeIf { it != -1 }
+                        } catch (e: JSONException) {
+                            Log.e("ImageProcessor", "Error parsing passenger count response", e)
+                            null
+                        }
+                        requireActivity().runOnUiThread {
+                            Toast.makeText(requireContext(), "Passenger count success: $numOfPeople", Toast.LENGTH_SHORT).show()
+                        }
+
+                        // Proceed with the second request
+                        val wagonRequest = Request.Builder()
+                            .url("$baseUrl/passengers/seats/$trainType/$wagonNumber")
+                            .addHeader("Authorization", "Bearer $token")
+                            .get()
+                            .build()
+
+                        client.newCall(wagonRequest).enqueue(object : Callback {
+                            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                                requireActivity().runOnUiThread {
+                                    Toast.makeText(requireContext(), "Wagon request failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    Log.e("ImageProcessor", "Wagon request failed", e)
+                                }
+                            }
+
+                            override fun onResponse(call: okhttp3.Call, response: Response) {
+                                if (!response.isSuccessful) {
+                                    requireActivity().runOnUiThread {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Failed to fetch wagon: ${response.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    toggleLoading (false)
+                                    binding.submitButton.isEnabled = true
+                                    return
+                                }
+
+                                val wagonResponse = response.body?.string()
+                                requireActivity().runOnUiThread {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Success: Passenger Count: $numOfPeople, Wagon: $wagonResponse",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    toggleLoading (false)
+                                    binding.submitButton.isEnabled = true
+                                }
+                            }
+                        })
+                    }
+
+                }
+            )
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             Log.e("ImageProcessor", "Error", e)
+            toggleLoading(false)
+            binding.submitButton.isEnabled = true
         }
     }
+
 
     private fun uriToFile(uri: Uri): File? {
         val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)

@@ -29,4 +29,5 @@
     <string name="please_login_to_use_this_function">Please login to use this function</string>
     <string name="no_image_selected">No image selected</string>
     <string name="image_processor_top_text">Choose or take an image to send for processing.\nSelect train and enter your wagon number.</string>
+    <string name="enter_wagon_number">Enter wagon number.</string>
 </resources>

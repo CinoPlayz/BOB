@@ -6,12 +6,33 @@
     android:layout_height="match_parent"
     tools:context=".ui.imageprocessor.ImageProcessorFragment">
 
+    <!-- Loading ProgressBar (Hidden by default) -->
+    <ProgressBar
+        android:id="@+id/loadingCircle"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_centerInParent="true"
+        android:elevation="10dp"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <!-- Submit Picture Layout -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_submit_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="visible">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineVertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="103dp" />
 
         <!-- Title Text -->
         <TextView
@@ -62,17 +83,47 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/loadImageButton" />
 
-        <!-- Input for Number of Seats -->
-        <EditText
-            android:id="@+id/numSeatsInput"
-            android:layout_width="0dp"
-            android:layout_height="65dp"
-            android:layout_marginTop="16dp"
-            android:hint="Enter Number of Seats"
-            android:inputType="number"
-            app:layout_constraintEnd_toEndOf="parent"
+        <!-- Routes dropdown -->
+        <TextView
+            android:id="@+id/route_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Route"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/routesSpinner"
+            app:layout_constraintEnd_toStartOf="@+id/guidelineVertical"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/routesSpinner" />
+
+        <Spinner
+            android:id="@+id/routesSpinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:layout_constraintStart_toEndOf="@+id/guidelineVertical"
             app:layout_constraintTop_toBottomOf="@id/takePictureButton" />
+
+        <!-- Number of Wagons Dropdown -->
+        <TextView
+            android:id="@+id/wagon_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wagon"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/wagonNumber"
+            app:layout_constraintEnd_toStartOf="@+id/guidelineVertical"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/wagonNumber" />
+
+        <Spinner
+            android:id="@+id/wagonNumber"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:layout_constraintStart_toEndOf="@+id/guidelineVertical"
+            app:layout_constraintTop_toBottomOf="@id/routesSpinner" />
 
         <!-- Submit Button -->
         <Button
@@ -83,7 +134,7 @@
             android:text="@string/submit"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/numSeatsInput" />
+            app:layout_constraintTop_toBottomOf="@id/wagonNumber" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Login Layout -->
@@ -114,6 +165,25 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/alternate_message" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_submit_occupancy"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+
+        <Button
+            android:id="@+id/button_submit_occupancy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/login"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
