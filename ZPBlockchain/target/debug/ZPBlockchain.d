@@ -1,1 +1,0 @@
-C:\Users\Nejc\Documents\Projekti\BOB\ZPBlockchain\target\debug\ZPBlockchain.exe: C:\Users\Nejc\Documents\Projekti\BOB\ZPBlockchain\src\main.rs C:\Users\Nejc\Documents\Projekti\BOB\ZPBlockchain\src\structs\mod.rs C:\Users\Nejc\Documents\Projekti\BOB\ZPBlockchain\src\structs\passengerData.rs
