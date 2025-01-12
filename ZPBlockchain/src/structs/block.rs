@@ -1,11 +1,10 @@
-use base64ct::{Base64, Encoding};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 
 use crate::structs::passengerData::PassengerData;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Block{
     pub index: u32,
     pub data: PassengerData,

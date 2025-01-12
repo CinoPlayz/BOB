@@ -5,10 +5,6 @@ use chrono::Utc;
 
 use crate::structs::{ block::{ Block, BlockWhileMining }, passengerData::PassengerData };
 
-fn getTimeStamp() -> i64 {
-    return Utc::now().timestamp();
-}
-
 fn doesHashHave0(hash: &String, zerosCount: u32) -> bool {
     let mut chars = hash.chars();
 
