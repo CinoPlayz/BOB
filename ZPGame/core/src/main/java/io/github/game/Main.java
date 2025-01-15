@@ -15,16 +15,20 @@ public class Main extends Game {
     private AssetManager assetManager;
     private TestScreen testScreen;
 
+    private Waypoints waypoints;
+
     @Override
     public void create() {
         batch = new SpriteBatch();
         assetManager = new AssetManager();
+        waypoints = new Waypoints();
         setScreen(new TestScreen());
     }
 
     @Override
     public void render() {
         super.render();
+
     }
 
     @Override
