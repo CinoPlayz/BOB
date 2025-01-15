@@ -87,6 +87,19 @@ public class TestScreen implements Screen {
         handleInput();
         camera.update();
 
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+
+            int screenX = Gdx.input.getX();
+            int screenY = Gdx.input.getY();
+
+
+            Vector3 worldCoordinates = camera.unproject(new Vector3(screenX, screenY, 0));
+            System.out.println("Kliknjeno na: " + worldCoordinates.x + ", " + worldCoordinates.y);
+
+            // Tukaj lahko shraniš koordinate kot waypoint
+            // waypoints.add(new Vector3(worldCoordinates.x, worldCoordinates.y, 0)); (po želji)
+        }
+
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
         drawMarkers();
