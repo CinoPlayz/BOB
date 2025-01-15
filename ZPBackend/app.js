@@ -63,6 +63,10 @@ cron.schedule('*/5 * * * *', () => {
 });
 
 
+require('./mqtt/mqttClient');  // Initialize MQTT connection
+require('./mqtt/mqttHandler'); // Handle MQTT messages
+
+
 var indexRouter = require('./routes/index');
 var testRouter = require('./routes/testRoutes');
 const trainLocHistoryRouter = require('./routes/trainLocHistoryRoutes');

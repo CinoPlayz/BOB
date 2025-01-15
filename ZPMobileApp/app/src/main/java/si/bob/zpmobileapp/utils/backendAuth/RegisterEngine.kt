@@ -1,11 +1,28 @@
 package si.bob.zpmobileapp.utils.backendAuth
 
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
+import org.eclipse.paho.client.mqttv3.MqttCallback
+import org.eclipse.paho.client.mqttv3.MqttClient
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttException
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import si.bob.zpmobileapp.MyApp
-import java.net.HttpURLConnection
-import java.net.URL
+
+private val json = Json { ignoreUnknownKeys = true }
+
+@Serializable
+data class RegisterResponse(
+    val success: Boolean,
+    val message: String? = null,
+)
 
 suspend fun registerUser(
     app: MyApp,
@@ -15,51 +32,78 @@ suspend fun registerUser(
     onSuccess: () -> Unit,
     onFailure: (String) -> Unit
 ) {
-    val baseUrl = app.sharedPrefs.getString(MyApp.BACKEND_URL_KEY, null)
+    try {
+        withContext(Dispatchers.IO) {
+            val mqttClient = MqttClient("tcp://broker.hivemq.com:1883", MqttClient.generateClientId(), null)
 
-    if (baseUrl.isNullOrEmpty()) {
-        onFailure("Backend URL not configured.")
-        return
-    }
+            val options = MqttConnectOptions()
+            options.isCleanSession = true
 
-    val registerUrl = "$baseUrl/users"
-
-    withContext(Dispatchers.IO) {
-        try {
-            val url = URL(registerUrl)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.doOutput = true
-
-            // Prepare JSON body
-            val requestBody = JSONObject().apply {
-                put("email", email)
-                put("username", username)
-                put("password", password)
-            }
-
-            // Write request body
-            connection.outputStream.use { outputStream ->
-                outputStream.write(requestBody.toString().toByteArray())
-            }
-
-            // Check response code
-            if (connection.responseCode == HttpURLConnection.HTTP_CREATED) {
-                withContext(Dispatchers.Main) {
-                    onSuccess()
+            try {
+                mqttClient.connect(options)
+                Log.d("MQTT", "Connected successfully")
+            } catch (e: MqttException) {
+                Log.e("MQTT", "Connection failed: ${e.message}")
+                Handler(Looper.getMainLooper()).post {
+                    onFailure("Failed to connect to MQTT broker")
                 }
-            } else {
-                val errorStream = connection.errorStream
-                val errorMessage = errorStream?.bufferedReader()?.readText() ?: "Unknown error occurred"
-                withContext(Dispatchers.Main) {
-                    onFailure(errorMessage)
+                return@withContext
+            }
+
+            val registerData = mapOf(
+                "email" to email,
+                "username" to username,
+                "password" to password
+            )
+            val body = json.encodeToString(registerData)
+
+            mqttClient.publish("app/register/request", MqttMessage(body.toByteArray()))
+
+            val subscribeTopic = "app/register/response/$username"
+            mqttClient.subscribe(subscribeTopic)
+
+            mqttClient.setCallback(object : MqttCallback {
+                override fun connectionLost(cause: Throwable?) {
+                    Handler(Looper.getMainLooper()).post {
+                        onFailure("Connection to server lost: ${cause?.message}")
+                    }
                 }
-            }
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                onFailure("Error: ${e.message}")
-            }
+
+                override fun messageArrived(topic: String?, message: MqttMessage?) {
+                    val responseBody = message?.toString()
+                    Log.d("MQTT", "Message received on topic: $topic, message: $responseBody")
+
+                    try {
+                        val response = responseBody?.let { json.decodeFromString<RegisterResponse>(it) }
+
+                        Handler(Looper.getMainLooper()).post {
+                            if (response?.success == true) {
+                                onSuccess()
+                            } else {
+                                val errorMessage = response?.message ?: "Unknown error occurred"
+                                onFailure(errorMessage)
+                            }
+                            mqttClient.disconnect()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MQTT", "Error parsing response: ${e.message}")
+                        Handler(Looper.getMainLooper()).post {
+                            onFailure("Error parsing server response")
+                        }
+                        mqttClient.disconnect()
+                    }
+                }
+
+                override fun deliveryComplete(token: IMqttDeliveryToken?) {
+                    // No action needed here
+                }
+            })
         }
+    } catch (e: Exception) {
+        Handler(Looper.getMainLooper()).post {
+            onFailure("An unexpected error occurred: ${e.message}")
+        }
+        Log.e("RegisterUser", "Exception: ${e.message}", e)
     }
 }
+
