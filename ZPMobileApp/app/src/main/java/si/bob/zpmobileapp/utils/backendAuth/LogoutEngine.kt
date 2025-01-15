@@ -1,12 +1,15 @@
 package si.bob.zpmobileapp.utils.backendAuth
 
 import android.util.Log
-import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.fuel.core.Headers
-import com.github.kittinunf.result.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.eclipse.paho.client.mqttv3.MqttClient
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import si.bob.zpmobileapp.MyApp
+
+private val json = Json { ignoreUnknownKeys = true }
 
 suspend fun logoutUserBackend(context: MyApp) {
     withContext(Dispatchers.IO) {
@@ -17,55 +20,57 @@ suspend fun logoutUserBackend(context: MyApp) {
             val token = prefs.getString(MyApp.TOKEN_KEY, "") ?: ""
             val username = prefs.getString(MyApp.USERNAME_KEY, "") ?: ""
 
+            prefs.edit().apply {
+                remove(MyApp.TOKEN_KEY)
+                remove(MyApp.USERNAME_KEY)
+                apply()
+            }
+
             if (token.isEmpty()) {
                 Log.e("LogoutUser", "No token found. User is already logged out.")
                 return@withContext
             }
 
-            // Construct the logout URL
-            val url = "${prefs.getString(MyApp.BACKEND_URL_KEY, "")}/users/token"
+            // Connect to the MQTT broker
+            val mqttClient = MqttClient("tcp://broker.hivemq.com:1883", MqttClient.generateClientId(), null)
+            mqttClient.connect()
 
-            // Make the DELETE request
-            val (_, response, result) = Fuel.delete(url)
-                .header("Accept-Language", "en")
-                .header(
-                    "User-Agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
-                )
-                .header(Headers.AUTHORIZATION, "Bearer $token")
-                .header(Headers.CONTENT_TYPE, "application/json")
-                .responseString()
+            // Prepare the logout data
+            val logoutData = mapOf("username" to username, "token" to token)
 
-            when (result) {
-                is Result.Failure -> {
-                    Log.e("LogoutUser", "Logout failed: ${result.getException().message}")
-                    // Clear the token and username from SharedPreferences even if the logout request fails
-                    prefs.edit().apply {
-                        remove(MyApp.TOKEN_KEY)
-                        remove(MyApp.USERNAME_KEY)
-                        apply()
-                    }
+            // Convert the data to JSON string
+            val body = json.encodeToString(logoutData)
+
+            // Publish the logout message to the MQTT topic
+            mqttClient.publish("app/logout/request", MqttMessage(body.toByteArray()))
+
+            // Subscribe to the response topic to know when the logout is complete
+            mqttClient.subscribe("app/logout/response/$username") { message, exception ->
+                if (exception != null) {
+                    Log.e("MQTT", "Error subscribing: $exception")
+                    return@subscribe
                 }
 
-                is Result.Success -> {
-                    Log.i("LogoutUser", "Logout successful: ${response.statusCode}")
+                // Handle the response message
+                val response = message.toString()
+                if (response.contains("success")) {
+                    Log.i("LogoutUser", "Logout successful via MQTT")
+
                     // Clear the token and username from SharedPreferences upon success
                     prefs.edit().apply {
                         remove(MyApp.TOKEN_KEY)
                         remove(MyApp.USERNAME_KEY)
                         apply()
                     }
+                } else {
+                    Log.e("LogoutUser", "Logout failed via MQTT: $response")
                 }
+
+                mqttClient.disconnect()
             }
+
         } catch (e: Exception) {
             Log.e("LogoutUser", "An error occurred during logout: ${e.message}")
-            // Ensure SharedPreferences are cleared in case of any exception
-            val prefs = context.sharedPrefs
-            prefs.edit().apply {
-                remove(MyApp.TOKEN_KEY)
-                remove(MyApp.USERNAME_KEY)
-                apply()
-            }
         }
     }
 }

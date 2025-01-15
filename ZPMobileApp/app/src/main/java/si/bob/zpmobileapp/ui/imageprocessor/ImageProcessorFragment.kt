@@ -6,6 +6,7 @@ import android.icu.text.SimpleDateFormat
 import android.location.Location
 import android.net.Uri
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -35,6 +36,11 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
+import org.eclipse.paho.client.mqttv3.MqttCallback
+import org.eclipse.paho.client.mqttv3.MqttClient
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -269,115 +275,93 @@ class ImageProcessorFragment : Fragment() {
     private fun sendImageToServer() {
         toggleLoading(true)
         binding.submitButton.isEnabled = false
+
         try {
             val imageFile = photoUri?.let { uriToFile(it) } ?: return
-            val baseUrl = app.sharedPrefs.getString(MyApp.BACKEND_URL_KEY, null)
             val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
-            //val trainType = this.trainType ?: return
+            val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null) ?: return
             val wagonNumber = binding.wagonNumber.selectedItem?.toString()?.substringBefore(".")?.toIntOrNull() ?: return
+            // val trainType = binding.trainType.selectedItem?.toString() ?: return
 
-            val client = OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build()
+            // Convert image to Base64
+            val imageBase64 = Base64.encodeToString(imageFile.readBytes(), Base64.DEFAULT)
 
-            val requestBody = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart(
-                    "image",
-                    imageFile.name,
-                    imageFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                )
-                .build()
+            val mqttClient = MqttClient("tcp://broker.hivemq.com:1883", MqttClient.generateClientId(), null)
+            val options = MqttConnectOptions().apply {
+                isCleanSession = true
+            }
 
-            val passengerCountRequest = Request.Builder()
-                .url("$baseUrl/passengers/countPassengers")
-                .addHeader("Authorization", "Bearer $token")
-                .post(requestBody)
-                .build()
+            mqttClient.connect(options)
 
-            client.newCall(passengerCountRequest).enqueue(
-                object : Callback {
-                    override fun onFailure(call: okhttp3.Call, e: IOException) {
-                        requireActivity().runOnUiThread {
-                            Toast.makeText(requireContext(), "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                            Log.e("ImageProcessor", "Passenger count request failed", e)
-                        }
+            val requestPayload = JSONObject().apply {
+                put("token", token)
+                put("username", username)
+                put("imageBase64", imageBase64)
+                put("trainType", trainType)
+                put("wagonNumber", wagonNumber)
+            }
+
+            val requestTopic = "app/passengers/count/request"
+            val responseTopic = "app/passengers/count/response/$username"
+
+            // Subscribe to the response topic
+            mqttClient.subscribe(responseTopic)
+
+            // Publish image to the server
+            mqttClient.publish(requestTopic, MqttMessage(requestPayload.toString().toByteArray()))
+
+            // Handle server response
+            mqttClient.setCallback(object : MqttCallback {
+                override fun connectionLost(cause: Throwable?) {
+                    requireActivity().runOnUiThread {
+                        //Toast.makeText(requireContext(), "MQTT connection lost: ${cause?.message}", Toast.LENGTH_SHORT).show()
+                        toggleLoading(false)
+                        binding.submitButton.isEnabled = true
                     }
-
-                    override fun onResponse(call: okhttp3.Call, response: Response) {
-                        if (!response.isSuccessful) {
-                            requireActivity().runOnUiThread {
-                                Toast.makeText(requireContext(), "Failed: ${response.message}", Toast.LENGTH_SHORT).show()
-                            }
-                            return
-                        }
-
-                        val detectPeopleResponse = response.body?.string()
-                        numOfPeople = try {
-                            val json = JSONObject(detectPeopleResponse ?: "{}")
-                            json.optInt("numOfPeople", -1).takeIf { it != -1 }
-                        } catch (e: JSONException) {
-                            Log.e("ImageProcessor", "Error parsing passenger count response", e)
-                            null
-                        }
-                        requireActivity().runOnUiThread {
-                            //Toast.makeText(requireContext(), "Passenger count success: $numOfPeople", Toast.LENGTH_SHORT).show()
-                        }
-
-                        // Proceed with the second request
-                        val wagonRequest = Request.Builder()
-                            .url("$baseUrl/passengers/seats/$trainType/$wagonNumber")
-                            .addHeader("Authorization", "Bearer $token")
-                            .get()
-                            .build()
-
-                        client.newCall(wagonRequest).enqueue(object : Callback {
-                            override fun onFailure(call: okhttp3.Call, e: IOException) {
-                                requireActivity().runOnUiThread {
-                                    Toast.makeText(requireContext(), "Wagon request failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                                    Log.e("ImageProcessor", "Wagon request failed", e)
-                                }
-                            }
-
-                            override fun onResponse(call: okhttp3.Call, response: Response) {
-                                if (!response.isSuccessful) {
-                                    requireActivity().runOnUiThread {
-                                        Toast.makeText(requireContext(), "Failed to fetch wagon: ${response.message}", Toast.LENGTH_SHORT).show()
-                                    }
-                                    toggleLoading(false)
-                                    binding.submitButton.isEnabled = true
-                                    return
-                                }
-
-                                val wagonResponse = response.body?.string()
-                                numOfSeats = try {
-                                    val jsonArray = JSONArray(wagonResponse ?: "[]")
-                                    val jsonObject = jsonArray.optJSONObject(0) // Get the first object from the array
-                                    jsonObject?.optInt("countOfSeats", -1)?.takeIf { it != -1 }
-                                } catch (e: JSONException) {
-                                    Log.e("ImageProcessor", "Error parsing seats count response", e)
-                                    null
-                                }
-                                requireActivity().runOnUiThread {
-                                    //Toast.makeText(requireContext(), "Success: Passenger Count: $numOfPeople, Seat Count: $numOfSeats", Toast.LENGTH_LONG).show()
-                                    showOccupancyData()
-                                    toggleLoading(false)
-                                    binding.submitButton.isEnabled = true
-                                }
-                            }
-                        })
-                    }
-
                 }
-            )
+
+                override fun messageArrived(topic: String?, message: MqttMessage?) {
+                    if (topic == responseTopic) {
+                        val response = message?.toString()
+                        val jsonResponse = JSONObject(response ?: "{}")
+                        val success = jsonResponse.optBoolean("success", false)
+
+                        requireActivity().runOnUiThread {
+                            if (success) {
+                                numOfPeople = jsonResponse.optInt("numOfPeople", -1)
+                                numOfSeats = jsonResponse.optInt("numOfSeats", -1)
+
+                                // Toast.makeText(requireContext(), "Passengers detected: $numOfPeople, Seats available: $numOfSeats", Toast.LENGTH_SHORT).show()
+                            } else {
+                                val errorMessage = jsonResponse.optString("message", "Unknown error")
+                                Toast.makeText(requireContext(), "Failed: $errorMessage", Toast.LENGTH_SHORT).show()
+                            }
+
+                            // Show results and reset UI
+                            showOccupancyData()
+                            toggleLoading(false)
+                            binding.submitButton.isEnabled = true
+                        }
+
+                        mqttClient.disconnect()
+                    }
+                }
+
+                override fun deliveryComplete(token: IMqttDeliveryToken?) {
+                    // Optional: Handle delivery confirmation
+                }
+            })
+
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            requireActivity().runOnUiThread {
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                toggleLoading(false)
+                binding.submitButton.isEnabled = true
+            }
             Log.e("ImageProcessor", "Error", e)
-            toggleLoading(false)
-            binding.submitButton.isEnabled = true
         }
     }
+
 
     private fun showOccupancyData() {
         if (numOfPeople != null || numOfSeats != null) {
@@ -419,7 +403,7 @@ class ImageProcessorFragment : Fragment() {
                 return@addOnSuccessListener
             }
 
-            // Prepare data for POST request
+            // Prepare data for MQTT request
             val realOccupancyRate = binding.percentageSpinner.selectedItem.toString().removeSuffix("%").toFloat()
             val timeOfRequest = DateTimeFormatter.ISO_INSTANT.format(java.time.Instant.now())
             val jsonBody = JSONObject().apply {
@@ -433,37 +417,67 @@ class ImageProcessorFragment : Fragment() {
                 put("route", routeId)
             }
 
-            // Create and send POST request
-            val baseUrl = app.sharedPrefs.getString(MyApp.BACKEND_URL_KEY, null)
+            // Get token and set up MQTT client
             val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
-            val client = OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build()
-            val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaTypeOrNull())
-            val request = Request.Builder()
-                .url("$baseUrl/passengers")
-                .addHeader("Authorization", "Bearer $token")
-                .post(requestBody)
-                .build()
+            val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null)
+            val mqttClient = MqttClient("tcp://broker.hivemq.com:1883", MqttClient.generateClientId(), null)
+            val options = MqttConnectOptions().apply {
+                isCleanSession = true
+            }
 
-            client.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
+            mqttClient.connect(options)
+
+            // Prepare MQTT request
+            val requestPayload = JSONObject().apply {
+                put("token", token)
+                put("username", username)
+                put("timeOfRequest", timeOfRequest)
+                put("coordinatesOfRequest", jsonBody.getJSONObject("coordinatesOfRequest"))
+                put("guessedOccupancyRate", guessedOccupancyRate)
+                put("realOccupancyRate", realOccupancyRate)
+                put("route", routeId)
+            }
+
+            val requestTopic = "app/passengers/create/request"
+            val responseTopic = "app/passengers/create/response/$username"
+
+            // Subscribe to the response topic
+            mqttClient.subscribe(responseTopic)
+
+            // Publish to the request topic
+            mqttClient.publish(requestTopic, MqttMessage(requestPayload.toString().toByteArray()))
+
+            // Handle server response
+            mqttClient.setCallback(object : MqttCallback {
+                override fun connectionLost(cause: Throwable?) {
                     requireActivity().runOnUiThread {
-                        Toast.makeText(context, "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                        Log.e("OccupancySubmit", "Error sending occupancy data", e)
+                        //Toast.makeText(requireContext(), "MQTT connection lost: ${cause?.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
 
-                override fun onResponse(call: Call, response: Response) {
-                    requireActivity().runOnUiThread {
-                        if (response.isSuccessful) {
-                            Toast.makeText(context, "Occupancy submitted successfully", Toast.LENGTH_SHORT).show()
-                            reset()
-                        } else {
-                            Toast.makeText(context, "Submission failed: ${response.message}", Toast.LENGTH_SHORT).show()
+                override fun messageArrived(topic: String?, message: MqttMessage?) {
+                    Log.d("MQTT", "Message arrived on topic: $topic")
+                    if (topic == responseTopic) {
+                        val response = message?.toString()
+                        val jsonResponse = JSONObject(response ?: "{}")
+                        val success = jsonResponse.optBoolean("success", false)
+
+                        requireActivity().runOnUiThread {
+                            if (success) {
+                                Toast.makeText(requireContext(), "Occupancy submitted successfully", Toast.LENGTH_SHORT).show()
+                                reset()
+                            } else {
+                                val errorMessage = jsonResponse.optString("message", "Unknown error")
+                                Toast.makeText(requireContext(), "Failed: $errorMessage", Toast.LENGTH_SHORT).show()
+                            }
                         }
+
+                        mqttClient.disconnect()
                     }
+                }
+
+                override fun deliveryComplete(token: IMqttDeliveryToken?) {
+                    // Optional: Handle delivery confirmation
                 }
             })
         }.addOnFailureListener { e ->
@@ -471,6 +485,7 @@ class ImageProcessorFragment : Fragment() {
             Log.e("OccupancySubmit", "Error getting location", e)
         }
     }
+
 
     private fun uriToFile(uri: Uri): File? {
         val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
