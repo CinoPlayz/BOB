@@ -22,6 +22,9 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+
+import io.github.game.Waypoints;
 import io.github.game.utils.Constants;
 import io.github.game.utils.Geolocation;
 import io.github.game.utils.MapRasterTiles;
@@ -36,6 +39,8 @@ public class TestScreen implements Screen {
 
     private ShapeRenderer shapeRenderer;
     private OrthographicCamera camera;
+
+    private FitViewport viewport;
     private TiledMap tiledMap;
     private TiledMapRenderer tiledMapRenderer;
     private Texture[] mapTiles;
@@ -43,10 +48,22 @@ public class TestScreen implements Screen {
     private final Geolocation CENTER_GEOLOCATION = new Geolocation(46.55, 14.96);
     private final Geolocation MARKER_GEOLOCATION = new Geolocation(46.559070, 15.638100);
 
+
+    private Waypoints waypoints;
+
+    public TestScreen(FitViewport viewport, OrthographicCamera camera) {
+        this.viewport = viewport;
+        this.camera = camera;
+        shapeRenderer = new ShapeRenderer();
+        waypoints = new Waypoints(shapeRenderer);
+    }
+
+
     @Override
     public void show() {
-        // Inicializacija ob prikazu zaslona
+
         shapeRenderer = new ShapeRenderer();
+        waypoints = new Waypoints(shapeRenderer);
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Constants.MAP_WIDTH, Constants.MAP_HEIGHT);
@@ -85,7 +102,9 @@ public class TestScreen implements Screen {
     public void render(float delta) {
         ScreenUtils.clear(0, 0, 0, 1);
         handleInput();
+        viewport.apply();
         camera.update();
+
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
 
@@ -96,13 +115,17 @@ public class TestScreen implements Screen {
             Vector3 worldCoordinates = camera.unproject(new Vector3(screenX, screenY, 0));
             System.out.println("Kliknjeno na: " + worldCoordinates.x + ", " + worldCoordinates.y);
 
-            // Tukaj lahko shraniš koordinate kot waypoint
-            // waypoints.add(new Vector3(worldCoordinates.x, worldCoordinates.y, 0)); (po želji)
-        }
+             }
+//        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+//            int screenX = Gdx.input.getX();
+//            int screenY = Gdx.graphics.getHeight() - Gdx.input.getY();
+//            System.out.println("Kliknjeno na zaslon: " + screenX + ", " + screenY);
+//        }
 
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
         drawMarkers();
+        waypoints.drawPath(camera);
     }
 
     private void drawMarkers() {
@@ -139,22 +162,22 @@ public class TestScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        // Po potrebi prilagodi kamero
+        viewport.update(width, height);
     }
 
     @Override
     public void pause() {
-        // Po potrebi
+
     }
 
     @Override
     public void resume() {
-        // Po potrebi
+
     }
 
     @Override
     public void hide() {
-        // Po potrebi
+
     }
 
     @Override
