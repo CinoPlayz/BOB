@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         // Passing each menu ID as a set of Ids because each menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home,
+                R.id.navigation_map,
                 R.id.navigation_imageprocessor,
                 R.id.navigation_dashboard,
                 R.id.navigation_profile
@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        window.statusBarColor = getColorFromAttr(androidx.appcompat.R.attr.colorPrimary)
+        window.statusBarColor = getColorFromAttr(androidx.appcompat.R.attr.background)
     }
 
     private fun getColorFromAttr(attr: Int): Int {

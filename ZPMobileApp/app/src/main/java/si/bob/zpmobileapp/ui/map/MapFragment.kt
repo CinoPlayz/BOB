@@ -1,4 +1,4 @@
-package si.bob.zpmobileapp.ui.home
+package si.bob.zpmobileapp.ui.map
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import si.bob.zpmobileapp.databinding.FragmentHomeBinding
+import si.bob.zpmobileapp.databinding.FragmentMapBinding
 
-class HomeFragment : Fragment() {
+class MapFragment : Fragment() {
 
-    private var _binding: FragmentHomeBinding? = null
+    private var _binding: FragmentMapBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -22,14 +22,14 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
+        val mapViewModel =
+            ViewModelProvider(this)[MapViewModel::class.java]
 
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        _binding = FragmentMapBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val textView: TextView = binding.textHome
-        homeViewModel.text.observe(viewLifecycleOwner) {
+        mapViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
         return root
