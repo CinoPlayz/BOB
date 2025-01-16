@@ -34,7 +34,7 @@ suspend fun registerUser(
 ) {
     try {
         withContext(Dispatchers.IO) {
-            val mqttClient = MqttClient("tcp://broker.hivemq.com:1883", MqttClient.generateClientId(), null)
+            val mqttClient = MqttClient("tcp://10.11.12.100:1883", MqttClient.generateClientId(), null)
 
             val options = MqttConnectOptions()
             options.isCleanSession = true

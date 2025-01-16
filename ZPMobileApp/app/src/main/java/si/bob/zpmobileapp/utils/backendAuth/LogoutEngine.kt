@@ -32,7 +32,7 @@ suspend fun logoutUserBackend(context: MyApp) {
             }
 
             // Connect to the MQTT broker
-            val mqttClient = MqttClient("tcp://broker.hivemq.com:1883", MqttClient.generateClientId(), null)
+            val mqttClient = MqttClient("tcp://10.11.12.100:1883", MqttClient.generateClientId(), null)
             mqttClient.connect()
 
             // Prepare the logout data

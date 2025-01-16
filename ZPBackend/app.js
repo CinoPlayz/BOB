@@ -5,6 +5,13 @@ var mongoose = require('mongoose');
 var cors = require('cors');
 const cron = require('node-cron');
 const { exec } = require('child_process');
+const aedes = require('aedes')();
+const server = require('net').createServer(aedes.handle);
+const PORT = 1883;
+
+server.listen(PORT, function () {
+    console.log(`Aedes MQTT broker started on port ${PORT}`);
+});
 
 //Reading mongoDB URI from args or env variable
 var args = process.argv.slice(2);
