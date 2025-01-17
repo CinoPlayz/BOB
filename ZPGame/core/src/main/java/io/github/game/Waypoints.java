@@ -14,40 +14,40 @@ public class Waypoints {
     private com.badlogic.gdx.utils.Array<Vector2> pathLjubljanaNovomesto;
     private ShapeRenderer shapeRenderer;
 
-    private Array<Junction> junctions;
+    //private Array<Junction> junctions;
 
 
 
     public Waypoints(ShapeRenderer shapeRenderer) {
         this.shapeRenderer = shapeRenderer;
-        junctions = new Array<>();
+        //junctions = new Array<>();
         initializePathJeseniceLjubljana();
         initializePathLjubljanaKoper();
         initializePathLjubljanaNovomesto();
-        initializeJunctions();
+        //initializeJunctions();
     }
-    private void initializeJunctions() {
+//    private void initializeJunctions() {
+//
+//        Junction ljubljanaJunction = new Junction(
+//            new Vector2(798.3568f, 991.8973f),
+//            pathLjubljanaKoper,                 // leva pot
+//            pathLjubljanaNovomesto             // desna pot
+//        );
+//
+//
+//        junctions.add(ljubljanaJunction);
+//
+//
+//    }
 
-        Junction ljubljanaJunction = new Junction(
-            new Vector2(798.3568f, 991.8973f),
-            pathLjubljanaKoper,                 // leva pot
-            pathLjubljanaNovomesto             // desna pot
-        );
-
-
-        junctions.add(ljubljanaJunction);
-
-
-    }
-
-    public Junction getJunctionNearPoint(Vector2 point, float threshold) {
-        for (Junction junction : junctions) {
-            if (junction.getPosition().dst(point) < threshold) {
-                return junction;
-            }
-        }
-        return null;
-    }
+//    public Junction getJunctionNearPoint(Vector2 point, float threshold) {
+//        for (Junction junction : junctions) {
+//            if (junction.getPosition().dst(point) < threshold) {
+//                return junction;
+//            }
+//        }
+//        return null;
+//    }
 
     private void initializePathJeseniceLjubljana() {
         pathJeseniceLjubljana = new com.badlogic.gdx.utils.Array<>();

@@ -19,7 +19,7 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
 
     private boolean isAtJunction = false;
 
-    private Junction currentJunction = null;
+    //private Junction currentJunction = null;
 
     public Train() {
         super(0, 0, 0, 0, 0);
@@ -41,15 +41,15 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
 
         float distance = Vector2.dst(position.x, position.y, targetPoint.x, targetPoint.y);
 
-        if (currentWaypoint == path.size - 1 && distance < 5f) {
-
-            Junction nearJunction = waypoints.getJunctionNearPoint(position, 5f);
-            if (nearJunction != null) {
-                currentJunction = nearJunction;
-                System.out.println("Prišli na križišče");
-                return;
-            }
-        }
+//        if (currentWaypoint == path.size - 1 && distance < 5f) {
+//
+//            Junction nearJunction = waypoints.getJunctionNearPoint(position, 5f);
+//            if (nearJunction != null) {
+//                //currentJunction = nearJunction;
+//                System.out.println("Prišli na križišče");
+//                return;
+//            }
+//        }
 
 
         float threshold = 5f;
