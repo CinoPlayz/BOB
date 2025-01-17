@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.input.GestureDetector;
@@ -21,10 +22,15 @@ import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.Pools;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
+import io.github.game.Train;
 import io.github.game.Waypoints;
+import io.github.game.assets.RegionNames;
 import io.github.game.utils.Constants;
 import io.github.game.utils.Geolocation;
 import io.github.game.utils.MapRasterTiles;
@@ -50,14 +56,72 @@ public class TestScreen implements Screen {
 
 
     private Waypoints waypoints;
+    private TextureAtlas gameplayAtlas;
 
-    public TestScreen(FitViewport viewport, OrthographicCamera camera) {
+    private Array<Train> trainArray;
+    Pool<Train> trainPool = Pools.get(Train.class, 10);
+
+    private SpriteBatch batch;
+
+    public TestScreen( FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, SpriteBatch batch) {
         this.viewport = viewport;
         this.camera = camera;
+        this.batch = batch;
         shapeRenderer = new ShapeRenderer();
         waypoints = new Waypoints(shapeRenderer);
+
+
+        trainArray = new Array<>();
+        trainPool.fill(2);
+        this.gameplayAtlas = gameplayAtlas;
+
+
+        spawnTrain();
     }
 
+    private void spawnTrain() {
+        Train newTrain = trainPool.obtain();
+         newTrain.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
+         newTrain.path = waypoints.getPathJeseniceLjubljana();
+        if (newTrain.texture != null) {
+            newTrain.bounds.width = newTrain.texture.getRegionWidth()/13f;
+            newTrain.bounds.height = newTrain.texture.getRegionHeight()/13f;
+        } else {
+            System.err.println("Error: Train texture not found!");
+        }
+        newTrain.position.x = waypoints.getPathJeseniceLjubljana().first().x;
+        newTrain.position.y = waypoints.getPathJeseniceLjubljana().first().y;
+        System.out.println("Path first " + waypoints.getPathJeseniceLjubljana().first().x + " " + waypoints.getPathJeseniceLjubljana().first().y);
+        newTrain.speed = 50f;
+        trainArray.add(newTrain);
+    }
+
+    private boolean isClickNearTrain(Train train, int screenX, int screenY) {
+
+        Vector3 clickWorldCoords = viewport.unproject(new Vector3(screenX, screenY, 0));
+
+
+        float trainCenterX = train.position.x + train.bounds.width/2;
+        float trainCenterY = train.position.y + train.bounds.height/2;
+
+
+        float distance = Vector2.dst(clickWorldCoords.x, clickWorldCoords.y, trainCenterX, trainCenterY);
+
+
+        float clickRadius = train.bounds.width;
+
+
+        System.out.println("==== Click Debug ====");
+        System.out.println("Screen click: " + screenX + ", " + screenY);
+        System.out.println("World click coords: " + clickWorldCoords.x + ", " + clickWorldCoords.y);
+        System.out.println("Train center: " + trainCenterX + ", " + trainCenterY);
+        System.out.println("Distance in world: " + distance);
+        System.out.println("Click radius: " + clickRadius);
+        System.out.println("Camera zoom: " + camera.zoom);
+        System.out.println("Is clicked: " + (distance < clickRadius));
+
+        return distance < clickRadius;
+    }
 
     @Override
     public void show() {
@@ -113,19 +177,71 @@ public class TestScreen implements Screen {
 
 
             Vector3 worldCoordinates = camera.unproject(new Vector3(screenX, screenY, 0));
-            System.out.println("Kliknjeno na: " + worldCoordinates.x + ", " + worldCoordinates.y);
-
+            float correctedX = worldCoordinates.x - 115.5371f;
+            float correctedY = worldCoordinates.y - 2.0992f;
+           // System.out.println("Kliknjeno na: " + correctedX + ", " + correctedY);
+//            waypoints.addWaypoint(new Vector2(worldCoordinates.x, worldCoordinates.y));
+//            System.out.println("Dodano: " + worldCoordinates.x + ", " + worldCoordinates.y);
+//
+//            System.out.println("Screen coordinates: " + screenX + ", " + screenY);
+//            System.out.println("World coordinates: " + worldCoordinates.x + ", " + worldCoordinates.y);
+//            System.out.println("Camera position: " + camera.position);
+//            System.out.println("Viewport: " + viewport.getWorldWidth() + "x" + viewport.getWorldHeight());
              }
+
 //        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-//            int screenX = Gdx.input.getX();
-//            int screenY = Gdx.graphics.getHeight() - Gdx.input.getY();
-//            System.out.println("Kliknjeno na zaslon: " + screenX + ", " + screenY);
+//            com.badlogic.gdx.math.Vector3 worldCoords = viewport.unproject(
+//                new com.badlogic.gdx.math.Vector3(
+//                    Gdx.input.getX(),
+//                    Gdx.input.getY(),
+//                    0
+//                )
+//            );
+//            System.out.println(String.format(
+//                "Point: (x: %.2f, y: %.2f)",
+//                worldCoords.x,
+//                worldCoords.y
+//            ));
 //        }
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            int screenX = Gdx.input.getX();
+            int screenY = Gdx.input.getY();
+
+            for (Train train : trainArray) {
+                if (isClickNearTrain(train, screenX, screenY)) {
+                    System.out.println("Klik na vlak!");
+
+                }
+            }
+        }
+
+
+        for (Train train : trainArray) {
+            train.update(delta, waypoints);
+        }
 
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
         drawMarkers();
         waypoints.drawPath(camera);
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        for (Train train : trainArray) {
+            train.draw(batch);
+        }
+        batch.end();
+
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(Color.YELLOW);
+        for (Train train : trainArray) {
+            float centerX = train.position.x + train.bounds.width/2;
+            float centerY = train.position.y + train.bounds.height/2;
+            Vector3 screenPos = camera.project(new Vector3(centerX, centerY, 0));
+            shapeRenderer.circle(centerX, centerY, train.bounds.width);
+        }
+        shapeRenderer.end();
     }
 
     private void drawMarkers() {
@@ -162,7 +278,7 @@ public class TestScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height);
+       viewport.update(width, height);
     }
 
     @Override

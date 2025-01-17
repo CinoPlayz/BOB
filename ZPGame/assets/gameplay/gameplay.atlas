@@ -1,0 +1,13 @@
+
+gameplay.png
+size: 2048, 512
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+train
+  rotate: false
+  xy: 2, 2
+  size: 1034, 308
+  orig: 1034, 308
+  offset: 0, 0
+  index: -1
