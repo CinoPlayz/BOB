@@ -50,12 +50,13 @@ android {
 }
 
 dependencies {
+    implementation("org.osmdroid:osmdroid-android:6.1.8")
     implementation(libs.org.eclipse.paho.client.mqttv3)
     implementation(libs.org.eclipse.paho.android.service)
     implementation(libs.fuel)
     implementation(libs.fuel.coroutines)
     implementation(libs.dotenv.kotlin)
-    implementation (libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -66,6 +67,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.preference.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

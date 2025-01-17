@@ -6,6 +6,8 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const PassengersModel = require('../models/PassengersModel.js');
 const SeatsModel = require('../models/seatsModel.js');
+const TrainLocHistory = require('../models/trainLocHistoryModel.js');
+const RouteModel = require('../models/routeModel.js');
 
 // Handle Incoming MQTT Messages for Login
 client.on('message', async (topic, message) => {
@@ -13,7 +15,7 @@ client.on('message', async (topic, message) => {
 
     if (topic === 'app/login/request') {
         const { username, password } = JSON.parse(message.toString());
-        
+
         try {
             const user = await UserModel.authenticate(username, password);
 
@@ -208,7 +210,7 @@ client.on('message', async (topic, message) => {
     if (topic === 'app/passengers/count/request') {
         try {
             const { token, username, imageBase64, trainType, wagonNumber } = JSON.parse(message.toString());
-    
+
             // Check for missing fields
             if (!token || !username || !imageBase64 || !trainType || !wagonNumber) {
                 return client.publish(`app/passengers/count/response/${username || 'unknown'}`, JSON.stringify({
@@ -216,7 +218,7 @@ client.on('message', async (topic, message) => {
                     message: "Missing required fields"
                 }));
             }
-    
+
             // Authenticate user token
             const user = await UserModel.findOne({ "tokens.token": token });
             if (!user) {
@@ -225,7 +227,7 @@ client.on('message', async (topic, message) => {
                     message: "Unauthorized access"
                 }));
             }
-    
+
             // Retrieve the number of seats for the given train type and wagon number
             const seatData = await SeatsModel.findOne({ type: trainType, wagonNumber: wagonNumber });
             if (!seatData) {
@@ -234,19 +236,19 @@ client.on('message', async (topic, message) => {
                     message: "Seat data not found"
                 }));
             }
-    
+
             const numOfSeats = seatData.countOfSeats;
-    
+
             // Save image temporarily
             const imageBuffer = Buffer.from(imageBase64, 'base64');
             const imagePath = `uploads/${username}_${Date.now()}.jpg`;
             fs.writeFileSync(imagePath, imageBuffer);
-    
+
             // Process image with Python script
             exec(`conda run -n PRO python ../ZPOccupancyDetection/image_processing.py count ${imagePath}`, (error, stdout, stderr) => {
                 // Clean up temp image
                 fs.unlinkSync(imagePath);
-    
+
                 if (error) {
                     console.error(`Error executing script: ${stderr}`);
                     return client.publish(`app/passengers/count/response/${username}`, JSON.stringify({
@@ -254,9 +256,9 @@ client.on('message', async (topic, message) => {
                         message: "Error during image processing"
                     }));
                 }
-    
+
                 const numOfPeople = parseInt(stdout.trim());
-    
+
                 // Send back result with both passenger count and seat count
                 client.publish(`app/passengers/count/response/${username}`, JSON.stringify({
                     success: true,
@@ -277,7 +279,7 @@ client.on('message', async (topic, message) => {
     if (topic === 'app/passengers/create/request') {
         try {
             const { token, username, timeOfRequest, coordinatesOfRequest, guessedOccupancyRate, realOccupancyRate, route } = JSON.parse(message.toString());
-    
+
             // Check for missing fields
             if (!token || !timeOfRequest || !coordinatesOfRequest || !guessedOccupancyRate || !realOccupancyRate || !route) {
                 console.log("Missing required fields, sending failure response.");
@@ -286,12 +288,12 @@ client.on('message', async (topic, message) => {
                     message: "Missing required fields"
                 }));
             }
-    
+
             // Retrieve user from token
             const user = await UserModel.findOne({
                 "tokens.token": token,
             });
-    
+
             if (!user) {
                 console.log("User not found, sending failure response.");
                 return client.publish(`app/passengers/create/response`, JSON.stringify({
@@ -299,7 +301,7 @@ client.on('message', async (topic, message) => {
                     message: "User not found"
                 }));
             }
-    
+
             // Create new passenger record
             const newPassengers = new PassengersModel({
                 timeOfRequest,
@@ -309,18 +311,18 @@ client.on('message', async (topic, message) => {
                 route,
                 postedByUser: user._id
             });
-    
+
             const savedPassenger = await newPassengers.save();
-    
+
             // Log success before sending the response
             console.log("Passenger created successfully, sending success response.");
-    
+
             // Respond with success
             const responseMessage = JSON.stringify({
                 success: true,
                 passengerId: savedPassenger._id
             });
-    
+
             console.log("Publishing response to topic:", `app/passengers/create/response/${user.username}`);
             client.publish(`app/passengers/create/response/${user.username}`, responseMessage, (err) => {
                 if (err) {
@@ -329,7 +331,7 @@ client.on('message', async (topic, message) => {
                     console.log("Response successfully published.");
                 }
             });
-    
+
         } catch (err) {
             console.error('Error processing passenger creation:', err);
             client.publish(`app/passengers/create/response`, JSON.stringify({
@@ -338,6 +340,76 @@ client.on('message', async (topic, message) => {
             }));
         }
     }
-    
-    
+
+    if (topic === 'app/trains/trainHistoryByDateRange/request') {
+        try {
+            const { startDate, endDate, uuid } = JSON.parse(message.toString());
+
+            if (!startDate || !endDate || !uuid) {
+                console.log("Missing required fields, sending failure response.");
+                return client.publish(`app/trains/trainHistoryByDateRange/response/${uuid}`, JSON.stringify({
+                    success: false,
+                    message: "Missing required date fields"
+                }));
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            // Fetch train history data within the specified date range
+            const trainData = await TrainLocHistory.find({
+                timeOfRequest: {
+                    $gte: start,
+                    $lte: end
+                }
+            });
+
+            let occupancyData = await PassengersModel.find({
+                timeOfRequest: {
+                    $gte: start,
+                    $lte: end
+                }
+            })
+
+            const routes = await RouteModel.find();
+
+            // Map routeId to trainNumber
+            const routeMap = routes.reduce((map, route) => {
+                map[route._id.toString()] = route.trainNumber;
+                return map;
+            }, {});
+
+            // Replace routeId with trainNumber in occupancy data
+            occupancyData = occupancyData.map(passenger => {
+                return {
+                    ...passenger.toObject(),
+                    route: routeMap[passenger.route.toString()] || passenger.route
+                };
+            });
+
+            console.log("Train history and occupancy data fetched successfully, sending response. No. of trainLocHistory: ", trainData.length, "No. of occupancy: ", occupancyData.length);
+
+            const responseMessage = JSON.stringify({
+                success: true,
+                trainHistory: trainData,
+                occupancy: occupancyData
+            });
+
+            console.log("Publishing response to topic:", `app/trains/trainHistoryByDateRange/response/${uuid}`);
+            client.publish(`app/trains/trainHistoryByDateRange/response/${uuid}`, responseMessage, (err) => {
+                if (err) {
+                    console.error("Error publishing response:", err);
+                } else {
+                    console.log("Response successfully published.");
+                }
+            });
+
+        } catch (err) {
+            console.error('Error processing train history request:', err);
+            client.publish(`app/trains/trainHistoryByDateRange/response`, JSON.stringify({
+                success: false,
+                message: "Error when fetching train history"
+            }));
+        }
+    }
 });

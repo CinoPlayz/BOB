@@ -286,7 +286,7 @@ class ImageProcessorFragment : Fragment() {
             // Convert image to Base64
             val imageBase64 = Base64.encodeToString(imageFile.readBytes(), Base64.DEFAULT)
 
-            val mqttClient = MqttClient("tcp://10.11.12.100:1883", MqttClient.generateClientId(), null)
+            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
             val options = MqttConnectOptions().apply {
                 isCleanSession = true
             }
@@ -420,7 +420,7 @@ class ImageProcessorFragment : Fragment() {
             // Get token and set up MQTT client
             val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
             val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null)
-            val mqttClient = MqttClient("tcp://10.11.12.100:1883", MqttClient.generateClientId(), null)
+            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
             val options = MqttConnectOptions().apply {
                 isCleanSession = true
             }

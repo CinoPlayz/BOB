@@ -37,7 +37,7 @@ suspend fun loginUser(
 ) {
     try {
         withContext(Dispatchers.IO) {
-            val mqttClient = MqttClient("tcp://10.11.12.100:1883", MqttClient.generateClientId(), null)
+            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
 
             val options = MqttConnectOptions()
             options.isCleanSession = true // Optional: set any other options as required
@@ -146,7 +146,7 @@ suspend fun loginUserTwoFA(
 
     try {
         withContext(Dispatchers.IO) {
-            val mqttClient = MqttClient("tcp://10.11.12.100:1883", MqttClient.generateClientId(), null)
+            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
             mqttClient.connect()
 
             val loginData = LoginDataTwoFA(loginToken, totp)

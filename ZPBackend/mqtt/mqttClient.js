@@ -1,5 +1,5 @@
 const mqtt = require('mqtt');
-const client = mqtt.connect('mqtt://localhost:1883');
+const client = mqtt.connect('mqtt://164.8.215.37:1883');
 //const client = mqtt.connect('mqtt://broker.hivemq.com');
 
 client.on('connect', () => {
@@ -50,6 +50,14 @@ client.on('connect', () => {
             console.log('Subscribed to app/passengers/create/request');
         } else {
             console.error('Error subscribing to app/passengers/create/request:', err);
+        }
+    });
+
+    client.subscribe('app/trains/trainHistoryByDateRange/request', (err) =>  {
+        if (!err) {
+            console.log('Subscribed to app/trains/trainHistoryByDateRange/request');
+        } else {
+            console.error('Error subscribing to app/trains/trainHistoryByDateRange/request:', err);
         }
     });
 });
