@@ -1,9 +1,23 @@
 
 gameplay.png
-size: 2048, 512
+size: 2048, 2048
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
+background_map
+  rotate: false
+  xy: 2, 312
+  size: 1060, 795
+  orig: 1060, 795
+  offset: 0, 0
+  index: -1
+map_land
+  rotate: false
+  xy: 2, 1109
+  size: 1480, 781
+  orig: 1480, 781
+  offset: 0, 0
+  index: -1
 train
   rotate: false
   xy: 2, 2
