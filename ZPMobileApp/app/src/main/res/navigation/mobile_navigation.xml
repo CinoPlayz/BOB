@@ -18,14 +18,25 @@
         tools:layout="@layout/fragment_imageprocessor" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="si.bob.zpmobileapp.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_messages"
+        android:name="si.bob.zpmobileapp.ui.messages.MessagesFragment"
+        android:label="@string/title_messages"
+        tools:layout="@layout/fragment_messages">
+        <!-- Action from MessagesFragment to NewMessageFragment -->
+        <action
+            android:id="@+id/action_navigation_messages_to_newMessageFragment"
+            app:destination="@id/navigation_new_message" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_profile"
         android:name="si.bob.zpmobileapp.ui.profile.ProfileFragment"
         android:label="@string/title_profile"
         tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/navigation_new_message"
+        android:name="si.bob.zpmobileapp.ui.messages.NewMessageFragment"
+        android:label="@string/title_new_message"
+        tools:layout="@layout/fragment_new_message" />
 </navigation>

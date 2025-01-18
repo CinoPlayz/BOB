@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
             setOf(
                 R.id.navigation_map,
                 R.id.navigation_imageprocessor,
-                R.id.navigation_dashboard,
+                R.id.navigation_messages,
                 R.id.navigation_profile
             )
         )
