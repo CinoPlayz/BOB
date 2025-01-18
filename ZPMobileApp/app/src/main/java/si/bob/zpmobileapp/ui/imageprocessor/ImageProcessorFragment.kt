@@ -13,38 +13,24 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.json.JSONArray
-import org.json.JSONException
 import org.json.JSONObject
-import si.bob.zpmobileapp.BuildConfig
 import si.bob.zpmobileapp.MyApp
 import si.bob.zpmobileapp.R
 import si.bob.zpmobileapp.databinding.FragmentImageprocessorBinding
@@ -55,7 +41,6 @@ import java.io.InputStream
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class ImageProcessorFragment : Fragment() {
 
@@ -286,12 +271,12 @@ class ImageProcessorFragment : Fragment() {
             // Convert image to Base64
             val imageBase64 = Base64.encodeToString(imageFile.readBytes(), Base64.DEFAULT)
 
-            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
-            val options = MqttConnectOptions().apply {
-                isCleanSession = true
-            }
+            val mqttClient = (requireActivity().application as MyApp).mqttClient
 
-            mqttClient.connect(options)
+            if (mqttClient == null || !mqttClient.isConnected) {
+                Toast.makeText(requireContext(), "MQTT client not connected", Toast.LENGTH_SHORT).show()
+                return
+            }
 
             val requestPayload = JSONObject().apply {
                 put("token", token)
@@ -342,8 +327,6 @@ class ImageProcessorFragment : Fragment() {
                             toggleLoading(false)
                             binding.submitButton.isEnabled = true
                         }
-
-                        mqttClient.disconnect()
                     }
                 }
 
@@ -420,14 +403,15 @@ class ImageProcessorFragment : Fragment() {
             // Get token and set up MQTT client
             val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
             val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null)
-            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
-            val options = MqttConnectOptions().apply {
-                isCleanSession = true
+
+            val mqttClient = (requireActivity().application as MyApp).mqttClient
+
+            if (mqttClient == null || !mqttClient.isConnected) {
+                Toast.makeText(requireContext(), "MQTT client not connected", Toast.LENGTH_SHORT).show()
+                return@addOnSuccessListener
             }
 
-            mqttClient.connect(options)
-
-            // Prepare MQTT request
+            // MQTT request
             val requestPayload = JSONObject().apply {
                 put("token", token)
                 put("username", username)
@@ -471,8 +455,6 @@ class ImageProcessorFragment : Fragment() {
                                 Toast.makeText(requireContext(), "Failed: $errorMessage", Toast.LENGTH_SHORT).show()
                             }
                         }
-
-                        mqttClient.disconnect()
                     }
                 }
 

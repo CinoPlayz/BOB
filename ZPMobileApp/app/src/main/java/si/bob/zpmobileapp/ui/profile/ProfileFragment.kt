@@ -11,9 +11,9 @@ import kotlinx.coroutines.launch
 import si.bob.zpmobileapp.MyApp
 import si.bob.zpmobileapp.R
 import si.bob.zpmobileapp.databinding.FragmentProfileBinding
-import si.bob.zpmobileapp.utils.backendAuth.logoutUserBackend
 import si.bob.zpmobileapp.utils.backendAuth.loginUser
 import si.bob.zpmobileapp.utils.backendAuth.loginUserTwoFA
+import si.bob.zpmobileapp.utils.backendAuth.logoutUserBackend
 import si.bob.zpmobileapp.utils.backendAuth.registerUser
 
 class ProfileFragment : Fragment() {
@@ -171,7 +171,7 @@ class ProfileFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope.launch {
                 val app = requireActivity().application as MyApp
                 // Perform logout
-                logoutUserBackend(context = app)
+                logoutUserBackend(app = app)
                 resetLoginScreen()
             }
         }

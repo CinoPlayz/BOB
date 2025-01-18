@@ -1,6 +1,9 @@
+require('dotenv').config();
 const mqtt = require('mqtt');
-const client = mqtt.connect('mqtt://164.8.215.37:1883');
-//const client = mqtt.connect('mqtt://broker.hivemq.com');
+
+const brokerUrl = process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883';
+
+const client = mqtt.connect(brokerUrl);
 
 client.on('connect', () => {
     console.log('Connected to MQTT Broker');
