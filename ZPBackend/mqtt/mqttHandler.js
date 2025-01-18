@@ -8,6 +8,7 @@ const PassengersModel = require('../models/PassengersModel.js');
 const SeatsModel = require('../models/seatsModel.js');
 const TrainLocHistory = require('../models/trainLocHistoryModel.js');
 const RouteModel = require('../models/routeModel.js');
+const MessageModel = require('../models/messageModel.js');
 
 // Handle Incoming MQTT Messages for Login
 client.on('message', async (topic, message) => {
@@ -409,6 +410,121 @@ client.on('message', async (topic, message) => {
             client.publish(`app/trains/trainHistoryByDateRange/response`, JSON.stringify({
                 success: false,
                 message: "Error when fetching train history"
+            }));
+        }
+    }
+
+
+    if (topic === 'app/messages/create/request') {
+        try {
+            const { token, username, timeOfMessage, message: incomingMessage, category } = JSON.parse(message.toString());
+
+            // Check for missing fields
+            if (!token || !timeOfMessage || !incomingMessage || !category) {
+                console.log("Missing required fields, sending failure response.");
+                return client.publish(`app/messages/create/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing required fields"
+                }));
+            }
+
+            // Retrieve user from token
+            const user = await UserModel.findOne({
+                "tokens.token": token,
+            });
+
+            if (!user) {
+                console.log("User not found, sending failure response.");
+                return client.publish(`app/messages/create/response`, JSON.stringify({
+                    success: false,
+                    message: "User not found"
+                }));
+            }
+
+            // Create new message record
+            const newMessage = new MessageModel({
+                timeOfMessage,
+                postedByUser: user._id,
+                message: incomingMessage,
+                category
+            });
+
+            const savedMessage = await newMessage.save();
+
+            // Log success before sending the response
+            console.log("Message created successfully, sending success response.");
+
+            // Respond with success
+            const responseMessage = JSON.stringify({
+                success: true,
+                messageId: savedMessage._id
+            });
+
+            console.log("Publishing response to topic:", `app/messages/create/response/${user.username}`);
+            client.publish(`app/messages/create/response/${user.username}`, responseMessage, (err) => {
+                if (err) {
+                    console.error("Error publishing response:", err);
+                } else {
+                    console.log("Response successfully published.");
+                }
+            });
+
+        } catch (err) {
+            console.error('Error processing message creation:', err);
+            client.publish(`app/message/create/response`, JSON.stringify({
+                success: false,
+                message: "Error when creating message record"
+            }));
+        }
+    }
+
+
+    if (topic === 'app/messages/retrieve/all/request') {
+        try {
+            const { token, uuid } = JSON.parse(message.toString());
+
+            if (!token, !uuid) {
+                console.log("Missing required fields, sending failure response.");
+                return client.publish(`app/messages/retrieve/all/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing required date fields"
+                }));
+            }
+
+            const messages = await MessageModel.find()
+                .populate('postedByUser')  // Replace the ObjectId with the username
+                .sort({ timeOfMessage: 1 })
+                .exec();
+
+            const formattedMessages = messages.map(message => ({
+                timeOfMessage: message.timeOfMessage,
+                message: message.message,
+                category: message.category,
+                postedByUser: message.postedByUser.username, // Replacing ObjectId with username
+            }));
+
+            console.log("Messages data fetched successfully, sending response. No. of messages: ", messages.length);
+
+            const responseMessage = JSON.stringify({
+                success: true,
+                messages: formattedMessages
+            });
+
+            // console.log('Messages with usernames:', formattedMessages);
+            console.log("Publishing response to topic:", `app/messages/retrieve/all/response/${uuid}`);
+            client.publish(`app/messages/retrieve/all/response/${uuid}`, responseMessage, (err) => {
+                if (err) {
+                    console.error("Error publishing response:", err);
+                } else {
+                    console.log("Response successfully published.");
+                }
+            });
+
+        } catch (err) {
+            console.error('Error processing messages request:', err);
+            client.publish(`app/messages/retrieve/all/response`, JSON.stringify({
+                success: false,
+                message: "Error when fetching messages"
             }));
         }
     }

@@ -56,13 +56,29 @@ client.on('connect', () => {
         }
     });
 
-    client.subscribe('app/trains/trainHistoryByDateRange/request', (err) =>  {
+    client.subscribe('app/trains/trainHistoryByDateRange/request', (err) => {
         if (!err) {
             console.log('Subscribed to app/trains/trainHistoryByDateRange/request');
         } else {
             console.error('Error subscribing to app/trains/trainHistoryByDateRange/request:', err);
         }
     });
+
+    client.subscribe('app/messages/create/request', (err) => {
+        if (!err) {
+            console.log('Subscribed to app/messages/create/request');
+        } else {
+            console.error('Error subscribing to app/messages/create/request:', err);
+        }
+    })
+
+    client.subscribe('app/messages/retrieve/all/request', (err) => {
+        if (!err) {
+            console.log('Subscribed to app/messages/retrieve/all/request');
+        } else {
+            console.error('Error subscribing to app/messages/retrieve/all/request:', err);
+        }
+    })
 });
 
 client.on('error', (err) => {
