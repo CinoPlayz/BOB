@@ -2,6 +2,7 @@ package io.github.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -12,7 +13,8 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 
 import io.github.game.assets.AssetDescriptors;
 import io.github.game.screens.GameScreen;
-import io.github.game.utils.Constants;
+
+
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends Game {
@@ -38,9 +40,12 @@ public class Main extends Game {
         gameplayAtlas = assetManager.get(AssetDescriptors.GAMEPLAY);
 
         camera = new OrthographicCamera();
-        viewport = new FitViewport(Constants.MAP_WIDTH , Constants.MAP_HEIGHT , camera);
+
+
+
+        viewport = new FitViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight() , camera);
         viewport.apply(true);
-         // setScreen(new GameScreen());
+        setScreen(new GameScreen(viewport, camera, gameplayAtlas, batch));
 
     }
 
