@@ -11,8 +11,6 @@ public class AssetDescriptors {
     public static final AssetDescriptor<TextureAtlas> GAMEPLAY =
         new AssetDescriptor<TextureAtlas>(AssetPaths.GAMEPLAY, TextureAtlas.class);
 
-    public static final AssetDescriptor<TextureAtlas> SPRITES =
-        new AssetDescriptor<TextureAtlas>(AssetPaths.SPRITES, TextureAtlas.class);
 
     public static final AssetDescriptor<BitmapFont> UI_FONT =
         new AssetDescriptor<BitmapFont>(AssetPaths.UI_FONT, BitmapFont.class);
