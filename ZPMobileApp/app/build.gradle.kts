@@ -56,7 +56,6 @@ android {
 
 dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.8")
-    implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.firebase.messaging)
@@ -77,7 +76,6 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.play.services.location)
     implementation(libs.androidx.preference.ktx)
-    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
