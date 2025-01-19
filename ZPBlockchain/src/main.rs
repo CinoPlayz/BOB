@@ -4,12 +4,12 @@ pub mod block;
 pub mod mining;
 
 use std::{
-    process::exit,
-    sync::{ mpsc::{ self, Receiver, Sender }, Arc, Mutex },
-    thread::{ self, available_parallelism, ScopedJoinHandle },
+    env, fs::OpenOptions, io::Write, process::exit, sync::{ mpsc::{ self, Receiver, Sender }, Arc, Mutex }, thread::{ self, available_parallelism, ScopedJoinHandle }
 };
 
+use bson::oid::ObjectId;
 use chrono::Utc;
+use mongodb::{bson::doc, options::ClientOptions, Client, Collection, error::Error};
 use mpi::{
     point_to_point::Status,
     request::{ LocalScope, Request },
@@ -17,12 +17,43 @@ use mpi::{
 };
 use structs::{
     block::Block,
-    passengerData::{ Coordinates, PassengerData },
+    passengerData::{ Coordinates, PassengerData, PassengerDataMongoDB },
     processTransmitionData::{ BroadcastNewBlockData, FoundHash },
     tags::Tags,
 };
 
 fn main() {
+    //Read args
+    let args: Vec<String> = env::args().collect();
+    let mut numOfThreads: usize = 0;
+    let mut clientOption: Option<Client> = None;
+    let argsLen = args.len();
+
+    for i in 1..argsLen{
+        if args[i] == "-c" && argsLen >= i+1 {
+            let mut clientOptions = ClientOptions::parse(args[i+1].clone()).run().expect("Wrong connection string");
+            clientOptions.app_name = Some(String::from("ZPBlockchain"));
+            let client = Client::with_options(clientOptions).expect("Cannot create Client");
+            clientOption = Some(client);
+        }
+
+        if args[i] == "-n" && argsLen >= i+1 {            
+            numOfThreads = args[i+1].parse::<usize>().expect("Number of threads not a number");
+        }
+
+        if args[i] == "-h" {
+            println!("Avaliable flags:");
+            println!("-c  -- Connection string to mongodb");
+            println!("-n  -- Number of threads used for mining");
+            println!("-h  -- Help");
+            println!();
+        }
+    }  
+
+    doWorkMPI(numOfThreads, clientOption);
+}
+
+fn doWorkMPI(mut numOfThreads: usize, clientOption: Option<Client>){
     let universe = mpi::initialize().unwrap();
     let world = universe.world();
     let size = world.size();
@@ -43,19 +74,88 @@ fn main() {
             let mut foundHash = FoundHash::new();            
             let mut data: PassengerData = PassengerData::new();
             let mut timeStamp: i64 = Utc::now().timestamp_millis() + 30000;
+            let mut lastDateOfCheck = Utc::now();
+            let mut docs: Vec<PassengerDataMongoDB> = Vec::new();
+            let mut alreadyRemoved: Vec<ObjectId> = Vec::new();
 
             loop {
                 if canChangeBlock {
                     canChangeBlock = false;
-                    //Generate data for block
-                    data = PassengerData {
-                        userRequestDateTime: Utc::now(),
-                        coordinatesOfUserRequest: Coordinates { lat: 2.0, lng: 3.0 },
-                        guessedOccupancyRate: 20,
-                        realOccupancyRate: 30,
-                        routeId: "000000000000000000000000".to_owned(),
-                        postedByUserId: "000000000000000000000000".to_owned(),
-                    };
+                    let mut foundDoc = false;
+
+                    //Get data for new block from mongodb database if avaiable
+                    if clientOption.is_some(){
+                        let client = clientOption.clone().unwrap();
+                        let db = client.database("ZP");
+                        let collection: Collection<PassengerDataMongoDB> = db.collection("passengers");
+                        let findDocument =
+                            doc! {
+                                "$or": [
+                                    {"createdAt": {"$lte": lastDateOfCheck}},
+                                    {"updatedAt": {"$lte": lastDateOfCheck}}
+                                ],                     
+                        };    
+
+                        let result = collection.find(findDocument).run();                 
+                        
+                        match result {
+                            Err(e) => {
+                                println!("Rank 0: Error when getting from mongodb: {}", e.to_string())
+                            },
+                            Ok(cursor) => {
+                                let results: Vec<Result<PassengerDataMongoDB, Error>> = cursor.collect();                                
+                                
+                                for result in results{
+
+                                    //Check if block is not already queued for sending to miners
+                                    let resUnwraped = result.unwrap();
+                                    let mut found = false;
+                                    for id in &alreadyRemoved {
+                                        if *id == resUnwraped._id{
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if !found {
+                                        for doc in &docs{
+                                            if doc._id == resUnwraped._id{
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if !found{
+                                        docs.push(resUnwraped);
+                                    }                                    
+                                }
+                            }                            
+                        }
+                        lastDateOfCheck = Utc::now();
+
+                        //Check if there are any documents to send them to miners
+                        if docs.len() != 0 {
+                            data = docs[0].toPassengerData();
+                            alreadyRemoved.push(docs[0]._id);
+                            docs.remove(0);
+                            foundDoc = true;
+                            println!("Count: {}", docs.len())
+                        }
+                    }
+
+                    //Fill data if there were no new documents
+                    if !foundDoc{
+                        //Generate data for block
+                        data = PassengerData {
+                            userRequestDateTime: Utc::now(),
+                            coordinatesOfUserRequest: Coordinates { lat: 2.0, lng: 3.0 },
+                            guessedOccupancyRate: 20,
+                            realOccupancyRate: 30,
+                            routeId: "000000000000000000000000".to_owned(),
+                            postedByUserId: "000000000000000000000000".to_owned(),
+                        };
+                    }                    
                     timeStamp = Utc::now().timestamp_millis() + 30000;
 
                     //Checks if there has been found the right hash for block
@@ -73,7 +173,6 @@ fn main() {
                         let realTime: i64 =
                             adjecmentBlock.timeStamp - blockchain[index10Old as usize].timeStamp;
 
-                        //println!("Real: {}",realTime);
                         if realTime < expectedTime / 2 {
                             difficulty += 1;
                         } else if realTime > expectedTime * 2 {
@@ -84,7 +183,7 @@ fn main() {
                     }
                 }
                 
-
+                //Build data of block that will be send to miners
                 let dataPassengerMPI = data.toPassengerDataMPI().unwrap();
                 let hashOfLastBlockMPI: [u8; 64] = hashOfLastBlock
                     .as_bytes()
@@ -134,8 +233,7 @@ fn main() {
                 //Checks if someone requested block data and then send data
                 if hasRequestedBlock {
                     world.process_at_rank(requestedRankBlockData).send_with_tag(&broadcastData, Tags::NewBlock as i32);
-                    hasRequestedBlock = false;
-                    //let t = world.process_at_rank(requestedRankBlockData).immediate_synchronous_send_with_tag(scope,&broadcastData, Tags::NewBlock as i32);
+                    hasRequestedBlock = false;                    
                 }
 
                 //Checks if someone found hash 
@@ -167,6 +265,7 @@ fn main() {
                             println!("{:?}", blockchain);
                             exit(-1);
                         } else {
+                            //Send stop signal for miners
                             let mut vecOfSendProcesses: Vec<
                                 Request<'_, bool, &LocalScope<'_>>
                             > = Vec::new();
@@ -181,15 +280,22 @@ fn main() {
                                 sendRequest.wait_without_status();
                             }
                             hashOfLastBlock = hashOfBlock;
+
+                            //Write blockchain to file
+                            let mut file = OpenOptions::new().create(true).read(true).write(true).open("blockchain.json").unwrap();
+                            file.write_all(serde_json::to_string(&blockchain).unwrap().as_bytes()).unwrap();
                         }                        
                     }
                 }               
                
             }
+            //Execute in any procees other then root
         } else {
             loop {
+                //Request block data from root process
                 world.process_at_rank(root_process).send_with_tag(&true, Tags::RequestBlock as i32);
 
+                //Recieve block data from root process
                 let msgNewBlockTulip: (BroadcastNewBlockData, _) = world
                     .process_at_rank(root_process)
                     .receive_with_tag(Tags::NewBlock as i32);
@@ -197,6 +303,7 @@ fn main() {
 
                 //println!("Rank {} got new message", rank);
 
+                //Inicialization of variables
                 let mut foundByProcess = false;
                 let timeStamp = msgNewBlock.timeStamp;
                 let data = msgNewBlock.passangerDataMPI.toPassengerData();
@@ -204,9 +311,9 @@ fn main() {
                 let difficulty = msgNewBlock.difficulty;
                 let strHashOfLastBlock = std::str::from_utf8(&msgNewBlock.hashOfLastBlock).unwrap();
                 let hashOfLastBlock = String::from(strHashOfLastBlock);
-                let numOfThreads = available_parallelism().unwrap().get();
-
-                //println!("Rank {}, Converted corectly: {:?}", rank, data);
+                if numOfThreads == 0 {
+                    numOfThreads = available_parallelism().unwrap().get();
+                }
 
                 let numberInMPI: u32 = (rank as u32) - 1;
                 let numberOfMPIProcessors: u32 = (size as u32) - 1;
@@ -339,6 +446,7 @@ fn main() {
                             let _ = handle.join();
                         }
 
+                        //Send data to root process only if it wasn't already found by another process
                         if !foundByProcess {
                             let blockLock = refReturnedBlock.lock().unwrap();
                             let blockToSend = blockLock.clone();
@@ -357,8 +465,6 @@ fn main() {
                             world
                                 .process_at_rank(root_process)
                                 .send_with_tag(&foundHash, Tags::FoundHash as i32);
-
-                            //println!("\n{:?}", blockLock);
                         }
                     });
                 }
