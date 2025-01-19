@@ -10,9 +10,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import si.bob.zpmobileapp.MyApp
 
@@ -37,18 +34,11 @@ suspend fun loginUser(
 ) {
     try {
         withContext(Dispatchers.IO) {
-            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
+            val mqttClient = app.mqttClient
 
-            val options = MqttConnectOptions()
-            options.isCleanSession = true // Optional: set any other options as required
-
-            try {
-                mqttClient.connect(options) // Just connect without passing listener here
-                Log.d("MQTT", "Connected successfully")
-            } catch (e: MqttException) {
-                Log.e("MQTT", "Connection failed: ${e.message}")
+            if (mqttClient == null || !mqttClient.isConnected) {
                 Handler(Looper.getMainLooper()).post {
-                    onFailure("Failed to connect to MQTT broker")
+                    onFailure("MQTT client not connected")
                 }
                 return@withContext
             }
@@ -56,10 +46,10 @@ suspend fun loginUser(
             val loginData = LoginData(username, password)
             val body = json.encodeToString(loginData)
 
-            mqttClient.publish("app/login/request", MqttMessage(body.toByteArray()))
-
-            // Subscribe to the response topic for the specific username
+            val publishTopic = "app/login/request"
             val subscribeTopic = "app/login/response/$username"
+
+            mqttClient.publish(publishTopic, MqttMessage(body.toByteArray()))
             mqttClient.subscribe(subscribeTopic)
 
             mqttClient.setCallback(object : MqttCallback {
@@ -87,8 +77,8 @@ suspend fun loginUser(
                                         apply()
                                     }
                                     onSuccess(loginResponse.token)
-                                    mqttClient.disconnect()
                                 }
+
                                 loginResponse?.loginToken != null -> {
                                     // Two-Factor Authentication case
                                     app.sharedPrefs.edit().apply {
@@ -96,24 +86,22 @@ suspend fun loginUser(
                                         apply()
                                     }
                                     onTwoFA(loginResponse.loginToken)
-                                    mqttClient.disconnect()
                                 }
+
                                 loginResponse?.message != null -> {
                                     // Handle login failure
                                     onFailure("Invalid username or password")
-                                    mqttClient.disconnect()
                                 }
+
                                 else -> {
                                     // Invalid response or failure
                                     onFailure("Internal Error: Unexpected response format.")
-                                    mqttClient.disconnect()
                                 }
                             }
                         }
                     } catch (e: Exception) {
                         Log.e("MQTT", "Error parsing response: ${e.message}")
                         onFailure("Error parsing server response")
-                        mqttClient.disconnect()
                     }
                 }
 
@@ -146,8 +134,14 @@ suspend fun loginUserTwoFA(
 
     try {
         withContext(Dispatchers.IO) {
-            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
-            mqttClient.connect()
+            val mqttClient = app.mqttClient
+
+            if (mqttClient == null || !mqttClient.isConnected) {
+                Handler(Looper.getMainLooper()).post {
+                    onFailure("MQTT client not connected")
+                }
+                return@withContext
+            }
 
             val loginData = LoginDataTwoFA(loginToken, totp)
             val body = json.encodeToString(loginData)
@@ -180,8 +174,8 @@ suspend fun loginUserTwoFA(
                                     apply()
                                 }
                                 onSuccess(loginResponse.token)
-                                mqttClient.disconnect()
                             }
+
                             loginResponse?.message != null -> {
                                 // If message contains "Invalid OTP code"
                                 if (loginResponse.message == "Invalid OTP code") {
@@ -190,11 +184,10 @@ suspend fun loginUserTwoFA(
                                     // Handle other failure messages
                                     onFailure(loginResponse.message)
                                 }
-                                mqttClient.disconnect()
                             }
+
                             else -> {
                                 onFailure("Internal Error: Unexpected response format.")
-                                mqttClient.disconnect()
                             }
                         }
                     }

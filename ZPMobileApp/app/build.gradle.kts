@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     kotlin("plugin.serialization") version "2.1.0"
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -22,18 +23,22 @@ android {
         buildConfig = true
     }
     println(env.BASE_URL.value)
+    println(env.AUTH_TOKEN.value)
+    println(env.MQTT_URL.value)
 
     buildTypes {
         debug {
             isMinifyEnabled = false
             buildConfigField("String", "BASE_URL", "\"${env.BASE_URL.value}\"")
             buildConfigField("String", "AUTH_TOKEN", "\"${env.AUTH_TOKEN.value}\"")
+            buildConfigField("String", "MQTT_BROKER_URL", "\"${env.MQTT_URL.value}\"")
         }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "BASE_URL", "\"${env.BASE_URL.value}\"")
             buildConfigField("String", "AUTH_TOKEN", "\"${env.AUTH_TOKEN.value}\"")
+            buildConfigField("String", "MQTT_BROKER_URL", "\"${env.MQTT_URL.value}\"")
         }
     }
 
@@ -51,6 +56,9 @@ android {
 
 dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.8")
+    implementation(libs.converter.gson)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.firebase.messaging)
     implementation(libs.org.eclipse.paho.client.mqttv3)
     implementation(libs.org.eclipse.paho.android.service)
     implementation(libs.fuel)

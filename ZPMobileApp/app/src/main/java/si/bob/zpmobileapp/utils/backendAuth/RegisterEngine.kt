@@ -10,9 +10,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import si.bob.zpmobileapp.MyApp
 
@@ -34,18 +31,11 @@ suspend fun registerUser(
 ) {
     try {
         withContext(Dispatchers.IO) {
-            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
+            val mqttClient = app.mqttClient
 
-            val options = MqttConnectOptions()
-            options.isCleanSession = true
-
-            try {
-                mqttClient.connect(options)
-                Log.d("MQTT", "Connected successfully")
-            } catch (e: MqttException) {
-                Log.e("MQTT", "Connection failed: ${e.message}")
+            if (mqttClient == null || !mqttClient.isConnected) {
                 Handler(Looper.getMainLooper()).post {
-                    onFailure("Failed to connect to MQTT broker")
+                    onFailure("MQTT client not connected")
                 }
                 return@withContext
             }
@@ -83,14 +73,12 @@ suspend fun registerUser(
                                 val errorMessage = response?.message ?: "Unknown error occurred"
                                 onFailure(errorMessage)
                             }
-                            mqttClient.disconnect()
                         }
                     } catch (e: Exception) {
                         Log.e("MQTT", "Error parsing response: ${e.message}")
                         Handler(Looper.getMainLooper()).post {
                             onFailure("Error parsing server response")
                         }
-                        mqttClient.disconnect()
                     }
                 }
 

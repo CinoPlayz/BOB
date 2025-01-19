@@ -8,6 +8,18 @@ const PassengersModel = require('../models/PassengersModel.js');
 const SeatsModel = require('../models/seatsModel.js');
 const TrainLocHistory = require('../models/trainLocHistoryModel.js');
 const RouteModel = require('../models/routeModel.js');
+const MessageModel = require('../models/messageModel.js');
+const admin = require('firebase-admin');
+const serviceAccount = require('../bandofbytes-serviceAccountKey.json');
+
+try {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+    console.log('Firebase Admin has been initialized successfully');
+} catch (error) {
+    console.error('Failed to initialize Firebase Admin:', error);
+}
 
 // Handle Incoming MQTT Messages for Login
 client.on('message', async (topic, message) => {
@@ -206,6 +218,92 @@ client.on('message', async (topic, message) => {
             }));
         }
     }
+
+    if (topic === 'app/notifications/register/request') {
+        try {
+            const { token, pushToken } = JSON.parse(message.toString());
+
+            if (!token || !pushToken) {
+                console.log("Missing token or pushToken");
+                return client.publish(`app/notifications/register/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing token or pushToken"
+                }));
+            }
+
+            const user = await UserModel.findOne({ "tokens.token": token });
+            if (!user) {
+                console.log("User not found");
+                return client.publish(`app/notifications/register/response`, JSON.stringify({
+                    success: false,
+                    message: "User not found"
+                }));
+            }
+
+            if (!user.notificationTokens.includes(pushToken)) {
+                user.notificationTokens.push(pushToken);
+                await user.save();
+                console.log("Device token registered");
+            }
+
+            client.publish(`app/notifications/register/response/${user.username}`, JSON.stringify({
+                success: true,
+                message: "Device registered for notifications"
+            }));
+
+        } catch (error) {
+            console.error("Error during registration:", error);
+            client.publish(`app/notifications/register/response`, JSON.stringify({
+                success: false,
+                message: "Error during registration"
+            }));
+        }
+    }
+
+    if (topic === 'app/notifications/deregister/request') {
+        try {
+            const { token, pushToken } = JSON.parse(message.toString());
+
+            if (!token || !pushToken) {
+                console.log("Missing token or pushToken");
+                return client.publish(`app/notifications/deregister/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing token or pushToken"
+                }));
+            }
+
+            const user = await UserModel.findOne({ "tokens.token": token });
+            if (!user) {
+                console.log("User not found");
+                return client.publish(`app/notifications/deregister/response`, JSON.stringify({
+                    success: false,
+                    message: "User not found"
+                }));
+            }
+
+            const tokenIndex = user.notificationTokens.indexOf(pushToken);
+            if (tokenIndex > -1) {
+                user.notificationTokens.splice(tokenIndex, 1);
+                await user.save();
+                console.log("Device token deregistered");
+            } else {
+                console.log("Device token not found");
+            }
+
+            client.publish(`app/notifications/deregister/response/${user.username}`, JSON.stringify({
+                success: true,
+                message: "Device deregistered from notifications"
+            }));
+
+        } catch (error) {
+            console.error("Error during deregistration:", error);
+            client.publish(`app/notifications/deregister/response`, JSON.stringify({
+                success: false,
+                message: "Error during deregistration"
+            }));
+        }
+    }
+
 
     if (topic === 'app/passengers/count/request') {
         try {
@@ -412,4 +510,168 @@ client.on('message', async (topic, message) => {
             }));
         }
     }
+
+
+    if (topic === 'app/messages/create/request') {
+        try {
+            const { token, username, timeOfMessage, message: incomingMessage, category } = JSON.parse(message.toString());
+
+            // Check for missing fields
+            if (!token || !timeOfMessage || !incomingMessage || !category) {
+                console.log("Missing required fields, sending failure response.");
+                return client.publish(`app/messages/create/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing required fields"
+                }));
+            }
+
+            // Retrieve user from token
+            const user = await UserModel.findOne({
+                "tokens.token": token,
+            });
+
+            if (!user) {
+                console.log("User not found, sending failure response.");
+                return client.publish(`app/messages/create/response`, JSON.stringify({
+                    success: false,
+                    message: "User not found"
+                }));
+            }
+
+            // Create new message record
+            const newMessage = new MessageModel({
+                timeOfMessage,
+                postedByUser: user._id,
+                message: incomingMessage,
+                category
+            });
+
+            const savedMessage = await newMessage.save();
+
+            // Log success before sending the response
+            console.log("Message created successfully, sending success response.");
+
+            // Respond with success
+            const responseMessage = JSON.stringify({
+                success: true,
+                messageId: savedMessage._id
+            });
+
+            console.log("Publishing response to topic:", `app/messages/create/response/${user.username}`);
+            client.publish(`app/messages/create/response/${user.username}`, responseMessage, (err) => {
+                if (err) {
+                    console.error("Error publishing response:", err);
+                } else {
+                    console.log("Response successfully published.");
+                }
+            });
+
+            // If the message category is "extreme", send notifications to all users
+            if (category === 'extreme') {
+                // Fetch all users with registered push tokens
+                const usersWithPushTokens = await UserModel.find({
+                    notificationTokens: { $exists: true, $ne: [] }
+                });
+
+                // Extract all registered push tokens
+                const pushTokens = usersWithPushTokens
+                    .map(user => user.notificationTokens)
+                    .flat();
+
+                const senderPushToken = user.notificationTokens; // Senders push token
+                const filteredPushTokens = pushTokens.filter(token => !senderPushToken.includes(token)); // Exclude sender (do not send notification to original sender)
+
+                if (pushTokens.length > 0) {
+                    try {
+                        // Use Firebase Admin SDK to send notifications to all push tokens
+                        const notificationPromises = filteredPushTokens.map(token =>
+                            sendNotificationToUser(token, 'Extreme Event Notification', `User "${user.username}" posted: ${incomingMessage}.`)
+                        );
+
+                        await Promise.all(notificationPromises);
+                    } catch (error) {
+                        console.error("Error sending notification:", error);
+                    }
+                } else {
+                    console.log('No registered push tokens found.');
+                }
+            }
+
+        } catch (err) {
+            console.error('Error processing message creation:', err);
+            client.publish(`app/message/create/response`, JSON.stringify({
+                success: false,
+                message: "Error when creating message record"
+            }));
+        }
+    }
+
+
+    if (topic === 'app/messages/retrieve/all/request') {
+        try {
+            const { token, uuid } = JSON.parse(message.toString());
+
+            if (!token, !uuid) {
+                console.log("Missing required fields, sending failure response.");
+                return client.publish(`app/messages/retrieve/all/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing required date fields"
+                }));
+            }
+
+            const messages = await MessageModel.find()
+                .populate('postedByUser')  // Replace the ObjectId with the username
+                .sort({ timeOfMessage: 1 })
+                .exec();
+
+            const formattedMessages = messages.map(message => ({
+                timeOfMessage: message.timeOfMessage,
+                message: message.message,
+                category: message.category,
+                postedByUser: message.postedByUser.username, // Replacing ObjectId with username
+            }));
+
+            console.log("Messages data fetched successfully, sending response. No. of messages: ", messages.length);
+
+            const responseMessage = JSON.stringify({
+                success: true,
+                messages: formattedMessages
+            });
+
+            // console.log('Messages with usernames:', formattedMessages);
+            console.log("Publishing response to topic:", `app/messages/retrieve/all/response/${uuid}`);
+            client.publish(`app/messages/retrieve/all/response/${uuid}`, responseMessage, (err) => {
+                if (err) {
+                    console.error("Error publishing response:", err);
+                } else {
+                    console.log("Response successfully published.");
+                }
+            });
+
+        } catch (err) {
+            console.error('Error processing messages request:', err);
+            client.publish(`app/messages/retrieve/all/response`, JSON.stringify({
+                success: false,
+                message: "Error when fetching messages"
+            }));
+        }
+    }
 });
+
+const sendNotificationToUser = async (deviceToken, title, body) => {
+    const message = {
+        data: {
+            title: title,
+            body: body,
+            navigate_to: 'messages' // Custom data field to specify navigation
+        },
+        token: deviceToken
+    };
+
+    try {
+        const response = await admin.messaging().send(message);
+        console.log('Notification sent successfully:', deviceToken, response);
+    } catch (error) {
+        console.error('Error sending notification:', error);
+    }
+};

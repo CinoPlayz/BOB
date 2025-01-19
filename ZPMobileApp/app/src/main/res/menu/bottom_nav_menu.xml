@@ -12,9 +12,9 @@
         android:title="@string/title_imageprocessor" />
 
     <item
-        android:id="@+id/navigation_dashboard"
-        android:icon="@drawable/ic_dashboard_black_24dp"
-        android:title="@string/title_dashboard" />
+        android:id="@+id/navigation_messages"
+        android:icon="@drawable/ic_forum_black_24dp"
+        android:title="@string/title_messages" />
 
     <item
         android:id="@+id/navigation_profile"

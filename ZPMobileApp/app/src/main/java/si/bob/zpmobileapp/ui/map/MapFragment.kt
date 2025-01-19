@@ -12,21 +12,19 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.json.JSONObject
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
+import org.osmdroid.tileprovider.MapTileProviderBasic
+import org.osmdroid.tileprovider.tilesource.ITileSource
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.tileprovider.tilesource.XYTileSource
-import org.osmdroid.tileprovider.tilesource.ITileSource
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.TilesOverlay
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.tileprovider.MapTileProviderBasic
+import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.TilesOverlay
 import si.bob.zpmobileapp.MyApp
 import si.bob.zpmobileapp.R
 import si.bob.zpmobileapp.databinding.FragmentMapBinding
@@ -70,12 +68,12 @@ class MapFragment : Fragment() {
         val endDate = "2024-05-25"
 
         try {
-            val mqttClient = MqttClient("tcp://164.8.215.37:1883", MqttClient.generateClientId(), null)
-            val options = MqttConnectOptions().apply {
-                isCleanSession = true
-            }
+            val mqttClient = (requireActivity().application as MyApp).mqttClient
 
-            mqttClient.connect(options)
+            if (mqttClient == null || !mqttClient.isConnected) {
+                Toast.makeText(requireContext(), "MQTT client not connected", Toast.LENGTH_SHORT).show()
+                return
+            }
 
             val requestPayload = JSONObject().apply {
                 put("startDate", startDate)
