@@ -1,8 +1,6 @@
 #![allow(non_snake_case)]
 use std::sync::{mpsc::Receiver, Arc, Mutex};
 
-use chrono::Utc;
-
 use crate::structs::{ block::{ Block, BlockWhileMining }, passengerData::PassengerData };
 
 fn doesHashHave0(hash: &String, zerosCount: u32) -> bool {

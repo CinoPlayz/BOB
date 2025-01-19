@@ -22,13 +22,13 @@ fn isValidBlockInChain(previousBlock: Option<&Block>, nowBlock: &Block) -> bool 
     }
 }
 
-fn isValidBlockChain(blockchain: &Vec<Block>) -> bool {
+pub fn isValidBlockChain(blockchain: &Vec<Block>) -> bool {
     for i in 0..blockchain.len() {
         let isValid;
         if i == 0 {
             isValid = isValidBlockInChain(None, &blockchain[i]);
         } else {
-            isValid = isValidBlockInChain(Some(&blockchain[i]), &blockchain[i]);
+            isValid = isValidBlockInChain(Some(&blockchain[i-1]), &blockchain[i]);
         }
 
         if !isValid {
