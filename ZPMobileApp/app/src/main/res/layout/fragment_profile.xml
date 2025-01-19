@@ -149,6 +149,15 @@
             android:textAlignment="center"
             android:textSize="24sp" />
 
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_extreme_notifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginVertical="16dp"
+            android:text="@string/extreme_event_notification"
+            android:textSize="16sp" />
+
         <Button
             android:id="@+id/logout_button"
             android:layout_width="wrap_content"

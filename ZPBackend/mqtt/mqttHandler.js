@@ -9,6 +9,17 @@ const SeatsModel = require('../models/seatsModel.js');
 const TrainLocHistory = require('../models/trainLocHistoryModel.js');
 const RouteModel = require('../models/routeModel.js');
 const MessageModel = require('../models/messageModel.js');
+const admin = require('firebase-admin');
+const serviceAccount = require('../bandofbytes-serviceAccountKey.json');
+
+try {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+    console.log('Firebase Admin has been initialized successfully');
+} catch (error) {
+    console.error('Failed to initialize Firebase Admin:', error);
+}
 
 // Handle Incoming MQTT Messages for Login
 client.on('message', async (topic, message) => {
@@ -207,6 +218,92 @@ client.on('message', async (topic, message) => {
             }));
         }
     }
+
+    if (topic === 'app/notifications/register/request') {
+        try {
+            const { token, pushToken } = JSON.parse(message.toString());
+
+            if (!token || !pushToken) {
+                console.log("Missing token or pushToken");
+                return client.publish(`app/notifications/register/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing token or pushToken"
+                }));
+            }
+
+            const user = await UserModel.findOne({ "tokens.token": token });
+            if (!user) {
+                console.log("User not found");
+                return client.publish(`app/notifications/register/response`, JSON.stringify({
+                    success: false,
+                    message: "User not found"
+                }));
+            }
+
+            if (!user.notificationTokens.includes(pushToken)) {
+                user.notificationTokens.push(pushToken);
+                await user.save();
+                console.log("Device token registered");
+            }
+
+            client.publish(`app/notifications/register/response/${user.username}`, JSON.stringify({
+                success: true,
+                message: "Device registered for notifications"
+            }));
+
+        } catch (error) {
+            console.error("Error during registration:", error);
+            client.publish(`app/notifications/register/response`, JSON.stringify({
+                success: false,
+                message: "Error during registration"
+            }));
+        }
+    }
+
+    if (topic === 'app/notifications/deregister/request') {
+        try {
+            const { token, pushToken } = JSON.parse(message.toString());
+
+            if (!token || !pushToken) {
+                console.log("Missing token or pushToken");
+                return client.publish(`app/notifications/deregister/response`, JSON.stringify({
+                    success: false,
+                    message: "Missing token or pushToken"
+                }));
+            }
+
+            const user = await UserModel.findOne({ "tokens.token": token });
+            if (!user) {
+                console.log("User not found");
+                return client.publish(`app/notifications/deregister/response`, JSON.stringify({
+                    success: false,
+                    message: "User not found"
+                }));
+            }
+
+            const tokenIndex = user.notificationTokens.indexOf(pushToken);
+            if (tokenIndex > -1) {
+                user.notificationTokens.splice(tokenIndex, 1);
+                await user.save();
+                console.log("Device token deregistered");
+            } else {
+                console.log("Device token not found");
+            }
+
+            client.publish(`app/notifications/deregister/response/${user.username}`, JSON.stringify({
+                success: true,
+                message: "Device deregistered from notifications"
+            }));
+
+        } catch (error) {
+            console.error("Error during deregistration:", error);
+            client.publish(`app/notifications/deregister/response`, JSON.stringify({
+                success: false,
+                message: "Error during deregistration"
+            }));
+        }
+    }
+
 
     if (topic === 'app/passengers/count/request') {
         try {
@@ -469,6 +566,32 @@ client.on('message', async (topic, message) => {
                 }
             });
 
+            // If the message category is "extreme", send notifications to all users
+            if (category === 'extreme') {
+                // Fetch all users with registered push tokens
+                const usersWithPushTokens = await UserModel.find({
+                    notificationTokens: { $exists: true, $ne: [] }
+                });
+
+                // Extract all registered push tokens
+                const pushTokens = usersWithPushTokens.map(user => user.notificationTokens).flat();
+
+                if (pushTokens.length > 0) {
+                    try {
+                        // Use Firebase Admin SDK to send notifications to all push tokens
+                        const notificationPromises = pushTokens.map(token =>
+                            sendNotificationToUser(token, 'Extreme Event Notification', `User "${user.username}" posted: ${incomingMessage}.`)
+                        );
+
+                        await Promise.all(notificationPromises);
+                    } catch (error) {
+                        console.error("Error sending notification:", error);
+                    }
+                } else {
+                    console.log('No registered push tokens found.');
+                }
+            }
+
         } catch (err) {
             console.error('Error processing message creation:', err);
             client.publish(`app/message/create/response`, JSON.stringify({
@@ -529,3 +652,20 @@ client.on('message', async (topic, message) => {
         }
     }
 });
+
+const sendNotificationToUser = async (deviceToken, title, body) => {
+    const message = {
+        notification: {
+            title: title,
+            body: body
+        },
+        token: deviceToken
+    };
+
+    try {
+        const response = await admin.messaging().send(message);
+        console.log('Notification sent successfully:', deviceToken, response);
+    } catch (error) {
+        console.error('Error sending notification:', error);
+    }
+};

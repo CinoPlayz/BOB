@@ -54,25 +54,26 @@ const userSchema = new Schema({
     },
     '2faSecret': {
         type: String,
-        required: function() { return this['2faEnabled']; } // prisoten le, če je 2faEnabled enak true.
+        required: function () { return this['2faEnabled']; } // prisoten le, če je 2faEnabled enak true.
     },
     role: {
         type: String,
         enum: ['admin', 'user'],
         default: 'user'
-    }
+    },
+    notificationTokens: [String]  // FCM device tokens
 }, {
     timestamps: true
 });
 
 
 // Pre-save hook za šifriranje gesla
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
     const user = this;
 
     if (!user.isModified('password')) { //preprečuje ponovno šifriranje gesla, 
         return next();                  //ko se uporabnik posodobi, ampak geslo ostane nespremenjeno.
-    }   
+    }
 
     try {
         const salt = await bcrypt.genSalt(10);//Sol se uporablja za zaščito gesel pred napadi s predpripravljenimi tabelami
@@ -84,11 +85,11 @@ userSchema.pre('save', async function(next) {
     }
 });
 
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.statics.authenticate = async function(username, password) {
+userSchema.statics.authenticate = async function (username, password) {
     const user = await this.findOne({ username }).exec();
     if (!user) {
         throw new Error("User not found.");

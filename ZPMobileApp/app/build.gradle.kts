@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     kotlin("plugin.serialization") version "2.1.0"
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -55,6 +56,10 @@ android {
 
 dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.8")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.firebase.messaging)
     implementation(libs.org.eclipse.paho.client.mqttv3)
     implementation(libs.org.eclipse.paho.android.service)
     implementation(libs.fuel)
@@ -72,6 +77,7 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.play.services.location)
     implementation(libs.androidx.preference.ktx)
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

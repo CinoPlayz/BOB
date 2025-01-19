@@ -36,4 +36,5 @@
     <string name="title_new_message">New Message</string>
     <string name="enter_your_message">Enter your message</string>
     <string name="send">Send</string>
+    <string name="extreme_event_notification">Extreme event notification</string>
 </resources>

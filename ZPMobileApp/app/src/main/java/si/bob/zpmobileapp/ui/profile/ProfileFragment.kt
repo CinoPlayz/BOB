@@ -11,6 +11,8 @@ import kotlinx.coroutines.launch
 import si.bob.zpmobileapp.MyApp
 import si.bob.zpmobileapp.R
 import si.bob.zpmobileapp.databinding.FragmentProfileBinding
+import si.bob.zpmobileapp.utils.backendAuth.deregisterPushTokenAndRemoveFromDevice
+import si.bob.zpmobileapp.utils.backendAuth.getPushTokenAndSendToMQTT
 import si.bob.zpmobileapp.utils.backendAuth.loginUser
 import si.bob.zpmobileapp.utils.backendAuth.loginUserTwoFA
 import si.bob.zpmobileapp.utils.backendAuth.logoutUserBackend
@@ -173,6 +175,20 @@ class ProfileFragment : Fragment() {
                 // Perform logout
                 logoutUserBackend(app = app)
                 resetLoginScreen()
+            }
+        }
+
+        // Extreme event notifications switch
+        val switch = binding.switchExtremeNotifications // Assuming it's added in your binding
+
+        val notificationToken = app.sharedPrefs.getString(MyApp.NOTIFICATION_TOKEN_KEY, null)
+        switch.isChecked = notificationToken != null
+
+        switch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                getPushTokenAndSendToMQTT(app)
+            } else {
+                deregisterPushTokenAndRemoveFromDevice(app)
             }
         }
     }

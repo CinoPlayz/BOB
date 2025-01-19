@@ -1,6 +1,8 @@
 package si.bob.zpmobileapp.ui.messages
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -94,6 +96,20 @@ class MessagesFragment : Fragment() {
         }
 
         getMessages()
+        startMessagePolling()
+    }
+
+    private fun startMessagePolling() {
+        // Check if the fragment is attached before starting background work
+        if (isAdded) {
+            // Perform background tasks or UI updates
+            getMessages()
+        }
+
+        // Set up polling for messages every 5 seconds
+        Handler(Looper.getMainLooper()).postDelayed({
+            startMessagePolling()
+        }, 5000)  // 5000ms = 5 seconds
     }
 
     private fun getMessages() {

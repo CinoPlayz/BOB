@@ -21,6 +21,7 @@ class MyApp : Application() {
         const val BACKEND_URL_KEY = "bobMobileApp_backend_url"
         const val USERNAME_KEY = "bobMobileApp_username"
         const val TOKEN_KEY = "bobMobileApp_token"
+        const val NOTIFICATION_TOKEN_KEY = "bobMobileApp_notification_token"
     }
     override fun onCreate() {
         super.onCreate()

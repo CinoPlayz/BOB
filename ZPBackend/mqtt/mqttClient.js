@@ -79,6 +79,22 @@ client.on('connect', () => {
             console.error('Error subscribing to app/messages/retrieve/all/request:', err);
         }
     })
+
+    client.subscribe('app/notifications/register/request', (err) => {
+        if (!err) {
+            console.log('Subscribed to app/notifications/register/request');
+        } else {
+            console.error('Error subscribing to app/notifications/register/request:', err);
+        }
+    })
+
+    client.subscribe('app/notifications/deregister/request', (err) => {
+        if (!err) {
+            console.log('Subscribed to app/notifications/deregister/request');
+        } else {
+            console.error('Error subscribing to app/notifications/deregister/request:', err);
+        }
+    })
 });
 
 client.on('error', (err) => {
