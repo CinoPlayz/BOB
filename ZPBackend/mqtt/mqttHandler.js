@@ -378,8 +378,19 @@ client.on('message', async (topic, message) => {
         try {
             const { token, username, timeOfRequest, coordinatesOfRequest, guessedOccupancyRate, realOccupancyRate, route } = JSON.parse(message.toString());
 
+            console.log("Parsed message:", { token, timeOfRequest, coordinatesOfRequest, guessedOccupancyRate, realOccupancyRate, route });
+
             // Check for missing fields
-            if (!token || !timeOfRequest || !coordinatesOfRequest || !guessedOccupancyRate || !realOccupancyRate || !route) {
+            if (
+                token == null || // null or undefined
+                timeOfRequest == null ||
+                coordinatesOfRequest == null ||
+                guessedOccupancyRate == null ||
+                realOccupancyRate == null ||
+                route == null ||
+                isNaN(realOccupancyRate) || // Valid number
+                isNaN(guessedOccupancyRate)
+            ) {
                 console.log("Missing required fields, sending failure response.");
                 return client.publish(`app/passengers/create/response`, JSON.stringify({
                     success: false,
