@@ -1,17 +1,18 @@
 #![allow(non_snake_case)]
 
-use chrono::{DateTime, TimeZone, Utc};
-use mpi::{traits::{Collection, Equivalence}, Error};
+use bson::oid::ObjectId;
+use chrono::{DateTime, Utc};
+use mpi::traits::Equivalence;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PassengerData{    
+pub struct PassengerData{
     pub userRequestDateTime: DateTime<Utc>,
     pub coordinatesOfUserRequest: Coordinates,
     pub guessedOccupancyRate: i32,
     pub realOccupancyRate: i32,
     pub routeId: String,
-    pub postedByUserId: String,
+    pub postedByUserId: String
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -106,5 +107,37 @@ impl PassengerDataMPI{
 impl CoordinatesMPI{
     pub fn toCoordinates(&self) -> Coordinates{
         return Coordinates { lat: self.lat, lng: self.lng }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PassengerDataMongoDB{    
+    pub _id: ObjectId,
+    #[serde(rename = "timeOfRequest", with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub userRequestDateTime: DateTime<Utc>,
+    #[serde(rename = "coordinatesOfRequest")]
+    pub coordinatesOfUserRequest: Coordinates,
+    pub guessedOccupancyRate: i32,
+    pub realOccupancyRate: i32,
+    #[serde(rename = "route", with = "bson::serde_helpers::hex_string_as_object_id")]
+    pub routeId: String,
+    #[serde(rename = "postedByUser", with = "bson::serde_helpers::hex_string_as_object_id")]
+    pub postedByUserId: String,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub createdAt: DateTime<Utc>,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub updatedAt: DateTime<Utc>
+}
+
+impl PassengerDataMongoDB {
+    pub fn toPassengerData(&self) -> PassengerData{
+        return PassengerData{
+            userRequestDateTime: self.userRequestDateTime,
+            coordinatesOfUserRequest: self.coordinatesOfUserRequest.clone(),
+            guessedOccupancyRate: self.guessedOccupancyRate,
+            realOccupancyRate: self.realOccupancyRate,
+            routeId: self.routeId.clone(),
+            postedByUserId: self.postedByUserId.clone(),
+        };
     }
 }
