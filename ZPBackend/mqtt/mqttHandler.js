@@ -656,7 +656,146 @@ client.on('message', async (topic, message) => {
             }));
         }
     }
+
+    if (topic === 'app/autoDataCapture/create/request') {
+        try {
+            const { token, username, trainType, wagonNumber, imageBase64, timeOfRequest, coordinatesOfRequest, route } = JSON.parse(message.toString());
+
+            if (!token || !username || !trainType || !wagonNumber || !timeOfRequest || !coordinatesOfRequest || !route || !imageBase64) {
+                return client.publish(`app/autoDataCapture/create/response/`, JSON.stringify({
+                    success: false,
+                    message: "Missing required fields"
+                }));
+            }
+
+            const user = await UserModel.findOne({ "tokens.token": token });
+            if (!user) {
+                return client.publish(`app/autoDataCapture/create/response/${username}`, JSON.stringify({
+                    success: false,
+                    message: "Unauthorized access"
+                }));
+            }
+
+            const seatData = await SeatsModel.findOne({ type: trainType, wagonNumber: wagonNumber });
+            if (!seatData) {
+                return client.publish(`app/autoDataCapture/create/response/${username}`, JSON.stringify({
+                    success: false,
+                    message: "Seat data not found"
+                }));
+            }
+
+            const numOfSeats = seatData.countOfSeats;
+
+            const imageBuffer = Buffer.from(imageBase64, 'base64');
+            const imagePath = `uploads/${username}_${Date.now()}.jpg`;
+            fs.writeFileSync(imagePath, imageBuffer);
+
+            const numOfPeople = await processImage(imagePath);
+
+            const guessedOccupancyRate = numOfPeople / numOfSeats * 100; // %
+
+            console.log("numOfSeats: ", numOfSeats);
+            console.log("numOfPeople: ", numOfPeople);
+            console.log("guessedOccupancyRate: ", guessedOccupancyRate);
+
+            const newPassenger = new PassengersModel({
+                timeOfRequest,
+                coordinatesOfRequest,
+                guessedOccupancyRate,
+                realOccupancyRate: null,
+                route,
+                postedByUser: user._id
+            });
+
+            const savedPassenger = await newPassenger.save();
+
+            console.log("Auto passenger created successfully, sending success response.");
+
+            const responseMessage = JSON.stringify({
+                success: true,
+                numOfPeople: numOfPeople,
+                guessedOccupancyRate: guessedOccupancyRate
+            });
+
+            console.log("Publishing response to topic:", `app/autoDataCapture/create/response/${user.username}`);
+            client.publish(`app/autoDataCapture/create/response/${user.username}`, responseMessage, (err) => {
+                if (err) {
+                    console.error("Error publishing response:", err);
+                } else {
+                    console.log("Response successfully published.");
+                }
+            });
+
+            if (guessedOccupancyRate > 20) {
+                console.log("High occupancy")
+
+                const routeId = route; // Assuming `route` is the ID of the route
+                const routeData = await RouteModel.findById(routeId);
+
+                const formattedOccupancyRate = guessedOccupancyRate.toFixed(2);
+                const message = `Auto generated occupancy on route ${routeData.trainNumber} is high ${formattedOccupancyRate}!`;
+
+                const newMessage = new MessageModel({
+                    timeOfMessage: timeOfRequest,
+                    postedByUser: user._id,
+                    message: message,
+                    category: "extreme"
+                });
+
+                const savedMessage = await newMessage.save();
+
+                const usersWithPushTokens = await UserModel.find({
+                    notificationTokens: { $exists: true, $ne: [] }
+                });
+
+                const pushTokens = usersWithPushTokens
+                    .map(user => user.notificationTokens)
+                    .flat();
+
+                const senderPushToken = user.notificationTokens; // Senders push token
+                const filteredPushTokens = pushTokens.filter(token => !senderPushToken.includes(token)); // Exclude sender (do not send notification to original sender)
+
+                if (pushTokens.length > 0) {
+                    try {
+                        // Use Firebase Admin SDK to send notifications to all push tokens
+                        const notificationPromises = filteredPushTokens.map(token =>
+                            sendNotificationToUser(token, 'Extreme Event Notification', `Auto generated occupancy by user ${user.username} on route ${routeData.trainNumber} is high ${formattedOccupancyRate}!`)
+                        );
+
+                        await Promise.all(notificationPromises);
+                    } catch (error) {
+                        console.error("Error sending notification:", error);
+                    }
+                } else {
+                    console.log('No registered push tokens found.');
+                }
+            }
+        } catch (err) {
+            console.error('Error processing automatic data capture request:', err);
+            client.publish(`app/autoDataCapture/create/response`, JSON.stringify({
+                success: false,
+                message: "Error when processing data request"
+            }));
+        }
+    }
 });
+
+const processImage = (imagePath) => {
+    return new Promise((resolve, reject) => {
+        exec(`conda run -n PRO python ../ZPOccupancyDetection/image_processing.py count ${imagePath}`, (error, stdout, stderr) => {
+            fs.unlinkSync(imagePath); // Clean up image file
+
+            if (error) {
+                console.error(`Error executing script: ${stderr}`);
+                reject(new Error("Error during image processing"));
+            }
+
+            const numOfPeople = parseInt(stdout.trim());
+            console.log("numOfPeople inside: ", numOfPeople);
+            resolve(numOfPeople);
+        });
+    });
+};
 
 const sendNotificationToUser = async (deviceToken, title, body) => {
     const message = {
