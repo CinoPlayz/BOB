@@ -125,20 +125,51 @@ public class Waypoints {
 
         RailwayPath fourSevenPath = new RailwayPath("4-7", fourSevenPoints);
         railwayPaths.add(fourSevenPath);
+//
+//        Array<Vector2> threeFivePoints = new Array<>();
+//        threeFivePoints.add(new Vector2(964.55237f, 884.88934f));
+//        threeFivePoints.add(new Vector2(986.0001f, 870.0002f));
+//        threeFivePoints.add(new Vector2(997.0001f, 842.00024f));
+//        threeFivePoints.add(new Vector2(996.0001f, 806.0001f));
+//        threeFivePoints.add(new Vector2(996.0001f, 770.0002f));
+////        threeFivePoints.add(new Vector2(994.0001f, 722.0001f));
+////        threeFivePoints.add(new Vector2(986.0001f, 681.0001f));
+////        threeFivePoints.add(new Vector2(972.0001f, 652.0001f));
+
+     //   RailwayPath threeFivePath = new RailwayPath("3-5", threeFivePoints);
+       // railwayPaths.add(threeFivePath);
 
 
-        Array<Vector2> threeFivePoints = new Array<>();
-        threeFivePoints.add(new Vector2(964.55237f, 884.88934f));
-        threeFivePoints.add(new Vector2(986.0001f, 870.0002f));
-        threeFivePoints.add(new Vector2(997.0001f, 842.00024f));
-        threeFivePoints.add(new Vector2(996.0001f, 806.0001f));
-        threeFivePoints.add(new Vector2(996.0001f, 770.0002f));
-        threeFivePoints.add(new Vector2(994.0001f, 722.0001f));
-        threeFivePoints.add(new Vector2(986.0001f, 681.0001f));
-        threeFivePoints.add(new Vector2(972.0001f, 652.0001f));
+        Array<Vector2> threeTwentyfourPoints = new Array<>();
+        threeTwentyfourPoints.add(new Vector2(964.55237f, 884.88934f));
+        threeTwentyfourPoints.add(new Vector2(986.0001f, 870.0002f));
+        threeTwentyfourPoints.add(new Vector2(997.0001f, 842.00024f));
+        threeTwentyfourPoints.add(new Vector2(996.0001f, 806.0001f));
+        threeTwentyfourPoints.add(new Vector2(996.0001f, 770.0002f));
 
-        RailwayPath threeFivePath = new RailwayPath("3-5", threeFivePoints);
-        railwayPaths.add(threeFivePath);
+        RailwayPath threeTwentyfourPath = new RailwayPath("3-24", threeTwentyfourPoints);
+        railwayPaths.add(threeTwentyfourPath);
+
+        Array<Vector2> fiveTwentyfourPoints = new Array<>();
+        fiveTwentyfourPoints.add(new Vector2(972.0001f, 652.0001f));
+        fiveTwentyfourPoints.add(new Vector2(986.0001f, 681.0001f));
+        fiveTwentyfourPoints.add(new Vector2(981.0001f, 756.0001f));
+        fiveTwentyfourPoints.add(new Vector2(996.0001f, 770.0002f));
+        RailwayPath fiveTwentyfourPath = new RailwayPath("5-24", fiveTwentyfourPoints);
+        railwayPaths.add(fiveTwentyfourPath);
+
+
+        Array<Vector2> twentyFourTwentyFivePoints = new Array<>();
+        twentyFourTwentyFivePoints.add(new Vector2(996.0001f, 770.0002f));
+        twentyFourTwentyFivePoints.add(new Vector2(1020.0001f, 772.0002f));
+        twentyFourTwentyFivePoints.add(new Vector2(1056.0001f, 770.0002f));
+        twentyFourTwentyFivePoints.add(new Vector2(1101.0001f, 766.0001f));
+        twentyFourTwentyFivePoints.add(new Vector2(1128.0001f, 764.00006f));
+        twentyFourTwentyFivePoints.add(new Vector2(1159.0001f, 757.0001f));
+
+        RailwayPath twentyFourTwentyFivePath = new RailwayPath("24-25", twentyFourTwentyFivePoints);
+        railwayPaths.add(twentyFourTwentyFivePath);
+
 
 
         Array<Vector2> threeEightPoints = new Array<>();
@@ -448,14 +479,14 @@ public class Waypoints {
 
         Junction junctionThree = new Junction(new Vector2(964.55237f, 884.88934f));
 
-        junctionThree.addConnection(new PathConnection("1-3", "3-5", false, false));
+        junctionThree.addConnection(new PathConnection("1-3", "3-24", false, false));
         junctionThree.addConnection(new PathConnection("1-3", "3-8", false, false));
 
         junctionThree.addConnection(new PathConnection("3-8", "1-3", true, true));
-        junctionThree.addConnection(new PathConnection("3-8", "3-5", true, false));
+        junctionThree.addConnection(new PathConnection("3-8", "3-24", true, false));
 
-        junctionThree.addConnection(new PathConnection("3-5", "3-8", true, false));
-        junctionThree.addConnection(new PathConnection("3-5", "1-3", true, true));
+        junctionThree.addConnection(new PathConnection("3-24", "3-8", true, false));
+        junctionThree.addConnection(new PathConnection("3-24", "1-3", true, true));
 
 
         junctions.add(junctionThree);
@@ -464,12 +495,14 @@ public class Waypoints {
         Junction junctionFive = new Junction(new Vector2(972.0001f, 652.0001f));
 
         junctionFive.addConnection(new PathConnection("2-5", "5-9", false, false));
-        junctionFive.addConnection(new PathConnection("2-5", "3-5", false, true));
+        junctionFive.addConnection(new PathConnection("2-5", "5-24", false, false));
 
-        junctionFive.addConnection(new PathConnection("3-5", "2-5", false, true));
-        junctionFive.addConnection(new PathConnection("3-5", "5-9", false, false));
+        junctionFive.addConnection(new PathConnection("5-24", "2-5", true, true));
+        junctionFive.addConnection(new PathConnection("5-24", "5-9", true, false));
+//        junctionFive.addConnection(new PathConnection("3-5", "2-5", false, true));
+//        junctionFive.addConnection(new PathConnection("3-5", "5-9", false, false));
 
-        junctionFive.addConnection(new PathConnection("5-9", "3-5", true, true));
+        junctionFive.addConnection(new PathConnection("5-9", "5-24", true, false));
         junctionFive.addConnection(new PathConnection("5-9", "2-5", true, true));
         junctions.add(junctionFive);
 
@@ -588,8 +621,27 @@ public class Waypoints {
 
         junctionTwenty.addConnection(new PathConnection("20-23", "19-20", true, true));
         junctionTwenty.addConnection(new PathConnection("20-23", "18-20", true, true));
-
         junctions.add(junctionTwenty);
+
+
+
+
+        Junction junctionTwentyFour = new Junction(new Vector2(996.0001f, 770.0002f));
+
+
+        junctionTwentyFour.addConnection(new PathConnection("3-24", "5-24", false, true));
+        junctionTwentyFour.addConnection(new PathConnection("3-24", "24-25", false, false));
+
+        junctionTwentyFour.addConnection(new PathConnection("5-24", "24-25", false, false));
+        junctionTwentyFour.addConnection(new PathConnection("5-24", "3-24", false, true));
+
+        junctionTwentyFour.addConnection(new PathConnection("24-25", "3-24", true, true));
+        junctionTwentyFour.addConnection(new PathConnection("24-25", "5-24", true, true));
+
+
+        junctions.add(junctionTwentyFour);
+
+
 
 
     }

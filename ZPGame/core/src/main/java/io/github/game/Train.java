@@ -9,6 +9,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 
+import io.github.game.screens.GameScreen;
+
 public class Train extends GameObjectDynamic implements Pool.Poolable {
 
     public int currentWaypoint = 0;
@@ -56,13 +58,13 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
 
     private void handleJunction(Junction junction, Waypoints waypoints) {
         Array<PathConnection> availableConnections =
-            junction.getAvailableConnections(currentPathId, isReversed);
+                junction.getAvailableConnections(currentPathId, isReversed);
 
 
         if (availableConnections.size > 0) {
             // Izbere naslednjo pot glede na nextDirection
             PathConnection chosenPath = nextDirection ?
-                availableConnections.get(0) : availableConnections.get(1);
+                    availableConnections.get(0) : availableConnections.get(1);
             //System.out.println("Chosen path: " + chosenPath.fromPathId + " -> " + chosenPath.toPathId);
             //System.out.println("New direction reversed: " + chosenPath.toReversed);
             // Nastavi novo pot
@@ -83,10 +85,12 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
         position.y += ySpeed * deltaTime;
     }
 
+
     public void update(float deltaTime, Waypoints waypoints) {
         if (currentPath == null) {
             return;
         }
+
         //Vector2 targetPoint = path.get(currentWaypoint);
         Vector2 targetPoint = currentPath.getPoint(currentWaypoint);
 
@@ -95,13 +99,15 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
         if (distance < 5f) {
             // Preveri za križišče samo če smo na koncu/začetku poti
             if ((isReversed && currentWaypoint == 0) ||
-                (!isReversed && currentWaypoint == currentPath.getSize() - 1)) {
+                    (!isReversed && currentWaypoint == currentPath.getSize() - 1)) {
 
                 Junction junction = waypoints.getJunctionNearPoint(position, 5f);
                 if (junction != null) {
                     handleJunction(junction, waypoints);
                     return;
                 }
+
+
             }
 
             // Premik na naslednjo točko
@@ -122,8 +128,8 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
 
 
         float angle = (float) Math.atan2(
-            targetPoint.y - position.y,
-            targetPoint.x - position.x
+                targetPoint.y - position.y,
+                targetPoint.x - position.x
         );
 
         float dx = targetPoint.x - position.x;
@@ -139,6 +145,22 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
 
     }
 
+    public boolean shouldRemoveTrain(String pathId, boolean reversed, Array<GameScreen.TrainSpawnConfig> spawnConfigs) {
+        for (GameScreen.TrainSpawnConfig config : spawnConfigs) {
+            if (config.pathId.equals(pathId) && config.isReversed != reversed) {
+                if (!config.isReversed) {
+                    if (currentWaypoint == 0) {
+                        return true;
+                    }
+                } else {
+                    if (currentWaypoint == currentPath.getSize() - 1) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     public void drawArrow(ShapeRenderer shapeRenderer) {
         float arrowLength = bounds.width * 0.8f;
@@ -184,19 +206,27 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
         //System.out.println("pozicija " + position.x + " " + position.y);
         //batch.draw(texture, position.x, position.y, bounds.width, bounds.height, rotation);
         batch.draw(texture,
-            position.x - bounds.width / 2,
-            position.y - bounds.height / 2,
-            bounds.width / 2,
-            bounds.height / 2,
-            bounds.width,
-            bounds.height,
-            1, 1,
-            rotation);
+                position.x - bounds.width / 2,
+                position.y - bounds.height / 2,
+                bounds.width / 2,
+                bounds.height / 2,
+                bounds.width,
+                bounds.height,
+                1, 1,
+                rotation);
 
 
     }
 
     @Override
     public void reset() {
+    }
+
+    public boolean isReversed() {
+        return isReversed;
+    }
+
+    public String getCurrentPathId() {
+        return currentPathId;
     }
 }

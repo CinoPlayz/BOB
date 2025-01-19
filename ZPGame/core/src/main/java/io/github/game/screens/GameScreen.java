@@ -3,6 +3,7 @@ package io.github.game.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -16,6 +17,9 @@ import com.badlogic.gdx.utils.Pools;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
+import java.util.Iterator;
+
+import io.github.game.PendingTrain;
 import io.github.game.RailwayPath;
 import io.github.game.Train;
 import io.github.game.Waypoints;
@@ -33,8 +37,38 @@ public class GameScreen implements Screen {
 
     private Array<Train> trainArray;
     Pool<Train> trainPool = Pools.get(Train.class, 10);
+    private final Array<PendingTrain> pendingTrains = new Array<>();
 
     private SpriteBatch batch;
+
+
+    private float spawnTimer = 0;
+    private final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
+    private float currentSpawnInterval = 3f;
+    private DifficultyLevel currentDifficulty = DifficultyLevel.EASY;
+
+    public enum DifficultyLevel {
+        EASY(5f),
+        NORMAL(3f),
+        HARD(1.5f);
+
+        final float baseSpawnInterval;
+
+        DifficultyLevel(float baseSpawnInterval) {
+            this.baseSpawnInterval = baseSpawnInterval;
+        }
+    }
+
+    public static class TrainSpawnConfig {
+        public final String pathId;
+        public final boolean isReversed;
+
+        TrainSpawnConfig(String pathId, boolean isReversed) {
+            this.pathId = pathId;
+            this.isReversed = isReversed;
+        }
+
+    }
 
     public GameScreen(FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, SpriteBatch batch) {
         this.viewport = viewport;
@@ -47,108 +81,118 @@ public class GameScreen implements Screen {
         trainArray = new Array<>();
         trainPool.fill(2);
         this.gameplayAtlas = gameplayAtlas;
-
-        spawnTrain();
+        initializeSpawnConfigs();
+        // spawnPendingTrain();
+        spawnTestTrain();
     }
 
-    private void spawnTrain() {
+    private void spawnTestTrain() {
+//        Train trainReverse = trainPool.obtain();
+//        trainReverse.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
+//        RailwayPath pathReverse = waypoints.getPathById("24-25");
+//        trainReverse.setPath(pathReverse, true);
+//
+//        if (trainReverse.texture != null) {
+//            trainReverse.bounds.width = trainReverse.texture.getRegionWidth() / 13f;
+//            trainReverse.bounds.height = trainReverse.texture.getRegionHeight() / 13f;
+//        }
+//        //Vector2 startPosReverse = pathReverse.getStart();
+//        //trainReverse.position.x = startPosReverse.x;
+//        //trainReverse.position.y = startPosReverse.y;
+//        trainReverse.speed = 50f;
+//        trainArray.add(trainReverse);
+    }
+
+
+    private void initializeSpawnConfigs() {
+        spawnConfigs.add(new TrainSpawnConfig("0-1", false));
+        spawnConfigs.add(new TrainSpawnConfig("4-6", true));
+        spawnConfigs.add(new TrainSpawnConfig("4-7", true));
+        spawnConfigs.add(new TrainSpawnConfig("8-22", true));
+        spawnConfigs.add(new TrainSpawnConfig("10-12", true));
+        spawnConfigs.add(new TrainSpawnConfig("10-13", true));
+        spawnConfigs.add(new TrainSpawnConfig("15-16", true));
+        spawnConfigs.add(new TrainSpawnConfig("20-23", true));
+        spawnConfigs.add(new TrainSpawnConfig("24-25", true));
+    }
+
+    public void setDifficulty(DifficultyLevel difficulty) {
+        this.currentDifficulty = difficulty;
+        this.currentSpawnInterval = difficulty.baseSpawnInterval;
+    }
+
+    private void spawnPendingTrain() {
+        if (trainArray.size >= 10) return;
+
+        TrainSpawnConfig config = spawnConfigs.get(MathUtils.random(spawnConfigs.size - 1));
+        float cooldown = MathUtils.random(3f, 5f);
+        //float spawnTime = spawnTimer + cooldown;
+        float spawnTime = System.currentTimeMillis() / 1000f + cooldown;
+
+
+        pendingTrains.add(new PendingTrain(config, cooldown));
+        System.out.println("Scheduled train for path " + config.pathId + " with cooldown: " + cooldown + " seconds.");
+    }
+
+
+    private void spawnTrain(PendingTrain pending) {
         Train newTrain = trainPool.obtain();
         newTrain.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
 
-        RailwayPath initialPath = waypoints.getPathById("0-1");
-        newTrain.setPath(initialPath, false);
+        RailwayPath initialPath = waypoints.getPathById(pending.config.pathId);
+        newTrain.setPath(initialPath, pending.config.isReversed);
 
         if (newTrain.texture != null) {
             newTrain.bounds.width = newTrain.texture.getRegionWidth() / 13f;
             newTrain.bounds.height = newTrain.texture.getRegionHeight() / 13f;
-        } else {
-            System.err.println("Error: Train texture not found!");
         }
 
-        newTrain.speed = 50f;
+        float baseSpeed = 50f;
+        float speedMultiplier;
+        switch (currentDifficulty) {
+            case EASY:
+                speedMultiplier = MathUtils.random(0.8f, 1.2f);
+                break;
+            case HARD:
+                speedMultiplier = MathUtils.random(1.3f, 2.0f);
+                break;
+            case NORMAL:
+            default:
+                speedMultiplier = MathUtils.random(1.0f, 1.5f);
+                break;
+        }
+
+        newTrain.speed = baseSpeed * speedMultiplier;
         trainArray.add(newTrain);
-
-        Train trainReverse = trainPool.obtain();
-        trainReverse.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
-
-        trainReverse.setPath(initialPath, true); // true = obratna smer
-
-        if (trainReverse.texture != null) {
-            trainReverse.bounds.width = trainReverse.texture.getRegionWidth() / 13f;
-            trainReverse.bounds.height = trainReverse.texture.getRegionHeight() / 13f;
-        }
-
-        trainReverse.speed = 50f;
-        trainArray.add(trainReverse);
-
-        Train trainReverseOne = trainPool.obtain();
-        trainReverseOne.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
-        RailwayPath pathReverseOne = waypoints.getPathById("1-2");
-        trainReverseOne.setPath(pathReverseOne, true);
-
-        if (trainReverseOne.texture != null) {
-            trainReverseOne.bounds.width = trainReverseOne.texture.getRegionWidth() / 13f;
-            trainReverseOne.bounds.height = trainReverseOne.texture.getRegionHeight() / 13f;
-        }
-
-        trainReverseOne.speed = 30f;
-        trainArray.add(trainReverseOne);
-
-        Train trainReverseTwo = trainPool.obtain();
-        trainReverseTwo.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
-        RailwayPath pathReverseTwo = waypoints.getPathById("1-3");
-        trainReverseTwo.setPath(pathReverseTwo, true);
-
-        if (trainReverseTwo.texture != null) {
-            trainReverseTwo.bounds.width = trainReverseTwo.texture.getRegionWidth() / 13f;
-            trainReverseTwo.bounds.height = trainReverseTwo.texture.getRegionHeight() / 13f;
-        }
-        trainReverseTwo.speed = 30f;
-        trainArray.add(trainReverseTwo);
-
-
-        Train train1 = trainPool.obtain();
-        train1.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
-        RailwayPath path = waypoints.getPathById("20-23");
-        train1.setPath(path, true);
-
-        if (trainReverseTwo.texture != null) {
-            train1.bounds.width = train1.texture.getRegionWidth() / 13f;
-            train1.bounds.height = train1.texture.getRegionHeight() / 13f;
-        }
-        train1.speed = 60f;
-        trainArray.add(train1);
+        System.out.println("Train spawned on path " + pending.config.pathId);
     }
 
+
     private boolean isClickNearTrain(Train train, int screenX, int screenY) {
-        // 1. Pridobi world koordinate klika, upoštevaje vse transformacije kamere
         Vector3 worldClick = new Vector3(screenX, screenY, 0);
         camera.unproject(worldClick,
-            viewport.getScreenX(),
-            viewport.getScreenY(),
-            viewport.getScreenWidth(),
-            viewport.getScreenHeight()
+                viewport.getScreenX(),
+                viewport.getScreenY(),
+                viewport.getScreenWidth(),
+                viewport.getScreenHeight()
         );
 
-        // 2. Izračuna center vlaka
         float trainCenterX = train.position.x + train.bounds.width / 2;
         float trainCenterY = train.position.y + train.bounds.height / 2;
 
-        // 3. Pretvori pozicijo vlaka v screen koordinate za primerjavo
         Vector3 trainScreenPos = new Vector3(trainCenterX, trainCenterY, 0);
         camera.project(trainScreenPos,
-            viewport.getScreenX(),
-            viewport.getScreenY(),
-            viewport.getScreenWidth(),
-            viewport.getScreenHeight()
+                viewport.getScreenX(),
+                viewport.getScreenY(),
+                viewport.getScreenWidth(),
+                viewport.getScreenHeight()
         );
 
-        // 4. Izračuna razdaljo v world space
         float distance = Vector2.dst(
-            worldClick.x,
-            worldClick.y,
-            trainCenterX,
-            trainCenterY
+                worldClick.x,
+                worldClick.y,
+                trainCenterX,
+                trainCenterY
         );
 
 
@@ -180,6 +224,7 @@ public class GameScreen implements Screen {
 
     }
 
+
     @Override
     public void render(float delta) {
         ScreenUtils.clear(0, 0, 0, 1);
@@ -187,6 +232,27 @@ public class GameScreen implements Screen {
         viewport.apply();
         camera.update();
 
+
+        spawnTimer += delta;
+
+        if (spawnTimer >= currentSpawnInterval) {
+            spawnPendingTrain();
+            float randomFactor = MathUtils.random(0.8f, 1.2f);
+            currentSpawnInterval = currentDifficulty.baseSpawnInterval * randomFactor;
+
+            spawnTimer = 0;
+        }
+
+
+        for (Iterator<PendingTrain> iterator = pendingTrains.iterator(); iterator.hasNext(); ) {
+            PendingTrain pending = iterator.next();
+            pending.remainingTime -= delta;
+
+            if (pending.remainingTime <= 0) {
+                spawnTrain(pending);
+                iterator.remove();
+            }
+        }
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             int screenX = Gdx.input.getX();
@@ -204,7 +270,14 @@ public class GameScreen implements Screen {
 
         for (Train train : trainArray) {
             train.update(delta, waypoints);
+
+
+            if (train.shouldRemoveTrain(train.getCurrentPathId(), train.isReversed(), spawnConfigs)) {
+                trainArray.removeValue(train, true);
+                trainPool.free(train);
+            }
         }
+
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
@@ -228,7 +301,65 @@ public class GameScreen implements Screen {
         }
         shapeRenderer.end();
 
+        Array<GameScreen.TrainSpawnConfig> confs = new Array<>();
+        for (PendingTrain train : pendingTrains) {
+            if (train.remainingTime > 0) {
+                confs.add(new TrainSpawnConfig(train.config.pathId, train.config.isReversed));
+            }
+        }
 
+        for (GameScreen.TrainSpawnConfig config : spawnConfigs) {
+            drawSemaphore(config, confs);
+        }
+
+    }
+
+    public void drawSemaphore(TrainSpawnConfig config, Array<TrainSpawnConfig> confs) {
+
+        RailwayPath path = waypoints.getPathById(config.pathId);
+        if (path == null || path.getSize() < 2) {
+            System.out.println("Path not valid or too short to draw semaphore.");
+            return;
+        }
+
+        Vector2 startPoint = config.isReversed
+                ? path.getPoint(path.getSize() - 2)
+                : path.getPoint(1);
+        Vector2 nextPoint = config.isReversed
+                ? path.getPoint(path.getSize() - 3)
+                : path.getPoint(2);
+
+
+        float dx = nextPoint.x - startPoint.x;
+        float dy = nextPoint.y - startPoint.y;
+
+
+        float length = (float) Math.sqrt(dx * dx + dy * dy);
+        dx /= length;
+        dy /= length;
+
+
+        float offsetX = -dy * 30;
+        float offsetY = dx * 30;
+
+
+        float semaphoreX = startPoint.x + offsetX;
+        float semaphoreY = startPoint.y + offsetY;
+
+        boolean isInConfs = false;
+        for (TrainSpawnConfig conf : confs) {
+            if (conf.pathId.equals(config.pathId) && conf.isReversed == config.isReversed) {
+                isInConfs = true;
+                break;
+            }
+        }
+
+        float radius = 10;
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(isInConfs ? Color.RED : Color.GREEN);
+        shapeRenderer.circle(semaphoreX, semaphoreY, radius);
+        shapeRenderer.end();
     }
 
 
