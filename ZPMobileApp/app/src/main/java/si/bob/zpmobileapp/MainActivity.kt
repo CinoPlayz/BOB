@@ -67,12 +67,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIntent(intent: Intent) {
         val navigateTo = intent.getStringExtra("navigate_to")
-        Log.d("IntentNavigation", "Navigate To: $navigateTo") // Debug log
+        Log.d("IntentNavigation", "Navigate To: $navigateTo, Intent Extras: ${intent.extras}")
 
         if (navigateTo == "messages") {
-            val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment).navController
-            Log.d("IntentNavigation", "Navigating to MessagesFragment")
-            navController.navigate(R.id.navigation_messages)
+            val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_main) as? NavHostFragment)?.navController
+            navController?.let {
+                if (it.currentDestination?.id != R.id.navigation_messages) {
+                    it.navigate(R.id.navigation_messages)
+                    Log.d("IntentNavigation", "Navigated to MessagesFragment")
+                }
+            }
         }
     }
 

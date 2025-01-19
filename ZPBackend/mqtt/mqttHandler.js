@@ -574,12 +574,17 @@ client.on('message', async (topic, message) => {
                 });
 
                 // Extract all registered push tokens
-                const pushTokens = usersWithPushTokens.map(user => user.notificationTokens).flat();
+                const pushTokens = usersWithPushTokens
+                    .map(user => user.notificationTokens)
+                    .flat();
+
+                const senderPushToken = user.notificationTokens; // Senders push token
+                const filteredPushTokens = pushTokens.filter(token => !senderPushToken.includes(token)); // Exclude sender (do not send notification to original sender)
 
                 if (pushTokens.length > 0) {
                     try {
                         // Use Firebase Admin SDK to send notifications to all push tokens
-                        const notificationPromises = pushTokens.map(token =>
+                        const notificationPromises = filteredPushTokens.map(token =>
                             sendNotificationToUser(token, 'Extreme Event Notification', `User "${user.username}" posted: ${incomingMessage}.`)
                         );
 
@@ -655,9 +660,10 @@ client.on('message', async (topic, message) => {
 
 const sendNotificationToUser = async (deviceToken, title, body) => {
     const message = {
-        notification: {
+        data: {
             title: title,
-            body: body
+            body: body,
+            navigate_to: 'messages' // Custom data field to specify navigation
         },
         token: deviceToken
     };

@@ -3,6 +3,7 @@ package si.bob.zpmobileapp
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
+import com.google.firebase.FirebaseApp
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
 import org.eclipse.paho.client.mqttv3.MqttClient
@@ -38,6 +39,7 @@ class MyApp : Application() {
         }
 
         initializeMQTT()
+        FirebaseApp.initializeApp(this)
     }
 
     private fun initializeMQTT() {
