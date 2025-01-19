@@ -40,7 +40,7 @@ fn main() {
         if args[i] == "-n" && argsLen >= i+1 {            
             numOfThreads = args[i+1].parse::<usize>().expect("Number of threads not a number");
         }
-
+        
         if args[i] == "-h" {
             println!("Avaliable flags:");
             println!("-c  -- Connection string to mongodb");
@@ -50,6 +50,7 @@ fn main() {
         }
     }  
 
+    println!("Start Time: {}",  Utc::now().timestamp_millis());
     doWorkMPI(numOfThreads, clientOption);
 }
 
@@ -286,7 +287,13 @@ fn doWorkMPI(mut numOfThreads: usize, clientOption: Option<Client>){
                             file.write_all(serde_json::to_string(&blockchain).unwrap().as_bytes()).unwrap();
                         }                        
                     }
-                }               
+                }   
+
+                if blockchain.len() == 15{
+                    println!("End Time: {}",  Utc::now().timestamp_millis());
+                    exit(0);
+                    //break;
+                }            
                
             }
             //Execute in any procees other then root
