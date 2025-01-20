@@ -3,7 +3,6 @@ package io.github.game.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -21,33 +20,28 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
 
 
-import org.bson.Document;
-import org.bson.conversions.Bson;
-
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import io.github.game.Main;
 import io.github.game.assets.RegionNames;
 import io.github.game.utils.Constants;
 import io.github.game.utils.Geolocation;
 import io.github.game.utils.MapRasterTiles;
-import io.github.game.utils.MongoClientConnect;
 import io.github.game.utils.RequestTiles;
 import io.github.game.utils.Requests;
 import io.github.game.utils.TrainLocHistory;
@@ -66,8 +60,15 @@ public class MapScreen implements Screen {
     private Stage stage;
     private Skin skin;
     private Main game;
-
     private List<TrainLocHistory> listOfTrainLocHistory;
+    private int speedOfAnimation = 1;
+    private int iterInAnimation = 0;
+    private LocalDateTime startDateForAnimation;
+    private LocalDateTime endDateForAnimation;
+    private String startDateString = null;
+    private String endDateString = null;
+    private boolean playingAnimation = false;
+    private float timeOfLastIter = 0;
 
     private final Geolocation MARKER_GEOLOCATION = new Geolocation(46.559070, 15.638100);
 
@@ -92,7 +93,9 @@ public class MapScreen implements Screen {
         camera.zoom = 1f;
         camera.update();
 
-        listOfTrainLocHistory = null;
+        DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        startDateForAnimation = LocalDateTime.parse("2024-05-24T00:00:00.432+00:00", ISO_FORMATTER);
+        endDateForAnimation = LocalDateTime.parse("2024-05-24T23:59:59.432+00:00", ISO_FORMATTER);
 
         RequestTiles requestTiles = Requests.requestTiles(camera);
         beginTile = requestTiles.beginTile;
@@ -125,12 +128,13 @@ public class MapScreen implements Screen {
         layers.add(layer);
         tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
 
-        drawTrainLocOnce("2024-05-24T00:00:00.432+00:00", "2024-05-24T23:59:59.999+00:00");
+        drawAnimationInput();
+        drawTrainLoc();
     }
 
     @Override
     public void render(float delta) {
-        ScreenUtils.clear(0, 0, 0, 1);
+        ScreenUtils.clear(218, 231, 205, 255);
         handleInput();
 
         viewport.apply();
@@ -147,18 +151,27 @@ public class MapScreen implements Screen {
         tiledMapRenderer.setView(camera);
         tiledMapRenderer.render();
 
-        drawMarkers();
+        if(playingAnimation){
+            float elapsedTime = getCurrentTime() - timeOfLastIter;
+            if(elapsedTime > (float) Constants.ANIMATION_TIME / speedOfAnimation){
+                timeOfLastIter = getCurrentTime();
+                iterInAnimation++;
+                stage.clear();
+                drawTrainLoc();
+                drawAnimationInput();
+            }
+        }
+
         stage.act(delta);
         stage.draw();
-
     }
 
     private void handleInput() {
         if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            camera.zoom += 0.02;
+            camera.zoom += 0.05F;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
-            camera.zoom -= 0.02;
+            camera.zoom -= 0.05F;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             camera.translate(-3, 0, 0);
@@ -173,7 +186,7 @@ public class MapScreen implements Screen {
             camera.translate(0, 3, 0);
         }
 
-        camera.zoom = MathUtils.clamp(camera.zoom, 0.5f, 2f);
+        camera.zoom = MathUtils.clamp(camera.zoom, 0.2f, 1f);
     }
 
     @Override
@@ -205,86 +218,193 @@ public class MapScreen implements Screen {
         }
     }
 
-    private void drawMarkers() {
-        Vector2 marker = MapRasterTiles.getPixelPosition(MARKER_GEOLOCATION.lat, MARKER_GEOLOCATION.lng, beginTile.x, beginTile.y);
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.setColor(Color.RED);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.circle(marker.x, marker.y, 10);
-        shapeRenderer.end();
+    private boolean displayStartButton = true;
+    private boolean displayEndButton = false;
+
+    private void drawAnimationInput(){
+        LocalDateTime dateTimeCurrent = LocalDateTime.from(startDateForAnimation);
+        dateTimeCurrent = dateTimeCurrent.plusMinutes(iterInAnimation * 10L);
+
+        Window.WindowStyle windowStyle = skin.get("default", Window.WindowStyle.class);
+        windowStyle.titleFont = game.getFontMediumBold();
+
+        Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
+        labelStyle.font = game.getFontMedium();
+
+        TextField.TextFieldStyle textFieldStyle = skin.get("default", TextField.TextFieldStyle.class);
+        textFieldStyle.font = game.getFontMedium();
+
+        com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle listStyle = skin.get("default", com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle.class);
+        listStyle.font = game.getFontMedium();
+        SelectBox.SelectBoxStyle selectBoxStyle = skin.get("default", SelectBox.SelectBoxStyle.class);
+        selectBoxStyle.font = game.getFontMedium();
+        selectBoxStyle.listStyle.font = game.getFontMedium();
+
+        TextButton.TextButtonStyle textButtonStyle = skin.get("default", TextButton.TextButtonStyle.class);
+        textButtonStyle.font = game.getFontMedium();
+
+        Window windowAnimationInput = new Window("", windowStyle);
+        Label labelSpeed = new Label("Speed:", labelStyle);
+        SelectBox<Integer> selectBoxSpeed = new SelectBox<>(selectBoxStyle);
+        selectBoxSpeed.setItems(1, 2, 3, 4, 5);
+        selectBoxSpeed.setSelected(1);
+        Label labelTime = new Label("Time:", labelStyle);
+        Label labelCurrentTime = new Label(dateTimeCurrent.format(DateTimeFormatter.ISO_DATE_TIME), labelStyle);
+
+        if (startDateString == null){
+            startDateString = "2024-05-24T00:00:00";
+        }
+
+        if (endDateString == null){
+            endDateString = "2024-05-24T23:59:59";
+        }
+
+        Label labelStartDate = new Label("Start:", labelStyle);
+        Label labelEndDate = new Label("End:", labelStyle);
+        TextField textFieldStartDate = new TextField(startDateString, textFieldStyle);
+        TextField textFieldEndDate = new TextField(endDateString, textFieldStyle);
+        TextButton textButton = new TextButton("START", textButtonStyle);
+        TextButton textButtonEnd = new TextButton("End", textButtonStyle);
+        textButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                displayStartButton = false;
+                displayEndButton = true;
+                playingAnimation = !playingAnimation;
+                speedOfAnimation = selectBoxSpeed.getSelected();
+                startDateString = textFieldStartDate.getText();
+                endDateString = textFieldEndDate.getText();
+                DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+                startDateForAnimation = LocalDateTime.parse(startDateString, ISO_FORMATTER);
+                endDateForAnimation = LocalDateTime.parse(endDateString, ISO_FORMATTER);
+                listOfTrainLocHistory = Requests.getTrainList(startDateForAnimation, endDateForAnimation);
+                stage.clear();
+                drawAnimationInput();
+                drawTrainLoc();
+            }
+        });
+
+        textButtonEnd.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                displayStartButton = true;
+                displayEndButton = false;
+                playingAnimation = false;
+                iterInAnimation = 0;
+                stage.clear();
+                drawAnimationInput();
+            }
+        });
+
+        if(!displayStartButton){
+            if (!playingAnimation){
+                textButton.setText("RESUME");
+            } else {
+                textButton.setText("PAUSE");
+            }
+        }
+        else {
+            textButton.setText("START");
+        }
+
+
+        windowAnimationInput.add(labelSpeed).padRight(2f);
+        windowAnimationInput.add(selectBoxSpeed).padLeft(4).padRight(4).row();
+        windowAnimationInput.add(labelTime).padRight(2f);
+        windowAnimationInput.add(labelCurrentTime).row();
+        windowAnimationInput.add(labelStartDate).padRight(2f);
+        windowAnimationInput.add(textFieldStartDate).expandX().fillX().row();
+        windowAnimationInput.add(labelEndDate).padRight(2f);
+        windowAnimationInput.add(textFieldEndDate).expandX().fillX().row();
+        if (!displayEndButton){
+            windowAnimationInput.add(textButton).colspan(2);
+        }
+        else {
+            windowAnimationInput.add(textButton).expandX();
+            windowAnimationInput.add(textButtonEnd);
+        }
+        windowAnimationInput.center();
+
+        windowAnimationInput.sizeBy(600, 200);
+        windowAnimationInput.setPosition(100, 2000);
+
+
+        stage.addActor(windowAnimationInput);
     }
 
-    private void drawTrainLocOnce(String startDate, String endDate){
-        Bson filter = null;
-        @SuppressWarnings("NewApi") DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.ENGLISH);
-        try {
-            filter = new Document("$gte", format.parse(startDate)).append("$lt", format.parse(endDate));
-        }
-        catch (ParseException e) {
-            System.out.println(e.getMessage());
-        }
+    private void drawTrainLoc(){
+        List<TrainLocHistory> listOfCurrentTrains = new ArrayList<>();
+        long minutesDiff = ChronoUnit.MINUTES.between(startDateForAnimation, endDateForAnimation);
+        long maxIters = minutesDiff / 10;
+        LocalDateTime dateTimeGetStart = null;
+        LocalDateTime dateTimeGetEnd = null;
 
-        if(filter != null){
-            MongoCollection<Document> collection = MongoClientConnect.database.getCollection("trainlochistories");
-            FindIterable<Document> findIter = collection.find(new Document("timeOfRequest", filter));
-            List<Document> docs = new ArrayList<>();
-            findIter.into(docs);
-
-            listOfTrainLocHistory.clear();
-            for(int i = 0; i < docs.size(); i++){
-                Document doc = docs.get(i);
-                listOfTrainLocHistory.add(new TrainLocHistory(doc));
-            }
+        if(iterInAnimation <= maxIters){
+            LocalDateTime dateTime = LocalDateTime.from(startDateForAnimation);
+            dateTime = dateTime.plusMinutes(iterInAnimation * 10L);
+            dateTimeGetStart = dateTime.truncatedTo(ChronoUnit.HOURS).plusMinutes(5 * (dateTime.getMinute() / 5));
+            dateTimeGetEnd = dateTimeGetStart.plusMinutes(5);
         }
 
-        if (listOfTrainLocHistory != null){
-            TextureRegion textureTrain = gameplayAtlas.findRegion(RegionNames.TRAIN_ICON);
-
-            for(int i = 0; i < listOfTrainLocHistory.size(); i++){
+        if(listOfTrainLocHistory != null){
+            for(int i = 0; i < listOfTrainLocHistory.size(); i++) {
                 TrainLocHistory trainLocHistory = listOfTrainLocHistory.get(i);
-                double lat = trainLocHistory.getCoordinates().getLat();
-                double lng = trainLocHistory.getCoordinates().getLng();
-
-                Vector2 marker = MapRasterTiles.getPixelPosition(lat, lng, beginTile.x, beginTile.y);
-
-                Image trainIcon = new Image(textureTrain);
-                float trainIconWidth = trainIcon.getWidth() / 10;
-                float trainIconHeight = trainIcon.getHeight() / 10;
-
-                Window.WindowStyle windowStyle = skin.get("default", Window.WindowStyle.class);
-                windowStyle.titleFont = game.getFontMediumBold();
-
-                Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
-                labelStyle.font = game.getFontMedium();
-
-                Window windowAboveTrain = new Window("", windowStyle);
-                Label labelName = new Label(trainLocHistory.getTrainType() + " " + trainLocHistory.getTrainNumber(), labelStyle);
-                Label labelNextStop = new Label("Next station: " + trainLocHistory.getNextStation(), labelStyle);
-                Label labelDelay = new Label("Delay: " + trainLocHistory.getDelay() + "min", labelStyle);
-                windowAboveTrain.add(labelName).row();
-                windowAboveTrain.add(labelNextStop).row();
-                windowAboveTrain.add(labelDelay);
-                windowAboveTrain.sizeBy(300, 0);
-                windowAboveTrain.setPosition(marker.x - windowAboveTrain.getWidth()/2, marker.y + trainIconHeight);
-                windowAboveTrain.setVisible(false);
-
-                trainIcon.addListener(new ClickListener(){
-                    @Override
-                    public void clicked(InputEvent event, float x, float y) {
-                        windowAboveTrain.setVisible(!windowAboveTrain.isVisible());
-                    }
-                });
-
-
-                trainIcon.setWidth(trainIconWidth);
-                trainIcon.setHeight(trainIconHeight);
-                trainIcon.setPosition(marker.x - trainIconWidth / 2, marker.y);
-
-                stage.addActor(trainIcon);
-                stage.addActor(windowAboveTrain);
+                if(trainLocHistory.getTimeOfRequest().isAfter(dateTimeGetStart) && trainLocHistory.getTimeOfRequest().isBefore(dateTimeGetEnd)){
+                    listOfCurrentTrains.add(trainLocHistory);
+                }
             }
         }
 
 
+
+        TextureRegion textureTrain = gameplayAtlas.findRegion(RegionNames.TRAIN_ICON);
+
+        for(int i = 0; i < listOfCurrentTrains.size(); i++){
+            TrainLocHistory trainLocHistory = listOfCurrentTrains.get(i);
+            double lat = trainLocHistory.getCoordinates().getLat();
+            double lng = trainLocHistory.getCoordinates().getLng();
+
+            Vector2 marker = MapRasterTiles.getPixelPosition(lat, lng, beginTile.x, beginTile.y);
+
+            Image trainIcon = new Image(textureTrain);
+            float trainIconWidth = trainIcon.getWidth() / 10;
+            float trainIconHeight = trainIcon.getHeight() / 10;
+
+            Window.WindowStyle windowStyle = skin.get("default", Window.WindowStyle.class);
+            windowStyle.titleFont = game.getFontMediumBold();
+
+            Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
+            labelStyle.font = game.getFontMedium();
+
+            Window windowAboveTrain = new Window("", windowStyle);
+            Label labelName = new Label(trainLocHistory.getTrainType() + " " + trainLocHistory.getTrainNumber(), labelStyle);
+            Label labelNextStop = new Label("Next station: " + trainLocHistory.getNextStation(), labelStyle);
+            Label labelDelay = new Label("Delay: " + trainLocHistory.getDelay() + "min", labelStyle);
+            windowAboveTrain.add(labelName).row();
+            windowAboveTrain.add(labelNextStop).row();
+            windowAboveTrain.add(labelDelay);
+            windowAboveTrain.sizeBy(300, 0);
+            windowAboveTrain.setPosition(marker.x - windowAboveTrain.getWidth()/2, marker.y + trainIconHeight);
+            windowAboveTrain.setVisible(false);
+
+            trainIcon.addListener(new ClickListener(){
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    windowAboveTrain.setVisible(!windowAboveTrain.isVisible());
+                }
+            });
+
+            trainIcon.setWidth(trainIconWidth);
+            trainIcon.setHeight(trainIconHeight);
+            trainIcon.setPosition(marker.x - trainIconWidth / 2, marker.y);
+
+            stage.addActor(trainIcon);
+            stage.addActor(windowAboveTrain);
+
+        }
+    }
+
+    private float getCurrentTime(){
+        return TimeUtils.nanosToMillis(TimeUtils.nanoTime()) / 1000f;
     }
 }

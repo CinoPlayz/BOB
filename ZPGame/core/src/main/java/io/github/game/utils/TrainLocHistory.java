@@ -1,11 +1,9 @@
 package io.github.game.utils;
 
-import org.bson.Document;
-
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class TrainLocHistory {
-    private Date timeOfRequest;
+    private LocalDateTime timeOfRequest;
     private String trainType;
     private String trainNumber;
     private String routeFrom;
@@ -15,7 +13,7 @@ public class TrainLocHistory {
     private int delay;
     private Coordinates coordinates;
 
-    public Date getTimeOfRequest() {
+    public LocalDateTime getTimeOfRequest() {
         return timeOfRequest;
     }
 
@@ -51,7 +49,7 @@ public class TrainLocHistory {
         return coordinates;
     }
 
-    public void setTimeOfRequest(Date timeOfRequest) {
+    public void setTimeOfRequest(LocalDateTime timeOfRequest) {
         this.timeOfRequest = timeOfRequest;
     }
 
@@ -87,15 +85,8 @@ public class TrainLocHistory {
         this.coordinates = coordinates;
     }
 
-    public TrainLocHistory(Document doc){
-        setTimeOfRequest(doc.getDate("timeOfRequest"));
-        setTrainType(doc.getString("trainType"));
-        setRouteFrom(doc.getString("routeFrom"));
-        setRouteTo(doc.getString("routeTo"));
-        setRouteStartTime(doc.getString("routeStartTime"));
-        setNextStation(doc.getString("nextStation"));
-        setDelay(doc.getInteger("delay"));
-        setCoordinates(doc.get("coordinates", Coordinates.class));
+    public TrainLocHistory(){
+
     }
 }
 

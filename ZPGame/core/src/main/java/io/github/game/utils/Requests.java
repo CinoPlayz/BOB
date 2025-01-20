@@ -1,16 +1,17 @@
 package io.github.game.utils;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
-import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Requests {
     private static final Geolocation CENTER_GEOLOCATION = new Geolocation(46.55, 14.96);
@@ -62,5 +63,17 @@ public class Requests {
 
 
         return requestTiles;
+    }
+
+    public static List<TrainLocHistory> getTrainList(LocalDateTime startDate, LocalDateTime endDate){
+        Bson filter = new Document("$gte", startDate).append("$lt", endDate);
+
+        MongoCollection<TrainLocHistory> collection = MongoClientConnect.database.getCollection("trainlochistories", TrainLocHistory.class);
+        FindIterable<TrainLocHistory> findIter = collection.find(new Document("timeOfRequest", filter));
+        List<TrainLocHistory> docs = new ArrayList<>();
+        findIter.into(docs);
+        System.out.println(docs.size());
+
+        return new ArrayList<>(docs);
     }
 }
