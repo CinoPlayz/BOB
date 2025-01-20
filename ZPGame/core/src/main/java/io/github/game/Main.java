@@ -47,7 +47,7 @@ public class Main extends Game {
 
         viewport = new FitViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight() , camera);
         viewport.apply(true);
-        setScreen(new GameScreenOne(viewport, camera, gameplayAtlas, batch));
+        setScreen(new GameScreen(viewport, camera, gameplayAtlas, batch));
 
 
     }
