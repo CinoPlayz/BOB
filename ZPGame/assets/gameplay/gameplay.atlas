@@ -18,6 +18,13 @@ map_land
   orig: 1480, 781
   offset: 0, 0
   index: -1
+passengers
+  rotate: false
+  xy: 1484, 1378
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
 train
   rotate: false
   xy: 2, 2

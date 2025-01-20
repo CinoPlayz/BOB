@@ -58,13 +58,13 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
 
     private void handleJunction(Junction junction, Waypoints waypoints) {
         Array<PathConnection> availableConnections =
-                junction.getAvailableConnections(currentPathId, isReversed);
+            junction.getAvailableConnections(currentPathId, isReversed);
 
 
         if (availableConnections.size > 0) {
             // Izbere naslednjo pot glede na nextDirection
             PathConnection chosenPath = nextDirection ?
-                    availableConnections.get(0) : availableConnections.get(1);
+                availableConnections.get(0) : availableConnections.get(1);
             //System.out.println("Chosen path: " + chosenPath.fromPathId + " -> " + chosenPath.toPathId);
             //System.out.println("New direction reversed: " + chosenPath.toReversed);
             // Nastavi novo pot
@@ -85,6 +85,21 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
         position.y += ySpeed * deltaTime;
     }
 
+    private void updateBounds() {
+        if (texture == null) return;
+
+        float width = texture.getRegionWidth() / 13f;
+        float height = texture.getRegionHeight() / 13f;
+
+        float centerX = position.x;
+        float centerY = position.y;
+
+        bounds.width = width;
+        bounds.height = height;
+
+        bounds.x = centerX - width / 2;
+        bounds.y = centerY - height / 2;
+    }
 
     public void update(float deltaTime, Waypoints waypoints) {
         if (currentPath == null) {
@@ -99,7 +114,7 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
         if (distance < 5f) {
             // Preveri za križišče samo če smo na koncu/začetku poti
             if ((isReversed && currentWaypoint == 0) ||
-                    (!isReversed && currentWaypoint == currentPath.getSize() - 1)) {
+                (!isReversed && currentWaypoint == currentPath.getSize() - 1)) {
 
                 Junction junction = waypoints.getJunctionNearPoint(position, 5f);
                 if (junction != null) {
@@ -128,8 +143,8 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
 
 
         float angle = (float) Math.atan2(
-                targetPoint.y - position.y,
-                targetPoint.x - position.x
+            targetPoint.y - position.y,
+            targetPoint.x - position.x
         );
 
         float dx = targetPoint.x - position.x;
@@ -142,7 +157,8 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
         position.x += xSpeed * deltaTime;
         position.y += ySpeed * deltaTime;
 
-
+        //updateRotatedBounds();
+        updateBounds();
     }
 
     public boolean shouldRemoveTrain(String pathId, boolean reversed, Array<GameScreen.TrainSpawnConfig> spawnConfigs) {
@@ -206,14 +222,14 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
         //System.out.println("pozicija " + position.x + " " + position.y);
         //batch.draw(texture, position.x, position.y, bounds.width, bounds.height, rotation);
         batch.draw(texture,
-                position.x - bounds.width / 2,
-                position.y - bounds.height / 2,
-                bounds.width / 2,
-                bounds.height / 2,
-                bounds.width,
-                bounds.height,
-                1, 1,
-                rotation);
+            position.x - bounds.width / 2,
+            position.y - bounds.height / 2,
+            bounds.width / 2,
+            bounds.height / 2,
+            bounds.width,
+            bounds.height,
+            1, 1,
+            rotation);
 
 
     }

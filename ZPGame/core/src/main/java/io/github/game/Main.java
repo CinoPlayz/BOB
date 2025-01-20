@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -26,6 +27,7 @@ public class Main extends Game {
     private FitViewport viewport;
 
     private TextureAtlas gameplayAtlas;
+    private Sound clickSound;
 
 
     @Override
@@ -46,6 +48,7 @@ public class Main extends Game {
         viewport = new FitViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight() , camera);
         viewport.apply(true);
         setScreen(new GameScreen(viewport, camera, gameplayAtlas, batch));
+
 
     }
 
