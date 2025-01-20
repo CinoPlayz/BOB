@@ -11,6 +11,8 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
@@ -25,7 +27,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.FileProvider
+import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import okhttp3.Call
@@ -65,9 +69,12 @@ class ImageProcessorFragment : Fragment() {
     private var automaticDataCaptureOn: Boolean = false
     private var automaticDataCaptureInterval: Int = 5
     private var autoCaptureRunnable: Runnable? = null
+    private lateinit var vibrator: Vibrator
+    private var countDownTimer: CountDownTimer? = null
 
     private var location: Coordinates? = null
     private lateinit var pickLocationLauncher: ActivityResultLauncher<Intent>
+    private lateinit var autoCaptureLauncher: ActivityResultLauncher<Intent>
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -76,6 +83,7 @@ class ImageProcessorFragment : Fragment() {
     companion object {
         private const val PERMISSIONS_REQUEST_CODE = 1001
         private const val PICK_LOCATION_REQUEST_CODE = 1002
+        private val imageCaptureRequestCode = 1
     }
 
     override fun onCreateView(
@@ -83,9 +91,11 @@ class ImageProcessorFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         app = requireActivity().application as MyApp
+        vibrator = app.vibrator
 
         _binding = FragmentImageprocessorBinding.inflate(inflater, container, false)
         val root: View = binding.root
+
 
         pickLocationLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -101,11 +111,32 @@ class ImageProcessorFragment : Fragment() {
             }
         }
 
+        autoCaptureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val photoUri1 = result.data?.getStringExtra("photoUri")
+                if (photoUri1 != null) {
+                    // Log the URI to ensure it's valid
+                    Log.d("Fragment", "Image saved at: $photoUri1")
+                    val uri = Uri.parse(photoUri1)
+                    if (uri != Uri.EMPTY) {
+                        // binding.imageView.setImageURI(uri)
+                        photoUri = uri
+                        submitAutoData()
+                    } else {
+                        Log.e("ImageProcessor", "Received empty URI")
+                        Toast.makeText(requireContext(), "Failed to load the image", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Log.e("ImageProcessor", "Capture failed: ${result.resultCode}")
+                Toast.makeText(requireContext(), "Failed to capture photo", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         checkUserCredentials()
 
         return root
     }
-
 
     private fun checkUserCredentials() {
         val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null)
@@ -513,16 +544,16 @@ class ImageProcessorFragment : Fragment() {
         // Subscribe to the response topic
         mqttClient.subscribe(responseTopic)
 
-            // Publish to the request topic
-            mqttClient.publish(requestTopic, MqttMessage(requestPayload.toString().toByteArray()))
+        // Publish to the request topic
+        mqttClient.publish(requestTopic, MqttMessage(requestPayload.toString().toByteArray()))
 
-            // Handle server response
-            mqttClient.setCallback(object : MqttCallback {
-                override fun connectionLost(cause: Throwable?) {
-                    requireActivity().runOnUiThread {
-                        //Toast.makeText(requireContext(), "MQTT connection lost: ${cause?.message}", Toast.LENGTH_SHORT).show()
-                    }
+        // Handle server response
+        mqttClient.setCallback(object : MqttCallback {
+            override fun connectionLost(cause: Throwable?) {
+                requireActivity().runOnUiThread {
+                    //Toast.makeText(requireContext(), "MQTT connection lost: ${cause?.message}", Toast.LENGTH_SHORT).show()
                 }
+            }
 
             override fun messageArrived(topic: String?, message: MqttMessage?) {
                 Log.d("MQTT", "Message arrived on topic: $topic")
@@ -573,11 +604,9 @@ class ImageProcessorFragment : Fragment() {
                 binding.wagonNumber.isEnabled = false
                 binding.routesSpinner.isEnabled = false
 
-                // Show the chosen interval in a Toast
                 Toast.makeText(requireContext(), "Automatic data capture started with an interval of $automaticDataCaptureInterval minutes", Toast.LENGTH_SHORT).show()
 
                 startAutoCapture()
-                // Continue with the automatic data capture process...
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
@@ -589,12 +618,12 @@ class ImageProcessorFragment : Fragment() {
     }
 
     private fun startAutoCapture() {
-        val intervalMillis = automaticDataCaptureInterval * 60 * 1000L // Convert minutes to milliseconds
+        val intervalMillis = automaticDataCaptureInterval * 60 * 1000L // Minutes --> milliseconds
 
         autoCaptureRunnable = object : Runnable {
             override fun run() {
                 // Start the countdown for the current interval
-                val countDownTimer = object : CountDownTimer(intervalMillis, 1000) {
+                countDownTimer = object : CountDownTimer(intervalMillis, 1000) {
                     override fun onTick(millisUntilFinished: Long) {
                         val minutes = millisUntilFinished / 1000 / 60
                         val seconds = (millisUntilFinished / 1000) % 60
@@ -605,12 +634,11 @@ class ImageProcessorFragment : Fragment() {
                         binding.timer.text = "00:00"
                     }
                 }
-                countDownTimer.start()
+                countDownTimer?.start()
 
-                // Trigger the camera auto-capture
                 launchCameraAuto()
+                triggerHapticFeedback()
 
-                // Schedule the next capture
                 handler.postDelayed(this, intervalMillis)
             }
         }
@@ -618,28 +646,24 @@ class ImageProcessorFragment : Fragment() {
         handler.post(autoCaptureRunnable!!) // Start the periodic execution
     }
 
-    /*private fun startAutoCapture() {
-        val intervalMillis = automaticDataCaptureInterval * 60 * 1000L // Convert minutes to milliseconds
-
-        autoCaptureRunnable = object : Runnable {
-            override fun run() {
-                launchCameraAuto()
-
-                handler.postDelayed(this, intervalMillis)
-            }
+    private fun triggerHapticFeedback() {
+        if (vibrator.hasVibrator()) {
+            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
         }
+    }
 
-        handler.post(autoCaptureRunnable!!) // Start the periodic execution
-    }*/
-
-    private val takePictureLauncherAuto =
-        registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+    private val takePictureLauncherAuto = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
             if (isSuccess) {
                 submitAutoData()
             } else {
                 Toast.makeText(requireContext(), "Failed to capture photo", Toast.LENGTH_SHORT).show()
             }
         }
+
+    private fun launchAutoCaptureActivity() {
+        val intent = Intent(requireContext(), AutoCaptureActivity::class.java)
+        autoCaptureLauncher.launch(intent)
+    }
 
     private fun launchCameraAuto() {
         try {
@@ -656,7 +680,6 @@ class ImageProcessorFragment : Fragment() {
             Toast.makeText(requireContext(), "Error: Unable to create image file", Toast.LENGTH_SHORT).show()
         }
     }
-
 
     // To stop automatic photo capturing
     private fun stopAutoCapture() {
@@ -795,7 +818,10 @@ class ImageProcessorFragment : Fragment() {
         binding.wagonNumber.isEnabled = true
         binding.routesSpinner.isEnabled = true
 
+        photoUri = null
+        binding.imageView.setImageDrawable(null)
 
+        countDownTimer?.cancel()
 
         stopAutoCapture()
 

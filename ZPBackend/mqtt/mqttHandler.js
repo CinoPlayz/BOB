@@ -737,7 +737,7 @@ client.on('message', async (topic, message) => {
                 }
             });
 
-            if (guessedOccupancyRate > 20) { // Above 70% occupancy = high
+            if (guessedOccupancyRate > 70) { // Above 70% occupancy = high
                 console.log("High occupancy")
 
                 const routeId = route; // Assuming `route` is the ID of the route
