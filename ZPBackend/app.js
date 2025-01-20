@@ -1,3 +1,5 @@
+process.removeAllListeners('warning'); // supress punycode deprecated warning
+
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
