@@ -3,6 +3,7 @@ package io.github.game.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -21,9 +22,13 @@ import java.util.Iterator;
 
 import io.github.game.PendingTrain;
 import io.github.game.RailwayPath;
+import io.github.game.Score;
 import io.github.game.Train;
 import io.github.game.Waypoints;
 import io.github.game.assets.RegionNames;
+import io.github.game.common.GameManager;
+import io.github.game.utils.debug.DebugCameraController;
+import io.github.game.utils.debug.MemoryInfo;
 
 public class GameScreen implements Screen {
 
@@ -40,16 +45,22 @@ public class GameScreen implements Screen {
     private final Array<PendingTrain> pendingTrains = new Array<>();
 
     private SpriteBatch batch;
-
-
+    private Sound trainParked;
+    private Sound explosion;
+    private Sound trainCollected;
+    private Score score;
     private float spawnTimer = 0;
     private final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
     private float currentSpawnInterval = 3f;
     private DifficultyLevel currentDifficulty = DifficultyLevel.EASY;
 
+    private DebugCameraController debugCameraController;
+    private MemoryInfo memoryInfo;
+    private boolean debug = true;
+
     public enum DifficultyLevel {
-        EASY(5f),
-        NORMAL(3f),
+        EASY(3f),
+        NORMAL(1.5f),
         HARD(1.5f);
 
         final float baseSpawnInterval;
@@ -77,13 +88,17 @@ public class GameScreen implements Screen {
         shapeRenderer = new ShapeRenderer();
         waypoints = new Waypoints(shapeRenderer);
 
-
+        score = new Score(gameplayAtlas);
         trainArray = new Array<>();
         trainPool.fill(2);
         this.gameplayAtlas = gameplayAtlas;
         initializeSpawnConfigs();
         // spawnPendingTrain();
         spawnTestTrain();
+        trainCollected = Gdx.audio.newSound(Gdx.files.internal("sounds/collected.mp3"));
+        explosion = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.mp3"));
+        setDifficulty(DifficultyLevel.EASY);
+
     }
 
     private void spawnTestTrain() {
@@ -122,7 +137,7 @@ public class GameScreen implements Screen {
     }
 
     private void spawnPendingTrain() {
-        if (trainArray.size >= 10) return;
+        if (trainArray.size >= 20) return;
 
         TrainSpawnConfig config = spawnConfigs.get(MathUtils.random(spawnConfigs.size - 1));
         float cooldown = MathUtils.random(3f, 5f);
@@ -203,14 +218,6 @@ public class GameScreen implements Screen {
         System.out.println("=== Click Detection Debug ===");
         System.out.println("Screen Click: " + screenX + ", " + screenY);
         System.out.println("World Click: " + worldClick.x + ", " + worldClick.y);
-        //System.out.println("Train Center World: " + trainCenterX + ", " + trainCenterY);
-        //System.out.println("Train Center Screen: " + trainScreenPos.x + ", " + trainScreenPos.y);
-        //System.out.println("Distance: " + distance);
-        //System.out.println("Detection Radius: " + scaledRadius);
-        //System.out.println("Camera Properties:");
-        //System.out.println("  Position: " + camera.position.x + ", " + camera.position.y);
-        //System.out.println("  Zoom: " + camera.zoom);
-        //System.out.println("  Viewport: " + viewport.getScreenWidth() + "x" + viewport.getScreenHeight());
 
         return distance <= scaledRadius;
     }
@@ -225,6 +232,31 @@ public class GameScreen implements Screen {
     }
 
 
+    private void checkTrainCollisions() {
+        for (int i = 0; i < trainArray.size; i++) {
+            Train trainA = trainArray.get(i);
+
+
+            for (int j = i + 1; j < trainArray.size; j++) {
+                Train trainB = trainArray.get(j);
+
+
+                if (trainA.bounds.overlaps(trainB.bounds)) {
+
+                    trainArray.removeValue(trainA, true);
+                    trainArray.removeValue(trainB, true);
+                    trainPool.free(trainA);
+                    trainPool.free(trainB);
+                    explosion.play();
+                    GameManager.INSTANCE.trainCrash(currentDifficulty);
+                    System.out.println(currentDifficulty);
+                    break;
+                }
+            }
+        }
+    }
+
+
     @Override
     public void render(float delta) {
         ScreenUtils.clear(0, 0, 0, 1);
@@ -232,10 +264,12 @@ public class GameScreen implements Screen {
         viewport.apply();
         camera.update();
 
+        GameManager.INSTANCE.updateScore(delta);
+
 
         spawnTimer += delta;
 
-        if (spawnTimer >= currentSpawnInterval) {
+        if (spawnTimer >= currentDifficulty.baseSpawnInterval) {
             spawnPendingTrain();
             float randomFactor = MathUtils.random(0.8f, 1.2f);
             currentSpawnInterval = currentDifficulty.baseSpawnInterval * randomFactor;
@@ -267,14 +301,18 @@ public class GameScreen implements Screen {
             }
         }
 
+        checkTrainCollisions();
 
         for (Train train : trainArray) {
             train.update(delta, waypoints);
 
 
             if (train.shouldRemoveTrain(train.getCurrentPathId(), train.isReversed(), spawnConfigs)) {
+
                 trainArray.removeValue(train, true);
                 trainPool.free(train);
+                GameManager.INSTANCE.trainDelivered(currentDifficulty);
+                trainCollected.play();
             }
         }
 
@@ -311,6 +349,9 @@ public class GameScreen implements Screen {
         for (GameScreen.TrainSpawnConfig config : spawnConfigs) {
             drawSemaphore(config, confs);
         }
+
+
+        score.draw(camera, batch, viewport);
 
     }
 

@@ -5,24 +5,27 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Json;
 
+import io.github.game.screens.GameScreen;
+
 public class GameManager {
 
     public static final GameManager INSTANCE = new GameManager();
     private static final String SCORES_FILE = "scores.json";
-    private Array<ScoreEntry> highScores;
-    private int result;
-    private int lives;
+    private long score;
+    Array<ScoreEntry> highScores = new Array<>();
+    private float timeMultiplier = 1.0f;
+    private static final float BASE_SCORE_RATE = 0.01f; // Points per second
+    private static final float MULTIPLIER_INCREASE_RATE = 0.000001f; // How fast multiplier increases
+    private static final float MAX_MULTIPLIER = 3.0f;
 
-    private int score;
-
+    private static final float SCORE_UPDATE_INTERVAL = 1.0f;
+    private float timeSinceLastScoreUpdate = 0.0f;
 
     public static class ScoreEntry {
         public String name;
-        public int score;
+        public long score;
         public long date;
 
-        public ScoreEntry() {
-        } //  za JSON
 
         public ScoreEntry(String name, int score) {
             this.name = name;
@@ -31,43 +34,60 @@ public class GameManager {
         }
     }
 
+
     private GameManager() {
         highScores = new Array<>();
         loadScores();
+        resetScore();
     }
 
-    public int getResult() {
-        return result;
+    public void resetScore() {
+        score = 0;
+        timeMultiplier = 1.0f;
     }
 
-    public void resetResult() {
-        result = 0;
-        lives = 3;
+    public void updateScore(float delta) {
+
+        timeSinceLastScoreUpdate += delta;
+
+        if (timeSinceLastScoreUpdate >= SCORE_UPDATE_INTERVAL) {
+            timeMultiplier = Math.min(timeMultiplier + (MULTIPLIER_INCREASE_RATE * delta), MAX_MULTIPLIER);
+
+
+            // long pointsToAdd = (long)(BASE_SCORE_RATE * timeMultiplier * delta);
+            long pointsToAdd = Math.max(1, (long) (BASE_SCORE_RATE * timeMultiplier * delta * 0.0001f));
+            score += pointsToAdd;
+            timeSinceLastScoreUpdate = 0.0f;
+            System.out.println("Updated score: " + score + ", Multiplier: " + timeMultiplier);
+        }
     }
 
-    public int getScore() {
+    public void trainDelivered(GameScreen.DifficultyLevel difficultyLevel) {
+        if (difficultyLevel == GameScreen.DifficultyLevel.EASY)
+            score += 100;
+        if (difficultyLevel == GameScreen.DifficultyLevel.NORMAL)
+            score += 500;
+        if (difficultyLevel == GameScreen.DifficultyLevel.HARD)
+            score += 1000;
+    }
+
+    public void trainCrash(GameScreen.DifficultyLevel difficultyLevel) {
+        if (difficultyLevel == GameScreen.DifficultyLevel.EASY)
+            score -= 100;
+        if (difficultyLevel == GameScreen.DifficultyLevel.NORMAL)
+            score -= 500;
+        if (difficultyLevel == GameScreen.DifficultyLevel.HARD)
+            score -= 1000;
+    }
+
+    public long getScore() {
         return score;
     }
 
-    public boolean isGameOver() {
-        return lives <= 0;
+    public float getMultiplier() {
+        return timeMultiplier;
     }
 
-    public int getLives() {
-        return lives;
-    }
-
-
-    public void addScore(String playerName, int score) {
-        highScores.add(new ScoreEntry(playerName, score));
-        // sortirano po score-u padajoče
-        highScores.sort((o1, o2) -> o2.score - o1.score);
-        // Obdrži samo top 10 rezultatov
-        if (highScores.size > 10) {
-            highScores.truncate(10);
-        }
-        saveScores();
-    }
 
     private void loadScores() {
         try {
@@ -88,7 +108,7 @@ public class GameManager {
             FileHandle file = Gdx.files.local(SCORES_FILE);
             Json json = new Json();
             String scoresJson = json.toJson(highScores);
-            file.writeString(json.prettyPrint(scoresJson), false);//false: datoteka se prepiše
+            file.writeString(json.prettyPrint(scoresJson), false);
         } catch (Exception e) {
             Gdx.app.error("GameManager", "Error saving scores", e);
         }
