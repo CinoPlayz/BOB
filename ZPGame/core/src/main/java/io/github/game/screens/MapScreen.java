@@ -26,11 +26,21 @@ import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 import io.github.game.Main;
 import io.github.game.assets.RegionNames;
@@ -40,6 +50,7 @@ import io.github.game.utils.MapRasterTiles;
 import io.github.game.utils.MongoClientConnect;
 import io.github.game.utils.RequestTiles;
 import io.github.game.utils.Requests;
+import io.github.game.utils.TrainLocHistory;
 import io.github.game.utils.ZoomXY;
 
 public class MapScreen implements Screen {
@@ -51,13 +62,12 @@ public class MapScreen implements Screen {
     private Texture[] mapTiles;
     private ZoomXY beginTile;
     private float previousZoomLevel = 0;
-
     private ShapeRenderer shapeRenderer;
     private Stage stage;
-
     private Skin skin;
-
     private Main game;
+
+    private List<TrainLocHistory> listOfTrainLocHistory;
 
     private final Geolocation MARKER_GEOLOCATION = new Geolocation(46.559070, 15.638100);
 
@@ -81,6 +91,8 @@ public class MapScreen implements Screen {
         camera.viewportHeight = Constants.MAP_HEIGHT / 2f;
         camera.zoom = 1f;
         camera.update();
+
+        listOfTrainLocHistory = null;
 
         RequestTiles requestTiles = Requests.requestTiles(camera);
         beginTile = requestTiles.beginTile;
@@ -113,7 +125,7 @@ public class MapScreen implements Screen {
         layers.add(layer);
         tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
 
-        drawTrainLocOnce("2024-05-23T23:10:12.432+00:00");
+        drawTrainLocOnce("2024-05-24T00:00:00.432+00:00", "2024-05-24T23:59:59.999+00:00");
     }
 
     @Override
@@ -202,46 +214,77 @@ public class MapScreen implements Screen {
         shapeRenderer.end();
     }
 
-    private void drawTrainLocOnce(String date){
-        MongoCollection<Document> collection = MongoClientConnect.database.getCollection("trainlochistories");
+    private void drawTrainLocOnce(String startDate, String endDate){
+        Bson filter = null;
+        @SuppressWarnings("NewApi") DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.ENGLISH);
+        try {
+            filter = new Document("$gte", format.parse(startDate)).append("$lt", format.parse(endDate));
+        }
+        catch (ParseException e) {
+            System.out.println(e.getMessage());
+        }
 
-        TextureRegion textureTrain = gameplayAtlas.findRegion(RegionNames.TRAIN_ICON);
-        Vector2 marker = MapRasterTiles.getPixelPosition(MARKER_GEOLOCATION.lat, MARKER_GEOLOCATION.lng, beginTile.x, beginTile.y);
+        if(filter != null){
+            MongoCollection<Document> collection = MongoClientConnect.database.getCollection("trainlochistories");
+            FindIterable<Document> findIter = collection.find(new Document("timeOfRequest", filter));
+            List<Document> docs = new ArrayList<>();
+            findIter.into(docs);
 
-        Image trainIcon = new Image(textureTrain);
-        float trainIconWidth = trainIcon.getWidth() / 10;
-        float trainIconHeight = trainIcon.getHeight() / 10;
-
-        Window.WindowStyle windowStyle = skin.get("default", Window.WindowStyle.class);
-        windowStyle.titleFont = game.getFontMediumBold();
-
-        Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
-        labelStyle.font = game.getFontMedium();
-
-        Window windowAboveTrain = new Window("", windowStyle);
-        Label labelName = new Label("LPV 2260", labelStyle);
-        Label labelNextStop = new Label("Next station: Postojna", labelStyle);
-        Label labelDelay = new Label("Delay: 10min", labelStyle);
-        windowAboveTrain.add(labelName).row();
-        windowAboveTrain.add(labelNextStop).row();
-        windowAboveTrain.add(labelDelay);
-        windowAboveTrain.sizeBy(300, 0);
-        windowAboveTrain.setPosition(marker.x - windowAboveTrain.getWidth()/2, marker.y + trainIconHeight);
-        windowAboveTrain.setVisible(false);
-
-        trainIcon.addListener(new ClickListener(){
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                windowAboveTrain.setVisible(!windowAboveTrain.isVisible());
+            listOfTrainLocHistory.clear();
+            for(int i = 0; i < docs.size(); i++){
+                Document doc = docs.get(i);
+                listOfTrainLocHistory.add(new TrainLocHistory(doc));
             }
-        });
+        }
+
+        if (listOfTrainLocHistory != null){
+            TextureRegion textureTrain = gameplayAtlas.findRegion(RegionNames.TRAIN_ICON);
+
+            for(int i = 0; i < listOfTrainLocHistory.size(); i++){
+                TrainLocHistory trainLocHistory = listOfTrainLocHistory.get(i);
+                double lat = trainLocHistory.getCoordinates().getLat();
+                double lng = trainLocHistory.getCoordinates().getLng();
+
+                Vector2 marker = MapRasterTiles.getPixelPosition(lat, lng, beginTile.x, beginTile.y);
+
+                Image trainIcon = new Image(textureTrain);
+                float trainIconWidth = trainIcon.getWidth() / 10;
+                float trainIconHeight = trainIcon.getHeight() / 10;
+
+                Window.WindowStyle windowStyle = skin.get("default", Window.WindowStyle.class);
+                windowStyle.titleFont = game.getFontMediumBold();
+
+                Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
+                labelStyle.font = game.getFontMedium();
+
+                Window windowAboveTrain = new Window("", windowStyle);
+                Label labelName = new Label(trainLocHistory.getTrainType() + " " + trainLocHistory.getTrainNumber(), labelStyle);
+                Label labelNextStop = new Label("Next station: " + trainLocHistory.getNextStation(), labelStyle);
+                Label labelDelay = new Label("Delay: " + trainLocHistory.getDelay() + "min", labelStyle);
+                windowAboveTrain.add(labelName).row();
+                windowAboveTrain.add(labelNextStop).row();
+                windowAboveTrain.add(labelDelay);
+                windowAboveTrain.sizeBy(300, 0);
+                windowAboveTrain.setPosition(marker.x - windowAboveTrain.getWidth()/2, marker.y + trainIconHeight);
+                windowAboveTrain.setVisible(false);
+
+                trainIcon.addListener(new ClickListener(){
+                    @Override
+                    public void clicked(InputEvent event, float x, float y) {
+                        windowAboveTrain.setVisible(!windowAboveTrain.isVisible());
+                    }
+                });
 
 
-        trainIcon.setWidth(trainIconWidth);
-        trainIcon.setHeight(trainIconHeight);
-        trainIcon.setPosition(marker.x - trainIconWidth / 2, marker.y);
+                trainIcon.setWidth(trainIconWidth);
+                trainIcon.setHeight(trainIconHeight);
+                trainIcon.setPosition(marker.x - trainIconWidth / 2, marker.y);
 
-        stage.addActor(trainIcon);
-        stage.addActor(windowAboveTrain);
+                stage.addActor(trainIcon);
+                stage.addActor(windowAboveTrain);
+            }
+        }
+
+
     }
 }

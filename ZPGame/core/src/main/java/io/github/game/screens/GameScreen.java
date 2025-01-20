@@ -27,8 +27,6 @@ import io.github.game.Train;
 import io.github.game.Waypoints;
 import io.github.game.assets.RegionNames;
 import io.github.game.common.GameManager;
-import io.github.game.utils.debug.DebugCameraController;
-import io.github.game.utils.debug.MemoryInfo;
 
 public class GameScreen implements Screen {
 
@@ -53,9 +51,6 @@ public class GameScreen implements Screen {
     private final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
     private float currentSpawnInterval = 3f;
     private DifficultyLevel currentDifficulty = DifficultyLevel.EASY;
-
-    private DebugCameraController debugCameraController;
-    private MemoryInfo memoryInfo;
     private boolean debug = true;
 
     public enum DifficultyLevel {

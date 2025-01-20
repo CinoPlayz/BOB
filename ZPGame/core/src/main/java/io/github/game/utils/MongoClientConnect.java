@@ -15,8 +15,10 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 public class MongoClientConnect {
-    public static MongoDatabase database = getMongoDatabase();
-    private static MongoDatabase getMongoDatabase(){
+    public static MongoDatabase database;
+    private static MongoClient client;
+
+    static {
         String uri = "mongodb://localhost:27017/";
         MongoDatabase mongoDatabase = null;
 
@@ -32,18 +34,17 @@ public class MongoClientConnect {
 
         // Create a new client and connect to the server
         try (MongoClient mongoClient = MongoClients.create(settings)) {
-            MongoDatabase database = mongoClient.getDatabase("ZP");
+            client = mongoClient;
+            MongoDatabase databaseClient = mongoClient.getDatabase("ZP");
             try {
                 // Send a ping to confirm a successful connection
                 Bson command = new BsonDocument("ping", new BsonInt64(1));
                 Document commandResult = database.runCommand(command);
                 System.out.println("Pinged your deployment. You successfully connected to MongoDB!");
-                mongoDatabase = database;
+                database = databaseClient;
             } catch (MongoException me) {
                 System.err.println(me);
             }
         }
-
-        return mongoDatabase;
     }
 }
