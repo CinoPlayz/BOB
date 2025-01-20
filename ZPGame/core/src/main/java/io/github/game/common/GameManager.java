@@ -63,20 +63,25 @@ public class GameManager {
             long pointsToAdd = Math.max(1, (long) (BASE_SCORE_RATE * timeMultiplier * delta * 0.0001f));
             score += pointsToAdd;
             timeSinceLastScoreUpdate = 0.0f;
-            System.out.println("Updated score: " + score + ", Multiplier: " + timeMultiplier);
+            //System.out.println("Updated score: " + score + ", Multiplier: " + timeMultiplier);
         }
     }
 
-    public void trainDelivered(GameScreen.DifficultyLevel difficultyLevel) {
+    public void trainDelivered(GameScreen.DifficultyLevel difficultyLevel, boolean isJokerType) {
+        int multiplier = 1;
+        if(isJokerType){
+            multiplier = 2;
+        }
         if (difficultyLevel == GameScreen.DifficultyLevel.EASY)
-            score += 100;
+            score += (multiplier * 100);
         if (difficultyLevel == GameScreen.DifficultyLevel.NORMAL)
-            score += 500;
+            score += (multiplier * 500);
         if (difficultyLevel == GameScreen.DifficultyLevel.HARD)
-            score += 1000;
+            score += (multiplier * 1000);
     }
 
     public void trainCrash(GameScreen.DifficultyLevel difficultyLevel) {
+
         if (difficultyLevel == GameScreen.DifficultyLevel.EASY)
             score -= 100;
         if (difficultyLevel == GameScreen.DifficultyLevel.NORMAL)

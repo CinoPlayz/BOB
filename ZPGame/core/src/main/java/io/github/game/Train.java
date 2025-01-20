@@ -28,6 +28,8 @@ public class Train extends GameObjectDynamic implements Pool.Poolable {
     private RailwayPath currentPath;
     private boolean isReversed;
 
+    public boolean isJokerType;
+
     public Train() {
         super(0, 0, 0, 0, 0);
         this.texture = null;
