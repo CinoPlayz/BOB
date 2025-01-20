@@ -1,12 +1,14 @@
 package si.bob.zpmobileapp.ui.imageprocessor
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
-import android.location.Location
 import android.net.Uri
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
@@ -19,13 +21,12 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import com.google.android.gms.location.LocationServices
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import okhttp3.Call
 import okhttp3.Callback
@@ -40,6 +41,7 @@ import org.json.JSONObject
 import si.bob.zpmobileapp.MyApp
 import si.bob.zpmobileapp.R
 import si.bob.zpmobileapp.databinding.FragmentImageprocessorBinding
+import si.bob.zpmobileapp.ui.map.Coordinates
 import si.bob.zpmobileapp.utils.location.LocationHelper
 import java.io.File
 import java.io.FileOutputStream
@@ -64,12 +66,16 @@ class ImageProcessorFragment : Fragment() {
     private var automaticDataCaptureInterval: Int = 5
     private var autoCaptureRunnable: Runnable? = null
 
+    private var location: Coordinates? = null
+    private lateinit var pickLocationLauncher: ActivityResultLauncher<Intent>
+
     private val handler = Handler(Looper.getMainLooper())
 
     private lateinit var app: MyApp
 
     companion object {
         private const val PERMISSIONS_REQUEST_CODE = 1001
+        private const val PICK_LOCATION_REQUEST_CODE = 1002
     }
 
     override fun onCreateView(
@@ -80,6 +86,20 @@ class ImageProcessorFragment : Fragment() {
 
         _binding = FragmentImageprocessorBinding.inflate(inflater, container, false)
         val root: View = binding.root
+
+        pickLocationLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent? = result.data
+                data?.let {
+                    val latitude = it.getDoubleExtra("latitude", 0.0)
+                    val longitude = it.getDoubleExtra("longitude", 0.0)
+                    location = Coordinates(latitude, longitude)
+
+                    // Update the UI with the picked location
+                    updateLocationUI()
+                }
+            }
+        }
 
         checkUserCredentials()
 
@@ -156,8 +176,20 @@ class ImageProcessorFragment : Fragment() {
                 binding.automatButton.text = getString(R.string.automatic_data_capture_start)
                 stopAutomaticDataCapture()
             }
-
         }
+
+        binding.buttonPickLocation.setOnClickListener {
+            openPickLocationActivity()
+        }
+    }
+
+    private fun openPickLocationActivity() {
+        val intent = Intent(requireContext(), PickLocationActivity::class.java)
+        location?.let {
+            intent.putExtra("latitude", it.lat)
+            intent.putExtra("longitude", it.lng)
+        }
+        pickLocationLauncher.launch(intent)
     }
 
     private fun hasPermissions(vararg permissions: String): Boolean {
@@ -313,6 +345,14 @@ class ImageProcessorFragment : Fragment() {
         toggleLoading(true)
         binding.submitButton.isEnabled = false
 
+        LocationHelper(requireContext()).getCurrentLocation { location ->
+            // Store the coordinates in the location variable
+            this.location = location?.let {
+                Coordinates(it.latitude, it.longitude)
+            }
+            Log.d("Location", "Latitude: ${location?.latitude}, Longitude: ${location?.longitude}")
+        }
+
         try {
             val imageFile = photoUri?.let { uriToFile(it) } ?: return
             val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
@@ -406,6 +446,9 @@ class ImageProcessorFragment : Fragment() {
             binding.seatsOnWagonValue.text = "$numOfSeats"
             binding.percentageOccupiedValue.text = String.format("%.1f%%", guessedOccupancyRate)
 
+            binding.latitudeValue.text = location?.lat.toString()
+            binding.longitudeValue.text = location?.lng.toString()
+
             // Percentage spinner
             val percentages = (0..100 step 10).map { "$it%" }
             val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, percentages)
@@ -423,62 +466,52 @@ class ImageProcessorFragment : Fragment() {
     private fun submitOccupancy() {
         val context = requireContext()
 
-        // Check location permission
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 100)
-            Toast.makeText(context, "Please grant location permissions", Toast.LENGTH_SHORT).show()
+        if (location == null) {
+            Toast.makeText(context, "Location not available", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Get current location
-        val locationProvider = LocationServices.getFusedLocationProviderClient(context)
-        locationProvider.lastLocation.addOnSuccessListener { location: Location? ->
-            if (location == null) {
-                Toast.makeText(context, "Failed to get location", Toast.LENGTH_SHORT).show()
-                return@addOnSuccessListener
-            }
+        // Prepare data for MQTT request
+        val realOccupancyRate = binding.percentageSpinner.selectedItem.toString().removeSuffix("%").toFloat()
+        val timeOfRequest = DateTimeFormatter.ISO_INSTANT.format(java.time.Instant.now())
+        val jsonBody = JSONObject().apply {
+            put("timeOfRequest", timeOfRequest)
+            put("coordinatesOfRequest", JSONObject().apply {
+                put("lat", location?.lat)
+                put("lng", location?.lng)
+            })
+            put("guessedOccupancyRate", guessedOccupancyRate)
+            put("realOccupancyRate", realOccupancyRate)
+            put("route", routeId)
+        }
 
-            // Prepare data for MQTT request
-            val realOccupancyRate = binding.percentageSpinner.selectedItem.toString().removeSuffix("%").toFloat()
-            val timeOfRequest = DateTimeFormatter.ISO_INSTANT.format(java.time.Instant.now())
-            val jsonBody = JSONObject().apply {
-                put("timeOfRequest", timeOfRequest)
-                put("coordinatesOfRequest", JSONObject().apply {
-                    put("lat", location.latitude)
-                    put("lng", location.longitude)
-                })
-                put("guessedOccupancyRate", guessedOccupancyRate)
-                put("realOccupancyRate", realOccupancyRate)
-                put("route", routeId)
-            }
+        // Get token and set up MQTT client
+        val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
+        val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null)
 
-            // Get token and set up MQTT client
-            val token = app.sharedPrefs.getString(MyApp.TOKEN_KEY, null)
-            val username = app.sharedPrefs.getString(MyApp.USERNAME_KEY, null)
+        val mqttClient = (requireActivity().application as MyApp).mqttClient
 
-            val mqttClient = (requireActivity().application as MyApp).mqttClient
+        if (mqttClient == null || !mqttClient.isConnected) {
+            Toast.makeText(requireContext(), "MQTT client not connected", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-            if (mqttClient == null || !mqttClient.isConnected) {
-                Toast.makeText(requireContext(), "MQTT client not connected", Toast.LENGTH_SHORT).show()
-                return@addOnSuccessListener
-            }
+        // MQTT request
+        val requestPayload = JSONObject().apply {
+            put("token", token)
+            put("username", username)
+            put("timeOfRequest", timeOfRequest)
+            put("coordinatesOfRequest", jsonBody.getJSONObject("coordinatesOfRequest"))
+            put("guessedOccupancyRate", guessedOccupancyRate)
+            put("realOccupancyRate", realOccupancyRate)
+            put("route", routeId)
+        }
 
-            // MQTT request
-            val requestPayload = JSONObject().apply {
-                put("token", token)
-                put("username", username)
-                put("timeOfRequest", timeOfRequest)
-                put("coordinatesOfRequest", jsonBody.getJSONObject("coordinatesOfRequest"))
-                put("guessedOccupancyRate", guessedOccupancyRate)
-                put("realOccupancyRate", realOccupancyRate)
-                put("route", routeId)
-            }
+        val requestTopic = "app/passengers/create/request"
+        val responseTopic = "app/passengers/create/response/$username"
 
-            val requestTopic = "app/passengers/create/request"
-            val responseTopic = "app/passengers/create/response/$username"
-
-            // Subscribe to the response topic
-            mqttClient.subscribe(responseTopic)
+        // Subscribe to the response topic
+        mqttClient.subscribe(responseTopic)
 
             // Publish to the request topic
             mqttClient.publish(requestTopic, MqttMessage(requestPayload.toString().toByteArray()))
@@ -491,33 +524,29 @@ class ImageProcessorFragment : Fragment() {
                     }
                 }
 
-                override fun messageArrived(topic: String?, message: MqttMessage?) {
-                    Log.d("MQTT", "Message arrived on topic: $topic")
-                    if (topic == responseTopic) {
-                        val response = message?.toString()
-                        val jsonResponse = JSONObject(response ?: "{}")
-                        val success = jsonResponse.optBoolean("success", false)
+            override fun messageArrived(topic: String?, message: MqttMessage?) {
+                Log.d("MQTT", "Message arrived on topic: $topic")
+                if (topic == responseTopic) {
+                    val response = message?.toString()
+                    val jsonResponse = JSONObject(response ?: "{}")
+                    val success = jsonResponse.optBoolean("success", false)
 
-                        requireActivity().runOnUiThread {
-                            if (success) {
-                                Toast.makeText(requireContext(), "Occupancy submitted successfully", Toast.LENGTH_SHORT).show()
-                                reset()
-                            } else {
-                                val errorMessage = jsonResponse.optString("message", "Unknown error")
-                                Toast.makeText(requireContext(), "Failed: $errorMessage", Toast.LENGTH_SHORT).show()
-                            }
+                    requireActivity().runOnUiThread {
+                        if (success) {
+                            Toast.makeText(requireContext(), "Occupancy submitted successfully", Toast.LENGTH_SHORT).show()
+                            reset()
+                        } else {
+                            val errorMessage = jsonResponse.optString("message", "Unknown error")
+                            Toast.makeText(requireContext(), "Failed: $errorMessage", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
+            }
 
-                override fun deliveryComplete(token: IMqttDeliveryToken?) {
-                    // Optional: Handle delivery confirmation
-                }
-            })
-        }.addOnFailureListener { e ->
-            Toast.makeText(context, "Location error: ${e.message}", Toast.LENGTH_SHORT).show()
-            Log.e("OccupancySubmit", "Error getting location", e)
-        }
+            override fun deliveryComplete(token: IMqttDeliveryToken?) {
+                // Optional: Handle delivery confirmation
+            }
+        })
     }
 
 
@@ -540,6 +569,7 @@ class ImageProcessorFragment : Fragment() {
                 binding.takePictureButton.visibility = GONE
                 binding.editText1.visibility = VISIBLE
                 binding.editText2.visibility = VISIBLE
+                binding.timer.visibility = VISIBLE
                 binding.wagonNumber.isEnabled = false
                 binding.routesSpinner.isEnabled = false
 
@@ -563,6 +593,36 @@ class ImageProcessorFragment : Fragment() {
 
         autoCaptureRunnable = object : Runnable {
             override fun run() {
+                // Start the countdown for the current interval
+                val countDownTimer = object : CountDownTimer(intervalMillis, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {
+                        val minutes = millisUntilFinished / 1000 / 60
+                        val seconds = (millisUntilFinished / 1000) % 60
+                        binding.timer.text = String.format("Next capture: %02d:%02d", minutes, seconds)
+                    }
+
+                    override fun onFinish() {
+                        binding.timer.text = "00:00"
+                    }
+                }
+                countDownTimer.start()
+
+                // Trigger the camera auto-capture
+                launchCameraAuto()
+
+                // Schedule the next capture
+                handler.postDelayed(this, intervalMillis)
+            }
+        }
+
+        handler.post(autoCaptureRunnable!!) // Start the periodic execution
+    }
+
+    /*private fun startAutoCapture() {
+        val intervalMillis = automaticDataCaptureInterval * 60 * 1000L // Convert minutes to milliseconds
+
+        autoCaptureRunnable = object : Runnable {
+            override fun run() {
                 launchCameraAuto()
 
                 handler.postDelayed(this, intervalMillis)
@@ -570,7 +630,7 @@ class ImageProcessorFragment : Fragment() {
         }
 
         handler.post(autoCaptureRunnable!!) // Start the periodic execution
-    }
+    }*/
 
     private val takePictureLauncherAuto =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
@@ -731,6 +791,7 @@ class ImageProcessorFragment : Fragment() {
         binding.takePictureButton.visibility = VISIBLE
         binding.editText1.visibility = GONE
         binding.editText2.visibility = GONE
+        binding.timer.visibility = GONE
         binding.wagonNumber.isEnabled = true
         binding.routesSpinner.isEnabled = true
 
@@ -856,6 +917,11 @@ class ImageProcessorFragment : Fragment() {
         } else {
             Toast.makeText(requireContext(), "Error: Camera permission denied", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun updateLocationUI() {
+        binding.latitudeValue.text = location?.lat.toString()
+        binding.longitudeValue.text = location?.lng.toString()
     }
 
     private fun reset() {

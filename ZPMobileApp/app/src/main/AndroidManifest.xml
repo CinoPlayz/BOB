@@ -32,6 +32,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".ui.imageprocessor.PickLocationActivity"
+            android:label="Pick Location" />
+
         <!-- FileProvider configuration -->
         <provider
             android:name="androidx.core.content.FileProvider"

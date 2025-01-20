@@ -40,4 +40,14 @@
     <string name="automatic_data_capture">Automatic data capture</string>
     <string name="automatic_data_capture_stop">Stop Automatic data capture</string>
     <string name="automatic_data_capture_start">Start Automatic data capture</string>
+    <string name="your_occupancy_estimate">Your occupancy estimate:</string>
+    <string name="pick_location">Pick location</string>
+    <string name="longitude">Longitude:</string>
+    <string name="latitude">Latitude:</string>
+    <string name="percentage_of_wagon_occupied">Percentage of wagon occupied:</string>
+    <string name="number_of_seats_on_wagon">Number of seats on wagon:</string>
+    <string name="number_of_detected_people">Number of detected people:</string>
+    <string name="choose_actual_occupancy_percentage_to_the_best_of_your_abilities_and_submit_data_to_save_in_database_ncurrent_location_will_be_saved">Choose actual occupancy percentage to the best of your abilities and submit data to save in database.\nCurrent location will be saved.</string>
+    <string name="wagon">Wagon</string>
+    <string name="route">Route</string>
 </resources>
