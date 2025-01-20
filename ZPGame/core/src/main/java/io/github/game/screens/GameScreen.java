@@ -31,12 +31,12 @@ import io.github.game.common.GameManager;
 
 public class GameScreen implements Screen {
 
-    private ShapeRenderer shapeRenderer;
+    protected ShapeRenderer shapeRenderer;
     private OrthographicCamera camera;
 
     private FitViewport viewport;
 
-    private Waypoints waypoints;
+    protected Waypoints waypoints;
     private TextureAtlas gameplayAtlas;
 
     private Array<Train> trainArray;
@@ -49,7 +49,7 @@ public class GameScreen implements Screen {
     private Sound trainCollected;
     private Score score;
     private float spawnTimer = 0;
-    private final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
+    protected final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
     private float currentSpawnInterval = 3f;
     private DifficultyLevel currentDifficulty = DifficultyLevel.EASY;
 
@@ -117,7 +117,7 @@ public class GameScreen implements Screen {
     }
 
 
-    private void initializeSpawnConfigs() {
+    protected void initializeSpawnConfigs() {
         spawnConfigs.add(new TrainSpawnConfig("0-1", false));
         spawnConfigs.add(new TrainSpawnConfig("4-6", true));
         spawnConfigs.add(new TrainSpawnConfig("4-7", true));

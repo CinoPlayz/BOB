@@ -14,7 +14,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 
 import io.github.game.assets.AssetDescriptors;
 import io.github.game.screens.GameScreen;
-
+import io.github.game.screens.GameScreenOne;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -47,7 +47,7 @@ public class Main extends Game {
 
         viewport = new FitViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight() , camera);
         viewport.apply(true);
-        setScreen(new GameScreen(viewport, camera, gameplayAtlas, batch));
+        setScreen(new GameScreenOne(viewport, camera, gameplayAtlas, batch));
 
 
     }
