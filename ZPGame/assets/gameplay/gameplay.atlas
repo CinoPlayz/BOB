@@ -25,3 +25,10 @@ train
   orig: 1034, 308
   offset: 0, 0
   index: -1
+train_icon
+  rotate: false
+  xy: 1064, 360
+  size: 637, 747
+  orig: 637, 747
+  offset: 0, 0
+  index: -1
