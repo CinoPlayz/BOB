@@ -27,8 +27,7 @@ import io.github.game.Train;
 import io.github.game.Waypoints;
 import io.github.game.assets.RegionNames;
 import io.github.game.common.GameManager;
-import io.github.game.utils.debug.DebugCameraController;
-import io.github.game.utils.debug.MemoryInfo;
+
 
 public class GameScreen implements Screen {
 
@@ -54,8 +53,7 @@ public class GameScreen implements Screen {
     private float currentSpawnInterval = 3f;
     private DifficultyLevel currentDifficulty = DifficultyLevel.EASY;
 
-    private DebugCameraController debugCameraController;
-    private MemoryInfo memoryInfo;
+
     private boolean debug = true;
 
     public enum DifficultyLevel {
@@ -137,7 +135,12 @@ public class GameScreen implements Screen {
     }
 
     private void spawnPendingTrain() {
-        if (trainArray.size >= 20) return;
+        if (currentDifficulty == DifficultyLevel.HARD) {
+            if (trainArray.size >= 30) return;
+        } else {
+            if (trainArray.size >= 20) return;
+        }
+
 
         TrainSpawnConfig config = spawnConfigs.get(MathUtils.random(spawnConfigs.size - 1));
         float cooldown = MathUtils.random(3f, 5f);
@@ -259,12 +262,17 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (GameManager.INSTANCE.getScore() > 2000 && currentDifficulty == DifficultyLevel.EASY) {
+            setDifficulty(DifficultyLevel.NORMAL);
+        } else if (GameManager.INSTANCE.getScore() > 6000 && currentDifficulty == DifficultyLevel.NORMAL) {
+            setDifficulty(DifficultyLevel.NORMAL);
+        }
         ScreenUtils.clear(0, 0, 0, 1);
         handleInput();
         viewport.apply();
         camera.update();
 
-        GameManager.INSTANCE.updateScore(delta);
+        GameManager.INSTANCE.updateScore(delta, currentDifficulty);
 
 
         spawnTimer += delta;
