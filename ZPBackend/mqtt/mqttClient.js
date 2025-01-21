@@ -95,6 +95,14 @@ client.on('connect', () => {
             console.error('Error subscribing to app/notifications/deregister/request:', err);
         }
     })
+
+    client.subscribe('app/autoDataCapture/create/request', (err) => {
+        if (!err) {
+            console.log('Subscribed to app/autoDataCapture/create/request');
+        } else {
+            console.error('Error subscribing to app/autoDataCapture/create/request:', err);
+        }
+    })
 });
 
 client.on('error', (err) => {

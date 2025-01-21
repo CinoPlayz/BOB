@@ -21,7 +21,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import io.github.game.assets.AssetDescriptors;
 import io.github.game.screens.GameScreen;
 import io.github.game.screens.MapScreen;
-import io.github.game.utils.Constants;
+import io.github.game.utils.Constants;import io.github.game.screens.GameScreenOne;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -78,7 +78,7 @@ public class Main extends Game {
     }
     @Override
     public void resize(int width, int height) {
-       // viewport.update(width, height);
+        viewport.update(width, height);
         super.resize(width, height);
     }
     @Override

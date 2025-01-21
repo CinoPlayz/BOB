@@ -18,7 +18,7 @@ public class GameManager {
     private static final float MULTIPLIER_INCREASE_RATE = 0.000001f; // How fast multiplier increases
     private static final float MAX_MULTIPLIER = 3.0f;
 
-    private static final float SCORE_UPDATE_INTERVAL = 1.0f;
+    private static float SCORE_UPDATE_INTERVAL = 1.0f;
     private float timeSinceLastScoreUpdate = 0.0f;
 
     public static class ScoreEntry {
@@ -46,7 +46,12 @@ public class GameManager {
         timeMultiplier = 1.0f;
     }
 
-    public void updateScore(float delta) {
+    public void updateScore(float delta, GameScreen.DifficultyLevel currentDifficulty) {
+
+        if (currentDifficulty == GameScreen.DifficultyLevel.NORMAL)
+            SCORE_UPDATE_INTERVAL = 0.1f;
+        if (currentDifficulty == GameScreen.DifficultyLevel.HARD)
+            SCORE_UPDATE_INTERVAL = 0.01f;
 
         timeSinceLastScoreUpdate += delta;
 
@@ -58,20 +63,25 @@ public class GameManager {
             long pointsToAdd = Math.max(1, (long) (BASE_SCORE_RATE * timeMultiplier * delta * 0.0001f));
             score += pointsToAdd;
             timeSinceLastScoreUpdate = 0.0f;
-            System.out.println("Updated score: " + score + ", Multiplier: " + timeMultiplier);
+            //System.out.println("Updated score: " + score + ", Multiplier: " + timeMultiplier);
         }
     }
 
-    public void trainDelivered(GameScreen.DifficultyLevel difficultyLevel) {
+    public void trainDelivered(GameScreen.DifficultyLevel difficultyLevel, boolean isJokerType) {
+        int multiplier = 1;
+        if(isJokerType){
+            multiplier = 2;
+        }
         if (difficultyLevel == GameScreen.DifficultyLevel.EASY)
-            score += 100;
+            score += (multiplier * 100);
         if (difficultyLevel == GameScreen.DifficultyLevel.NORMAL)
-            score += 500;
+            score += (multiplier * 500);
         if (difficultyLevel == GameScreen.DifficultyLevel.HARD)
-            score += 1000;
+            score += (multiplier * 1000);
     }
 
     public void trainCrash(GameScreen.DifficultyLevel difficultyLevel) {
+
         if (difficultyLevel == GameScreen.DifficultyLevel.EASY)
             score -= 100;
         if (difficultyLevel == GameScreen.DifficultyLevel.NORMAL)

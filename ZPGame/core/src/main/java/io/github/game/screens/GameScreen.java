@@ -20,6 +20,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 
 import java.util.Iterator;
 
+import io.github.game.JokerTrain;
 import io.github.game.PendingTrain;
 import io.github.game.RailwayPath;
 import io.github.game.Score;
@@ -30,12 +31,12 @@ import io.github.game.common.GameManager;
 
 public class GameScreen implements Screen {
 
-    private ShapeRenderer shapeRenderer;
+    protected ShapeRenderer shapeRenderer;
     private OrthographicCamera camera;
 
     private FitViewport viewport;
 
-    private Waypoints waypoints;
+    protected Waypoints waypoints;
     private TextureAtlas gameplayAtlas;
 
     private Array<Train> trainArray;
@@ -48,10 +49,14 @@ public class GameScreen implements Screen {
     private Sound trainCollected;
     private Score score;
     private float spawnTimer = 0;
-    private final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
+    protected final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
     private float currentSpawnInterval = 3f;
     private DifficultyLevel currentDifficulty = DifficultyLevel.EASY;
+
+
     private boolean debug = true;
+
+    private float timeSinceLastJokerTrain = 0f;
 
     public enum DifficultyLevel {
         EASY(3f),
@@ -114,7 +119,7 @@ public class GameScreen implements Screen {
     }
 
 
-    private void initializeSpawnConfigs() {
+    protected void initializeSpawnConfigs() {
         spawnConfigs.add(new TrainSpawnConfig("0-1", false));
         spawnConfigs.add(new TrainSpawnConfig("4-6", true));
         spawnConfigs.add(new TrainSpawnConfig("4-7", true));
@@ -132,7 +137,12 @@ public class GameScreen implements Screen {
     }
 
     private void spawnPendingTrain() {
-        if (trainArray.size >= 20) return;
+        if (currentDifficulty == DifficultyLevel.HARD) {
+            if (trainArray.size >= 30) return;
+        } else {
+            if (trainArray.size >= 20) return;
+        }
+
 
         TrainSpawnConfig config = spawnConfigs.get(MathUtils.random(spawnConfigs.size - 1));
         float cooldown = MathUtils.random(3f, 5f);
@@ -148,7 +158,7 @@ public class GameScreen implements Screen {
     private void spawnTrain(PendingTrain pending) {
         Train newTrain = trainPool.obtain();
         newTrain.texture = gameplayAtlas.findRegion(RegionNames.TRAIN);
-
+        newTrain.isJokerType = false;
         RailwayPath initialPath = waypoints.getPathById(pending.config.pathId);
         newTrain.setPath(initialPath, pending.config.isReversed);
 
@@ -157,7 +167,7 @@ public class GameScreen implements Screen {
             newTrain.bounds.height = newTrain.texture.getRegionHeight() / 13f;
         }
 
-        float baseSpeed = 50f;
+       float baseSpeed = 50f;
         float speedMultiplier;
         switch (currentDifficulty) {
             case EASY:
@@ -173,8 +183,9 @@ public class GameScreen implements Screen {
         }
 
         newTrain.speed = baseSpeed * speedMultiplier;
+       // newTrain.speed = baseSpeed * MathUtils.random(0.8f, 1.2f);
         trainArray.add(newTrain);
-        System.out.println("Train spawned on path " + pending.config.pathId);
+        //System.out.println("Train spawned on path " + pending.config.pathId);
     }
 
 
@@ -240,8 +251,12 @@ public class GameScreen implements Screen {
 
                     trainArray.removeValue(trainA, true);
                     trainArray.removeValue(trainB, true);
-                    trainPool.free(trainA);
-                    trainPool.free(trainB);
+                    if (!(trainA instanceof JokerTrain)) {
+                        trainPool.free(trainA);
+                    }
+                    if (!(trainB instanceof JokerTrain)) {
+                        trainPool.free(trainB);
+                    }
                     explosion.play();
                     GameManager.INSTANCE.trainCrash(currentDifficulty);
                     System.out.println(currentDifficulty);
@@ -254,12 +269,18 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (GameManager.INSTANCE.getScore() > 2000 && currentDifficulty == DifficultyLevel.EASY) {
+            setDifficulty(DifficultyLevel.NORMAL);
+        } else if (GameManager.INSTANCE.getScore() > 6000 && currentDifficulty == DifficultyLevel.NORMAL) {
+            setDifficulty(DifficultyLevel.NORMAL);
+        }
         ScreenUtils.clear(0, 0, 0, 1);
         handleInput();
         viewport.apply();
         camera.update();
+        timeSinceLastJokerTrain += delta;
 
-        GameManager.INSTANCE.updateScore(delta);
+        GameManager.INSTANCE.updateScore(delta, currentDifficulty);
 
 
         spawnTimer += delta;
@@ -281,6 +302,11 @@ public class GameScreen implements Screen {
                 spawnTrain(pending);
                 iterator.remove();
             }
+        }
+
+        if (timeSinceLastJokerTrain >= 20f) {
+            spawnJokerTrain();
+            timeSinceLastJokerTrain = 0f;
         }
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
@@ -306,7 +332,7 @@ public class GameScreen implements Screen {
 
                 trainArray.removeValue(train, true);
                 trainPool.free(train);
-                GameManager.INSTANCE.trainDelivered(currentDifficulty);
+                GameManager.INSTANCE.trainDelivered(currentDifficulty, train.isJokerType);
                 trainCollected.play();
             }
         }
@@ -348,6 +374,27 @@ public class GameScreen implements Screen {
 
         score.draw(camera, batch, viewport);
 
+    }
+
+    private void spawnJokerTrain() {
+        JokerTrain jokerTrain = new JokerTrain();
+        jokerTrain.texture = gameplayAtlas.findRegion(RegionNames.JOKER_TRAIN);
+        jokerTrain.isJokerType = true;
+
+        TrainSpawnConfig config = spawnConfigs.get(MathUtils.random(spawnConfigs.size - 1));
+
+        RailwayPath initialPath = waypoints.getPathById(config.pathId);
+        jokerTrain.setPath(initialPath, config.isReversed);
+
+        if (jokerTrain.texture != null) {
+            jokerTrain.bounds.width = jokerTrain.texture.getRegionWidth() /13f;
+            jokerTrain.bounds.height = jokerTrain.texture.getRegionHeight() / 13f;
+        } else {
+            System.err.println("Error: Joker Train texture not found!");
+        }
+
+        jokerTrain.speed = 110f;
+        trainArray.add(jokerTrain);
     }
 
     public void drawSemaphore(TrainSpawnConfig config, Array<TrainSpawnConfig> confs) {

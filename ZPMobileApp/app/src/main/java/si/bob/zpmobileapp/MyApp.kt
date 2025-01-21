@@ -2,7 +2,9 @@ package si.bob.zpmobileapp
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.os.Vibrator
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.google.firebase.FirebaseApp
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
@@ -15,6 +17,7 @@ import java.util.UUID
 class MyApp : Application() {
     lateinit var sharedPrefs: SharedPreferences
     var mqttClient: MqttClient? = null
+    lateinit var vibrator: Vibrator
 
     companion object {
         const val PREFS_NAME = "bobMobileApp_preferences"
@@ -37,6 +40,8 @@ class MyApp : Application() {
         if (!sharedPrefs.contains(BACKEND_URL_KEY)) {
             sharedPrefs.edit().putString(BACKEND_URL_KEY, BuildConfig.BASE_URL).apply()
         }
+
+        vibrator = getSystemService(Vibrator::class.java)
 
         initializeMQTT()
         FirebaseApp.initializeApp(this)
