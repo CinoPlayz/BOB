@@ -40,6 +40,7 @@ import java.util.List;
 import io.github.game.Main;
 import io.github.game.assets.RegionNames;
 import io.github.game.utils.Constants;
+import io.github.game.utils.Coordinates;
 import io.github.game.utils.Geolocation;
 import io.github.game.utils.MapRasterTiles;
 import io.github.game.utils.RequestTiles;
@@ -130,6 +131,7 @@ public class MapScreen implements Screen {
 
         drawAnimationInput();
         drawTrainLoc();
+        drawAddData();
     }
 
     @Override
@@ -355,8 +357,6 @@ public class MapScreen implements Screen {
             }
         }
 
-
-
         TextureRegion textureTrain = gameplayAtlas.findRegion(RegionNames.TRAIN_ICON);
 
         for(int i = 0; i < listOfCurrentTrains.size(); i++){
@@ -376,14 +376,27 @@ public class MapScreen implements Screen {
             Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
             labelStyle.font = game.getFontMedium();
 
+            TextButton.TextButtonStyle textButtonStyle = skin.get("default", TextButton.TextButtonStyle.class);
+            textButtonStyle.font = game.getFontMedium();
+
+            TextButton textButtonUpdate = new TextButton("Update", textButtonStyle);
+            textButtonUpdate.addListener(new ClickListener(){
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    displayUpdateWindow = !displayUpdateWindow;
+                    drawUpdateData(trainLocHistory, marker.x - trainIconWidth / 2, marker.y);
+                }
+            });
+
             Window windowAboveTrain = new Window("", windowStyle);
             Label labelName = new Label(trainLocHistory.getTrainType() + " " + trainLocHistory.getTrainNumber(), labelStyle);
             Label labelNextStop = new Label("Next station: " + trainLocHistory.getNextStation(), labelStyle);
             Label labelDelay = new Label("Delay: " + trainLocHistory.getDelay() + "min", labelStyle);
             windowAboveTrain.add(labelName).row();
             windowAboveTrain.add(labelNextStop).row();
-            windowAboveTrain.add(labelDelay);
-            windowAboveTrain.sizeBy(300, 0);
+            windowAboveTrain.add(labelDelay).row();
+            windowAboveTrain.add(textButtonUpdate);
+            windowAboveTrain.sizeBy(300, 100);
             windowAboveTrain.setPosition(marker.x - windowAboveTrain.getWidth()/2, marker.y + trainIconHeight);
             windowAboveTrain.setVisible(false);
 
@@ -401,6 +414,248 @@ public class MapScreen implements Screen {
             stage.addActor(trainIcon);
             stage.addActor(windowAboveTrain);
 
+        }
+    }
+
+    private boolean displayAddWindow = false;
+
+    private void drawAddData(){
+        TextButton.TextButtonStyle textButtonStyle = skin.get("default", TextButton.TextButtonStyle.class);
+        textButtonStyle.font = game.getFontMedium();
+        TextButton textButtonAdd = new TextButton("Add", textButtonStyle);
+        textButtonAdd.setPosition(2400, 2400);
+        textButtonAdd.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                displayAddWindow = !displayAddWindow;
+                stage.clear();
+                drawAnimationInput();
+                drawTrainLoc();
+                drawAddData();
+            }
+        });
+        stage.addActor(textButtonAdd);
+
+        if(displayAddWindow){
+            Window.WindowStyle windowStyle = skin.get("default", Window.WindowStyle.class);
+            windowStyle.titleFont = game.getFontMediumBold();
+
+            Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
+            labelStyle.font = game.getFontMedium();
+
+            TextField.TextFieldStyle textFieldStyle = skin.get("default", TextField.TextFieldStyle.class);
+            textFieldStyle.font = game.getFontMedium();
+
+            com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle listStyle = skin.get("default", com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle.class);
+            listStyle.font = game.getFontMedium();
+            SelectBox.SelectBoxStyle selectBoxStyle = skin.get("default", SelectBox.SelectBoxStyle.class);
+            selectBoxStyle.font = game.getFontMedium();
+            selectBoxStyle.listStyle.font = game.getFontMedium();
+
+            Window windowAddData = new Window("", windowStyle);
+            Label labelRequestTime = new Label("Time:", labelStyle);
+            Label labelTrainType = new Label("Type:", labelStyle);
+            Label labelNumber = new Label("Number:", labelStyle);
+            Label labelNextStation = new Label("Next:", labelStyle);
+            Label labelLat = new Label("Latitude:", labelStyle);
+            Label labelLng = new Label("Longitude:", labelStyle);
+            Label labelDelay = new Label("Delay:", labelStyle);
+            Label labelRouteFrom = new Label("Route From:", labelStyle);
+            Label labelRouteTo = new Label("Route To:", labelStyle);
+            Label labelRouteStartTime = new Label("Route Time:", labelStyle);
+
+            TextField textFieldRequestTime = new TextField(startDateString, textFieldStyle);
+            TextField textFieldNumber = new TextField("", textFieldStyle);
+            TextField textFieldNextStation = new TextField("", textFieldStyle);
+            TextField textFieldLat = new TextField("", textFieldStyle);
+            TextField textFieldLng = new TextField("", textFieldStyle);
+            TextField textFieldDelay = new TextField("", textFieldStyle);
+            TextField textFieldRouteFrom = new TextField("", textFieldStyle);
+            TextField textFieldRouteTo = new TextField("", textFieldStyle);
+            TextField textFieldRouteStartTime = new TextField("", textFieldStyle);
+            SelectBox<String> selectBoxTrainType = new SelectBox<>(selectBoxStyle);
+            selectBoxTrainType.setItems("LP", "LPV", "RG", "IC", "ICS", "MV");
+            selectBoxTrainType.setSelected("LP");
+
+            TextButton textButtonAddData = new TextButton("Add Data", textButtonStyle);
+            textButtonAddData.addListener(new ClickListener(){
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    TrainLocHistory trainLocHistory = new TrainLocHistory();
+
+                    DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+                    LocalDateTime reqDateTime = LocalDateTime.parse(textFieldRequestTime.getText(), ISO_FORMATTER);
+                    trainLocHistory.setTimeOfRequest(reqDateTime);
+
+                    trainLocHistory.setTrainType(selectBoxTrainType.getSelected());
+                    trainLocHistory.setTrainNumber(textFieldNumber.getText());
+                    trainLocHistory.setNextStation(textFieldNextStation.getText());
+                    trainLocHistory.setDelay(Integer.parseInt(textFieldDelay.getText()));
+                    trainLocHistory.setRouteFrom(textFieldRouteFrom.getText());
+                    trainLocHistory.setRouteTo(textFieldRouteTo.getText());
+                    trainLocHistory.setRouteStartTime(textFieldRouteStartTime.getText());
+                    double lat = Double.parseDouble(textFieldLat.getText());
+                    double lng = Double.parseDouble(textFieldLng.getText());
+                    trainLocHistory.setCoordinates(new Coordinates(lat, lng));
+                    Requests.insertTrainLocHistory(trainLocHistory);
+                }
+            });
+
+            windowAddData.add(labelRequestTime).padRight(2f);
+            windowAddData.add(textFieldRequestTime).expandX().fillX().row();
+
+            windowAddData.add(labelTrainType).padRight(2f).padTop(5f);
+            windowAddData.add(selectBoxTrainType).row();
+
+            windowAddData.add(labelNumber).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldNumber).expandX().fillX().row();
+
+            windowAddData.add(labelNextStation).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldNextStation).expandX().fillX().row();
+
+            windowAddData.add(labelLat).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldLat).expandX().fillX().row();
+
+            windowAddData.add(labelLng).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldLng).expandX().fillX().row();
+
+            windowAddData.add(labelDelay).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldDelay).expandX().fillX().row();
+
+            windowAddData.add(labelRouteFrom).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldRouteFrom).expandX().fillX().row();
+
+            windowAddData.add(labelRouteTo).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldRouteTo).expandX().fillX().row();
+
+            windowAddData.add(labelRouteStartTime).padRight(2f).padTop(5f);
+            windowAddData.add(textFieldRouteStartTime).expandX().fillX().row();
+
+            windowAddData.add(textButtonAddData).colspan(2).padTop(10f);
+
+            windowAddData.sizeBy(600, 600);
+            windowAddData.setPosition(1600, 1800);
+            stage.addActor(windowAddData);
+        }
+    }
+
+    private boolean displayUpdateWindow = false;
+
+    private void drawUpdateData(TrainLocHistory trainLocHistoryPassed, float x, float y){
+        if (displayUpdateWindow){
+            Window.WindowStyle windowStyle = skin.get("default", Window.WindowStyle.class);
+            windowStyle.titleFont = game.getFontMediumBold();
+
+            Label.LabelStyle labelStyle = skin.get("default", Label.LabelStyle.class);
+            labelStyle.font = game.getFontMedium();
+
+            TextField.TextFieldStyle textFieldStyle = skin.get("default", TextField.TextFieldStyle.class);
+            textFieldStyle.font = game.getFontMedium();
+
+            TextButton.TextButtonStyle textButtonStyle = skin.get("default", TextButton.TextButtonStyle.class);
+            textButtonStyle.font = game.getFontMedium();
+
+            com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle listStyle = skin.get("default", com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle.class);
+            listStyle.font = game.getFontMedium();
+            SelectBox.SelectBoxStyle selectBoxStyle = skin.get("default", SelectBox.SelectBoxStyle.class);
+            selectBoxStyle.font = game.getFontMedium();
+            selectBoxStyle.listStyle.font = game.getFontMedium();
+            DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+            Window windowUpdateData = new Window("", windowStyle);
+            Label labelRequestTime = new Label("Time:", labelStyle);
+            Label labelTrainType = new Label("Type:", labelStyle);
+            Label labelNumber = new Label("Number:", labelStyle);
+            Label labelNextStation = new Label("Next:", labelStyle);
+            Label labelLat = new Label("Latitude:", labelStyle);
+            Label labelLng = new Label("Longitude:", labelStyle);
+            Label labelDelay = new Label("Delay:", labelStyle);
+            Label labelRouteFrom = new Label("Route From:", labelStyle);
+            Label labelRouteTo = new Label("Route To:", labelStyle);
+            Label labelRouteStartTime = new Label("Route Time:", labelStyle);
+
+            TextField textFieldRequestTime = new TextField(ISO_FORMATTER.format(trainLocHistoryPassed.getTimeOfRequest()), textFieldStyle);
+            TextField textFieldNumber = new TextField(trainLocHistoryPassed.getTrainNumber(), textFieldStyle);
+            TextField textFieldNextStation = new TextField(trainLocHistoryPassed.getNextStation(), textFieldStyle);
+            TextField textFieldLat = new TextField(String.valueOf(trainLocHistoryPassed.getCoordinates().getLat()), textFieldStyle);
+            TextField textFieldLng = new TextField(String.valueOf(trainLocHistoryPassed.getCoordinates().getLng()), textFieldStyle);
+            TextField textFieldDelay = new TextField(String.valueOf(trainLocHistoryPassed.getDelay()), textFieldStyle);
+            TextField textFieldRouteFrom = new TextField(trainLocHistoryPassed.getRouteFrom(), textFieldStyle);
+            TextField textFieldRouteTo = new TextField(trainLocHistoryPassed.getRouteTo(), textFieldStyle);
+            TextField textFieldRouteStartTime = new TextField(trainLocHistoryPassed.getRouteStartTime(), textFieldStyle);
+            SelectBox<String> selectBoxTrainType = new SelectBox<>(selectBoxStyle);
+            selectBoxTrainType.setItems("LP", "LPV", "RG", "IC", "ICS", "MV");
+            selectBoxTrainType.setSelected("LP");
+
+            TextButton textButtonAddData = new TextButton("Update Data", textButtonStyle);
+            textButtonAddData.addListener(new ClickListener(){
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    TrainLocHistory trainLocHistory = new TrainLocHistory();
+
+
+                    LocalDateTime reqDateTime = LocalDateTime.parse(textFieldRequestTime.getText(), ISO_FORMATTER);
+                    trainLocHistory.setTimeOfRequest(reqDateTime);
+
+                    trainLocHistory.setTrainType(selectBoxTrainType.getSelected());
+                    trainLocHistory.setTrainNumber(textFieldNumber.getText());
+                    trainLocHistory.setNextStation(textFieldNextStation.getText());
+                    trainLocHistory.setDelay(Integer.parseInt(textFieldDelay.getText()));
+                    trainLocHistory.setRouteFrom(textFieldRouteFrom.getText());
+                    trainLocHistory.setRouteTo(textFieldRouteTo.getText());
+                    trainLocHistory.setRouteStartTime(textFieldRouteStartTime.getText());
+                    double lat = Double.parseDouble(textFieldLat.getText());
+                    double lng = Double.parseDouble(textFieldLng.getText());
+                    trainLocHistory.setCoordinates(new Coordinates(lat, lng));
+                    Requests.updateTrainLocHistory(trainLocHistoryPassed, trainLocHistory);
+                    windowUpdateData.remove();
+                }
+            });
+
+            TextButton textButtonCancel = new TextButton("Cancel", textButtonStyle);
+            textButtonCancel.addListener(new ClickListener(){
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    windowUpdateData.remove();
+                }
+            });
+
+            windowUpdateData.add(labelRequestTime).padRight(2f);
+            windowUpdateData.add(textFieldRequestTime).expandX().fillX().row();
+
+            windowUpdateData.add(labelTrainType).padRight(2f).padTop(5f);
+            windowUpdateData.add(selectBoxTrainType).row();
+
+            windowUpdateData.add(labelNumber).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldNumber).expandX().fillX().row();
+
+            windowUpdateData.add(labelNextStation).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldNextStation).expandX().fillX().row();
+
+            windowUpdateData.add(labelLat).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldLat).expandX().fillX().row();
+
+            windowUpdateData.add(labelLng).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldLng).expandX().fillX().row();
+
+            windowUpdateData.add(labelDelay).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldDelay).expandX().fillX().row();
+
+            windowUpdateData.add(labelRouteFrom).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldRouteFrom).expandX().fillX().row();
+
+            windowUpdateData.add(labelRouteTo).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldRouteTo).expandX().fillX().row();
+
+            windowUpdateData.add(labelRouteStartTime).padRight(2f).padTop(5f);
+            windowUpdateData.add(textFieldRouteStartTime).expandX().fillX().row();
+
+            windowUpdateData.add(textButtonCancel).padTop(10f);
+            windowUpdateData.add(textButtonAddData).padTop(10f);
+
+            windowUpdateData.sizeBy(600, 600);
+            windowUpdateData.setPosition(x-600, y-600);
+            stage.addActor(windowUpdateData);
         }
     }
 

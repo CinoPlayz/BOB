@@ -1,5 +1,8 @@
 package io.github.game.utils;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.mongodb.client.FindIterable;
@@ -10,6 +13,8 @@ import org.bson.conversions.Bson;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,5 +80,15 @@ public class Requests {
         System.out.println(docs.size());
 
         return new ArrayList<>(docs);
+    }
+
+    public static void insertTrainLocHistory(TrainLocHistory trainLocHistory){
+        MongoCollection<TrainLocHistory> collection = MongoClientConnect.database.getCollection("trainlochistories", TrainLocHistory.class);
+        collection.insertOne(trainLocHistory);
+    }
+
+    public static void updateTrainLocHistory(TrainLocHistory trainLocHistoryOriginal, TrainLocHistory trainLocHistoryUpdate){
+        MongoCollection<TrainLocHistory> collection = MongoClientConnect.database.getCollection("trainlochistories", TrainLocHistory.class);
+        collection.replaceOne(and(eq("timeOfRequest", trainLocHistoryOriginal.getTimeOfRequest()), eq("trainNumber", trainLocHistoryOriginal.getTrainNumber())), trainLocHistoryUpdate);
     }
 }

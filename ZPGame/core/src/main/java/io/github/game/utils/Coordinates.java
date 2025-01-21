@@ -23,4 +23,9 @@ public class Coordinates{
     public Coordinates(){
 
     }
+
+    public Coordinates(double lat, double lng){
+        setLat(lat);
+        setLng(lng);
+    }
 }
