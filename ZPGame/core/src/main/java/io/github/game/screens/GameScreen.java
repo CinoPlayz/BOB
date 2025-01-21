@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pools;
@@ -21,6 +22,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import java.util.Iterator;
 
 import io.github.game.JokerTrain;
+import io.github.game.Main;
 import io.github.game.PendingTrain;
 import io.github.game.RailwayPath;
 import io.github.game.Score;
@@ -28,6 +30,7 @@ import io.github.game.Train;
 import io.github.game.Waypoints;
 import io.github.game.assets.RegionNames;
 import io.github.game.common.GameManager;
+import io.github.game.utils.Constants;
 
 public class GameScreen implements Screen {
 
@@ -52,11 +55,13 @@ public class GameScreen implements Screen {
     protected final Array<TrainSpawnConfig> spawnConfigs = new Array<>();
     private float currentSpawnInterval = 3f;
     private DifficultyLevel currentDifficulty = DifficultyLevel.EASY;
+    private Skin skin;
 
 
     private boolean debug = true;
 
     private float timeSinceLastJokerTrain = 0f;
+    private Main game;
 
     public enum DifficultyLevel {
         EASY(3f),
@@ -81,10 +86,12 @@ public class GameScreen implements Screen {
 
     }
 
-    public GameScreen(FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, SpriteBatch batch) {
+    public GameScreen(FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, SpriteBatch batch, Main game, Skin skin) {
         this.viewport = viewport;
         this.camera = camera;
         this.batch = batch;
+        this.game = game;
+        this.skin = skin;
         shapeRenderer = new ShapeRenderer();
         waypoints = new Waypoints(shapeRenderer);
 
@@ -464,6 +471,11 @@ public class GameScreen implements Screen {
         }
         if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             camera.translate(0, 3, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.B)) {
+            viewport = new FitViewport(Constants.MAP_WIDTH, Constants.MAP_HEIGHT, camera);
+            viewport.apply(true);
+            game.setScreen(new MapScreen(viewport, camera, gameplayAtlas, skin, game, batch));
         }
 
         camera.zoom = MathUtils.clamp(camera.zoom, 0.5f, 2f);

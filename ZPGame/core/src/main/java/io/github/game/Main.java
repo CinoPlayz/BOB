@@ -1,6 +1,5 @@
 package io.github.game;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
@@ -8,20 +7,17 @@ import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 import io.github.game.assets.AssetDescriptors;
-import io.github.game.screens.GameScreen;
 import io.github.game.screens.MapScreen;
-import io.github.game.utils.Constants;import io.github.game.screens.GameScreenOne;
+import io.github.game.utils.Constants;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -68,7 +64,7 @@ public class Main extends Game {
         camera = new OrthographicCamera();
         viewport = new FitViewport(Constants.MAP_WIDTH, Constants.MAP_HEIGHT, camera);
         viewport.apply(true);
-        setScreen(new MapScreen(viewport, camera, gameplayAtlas, skin, this));
+        setScreen(new MapScreen(viewport, camera, gameplayAtlas, skin, this, batch));
     }
 
     @Override

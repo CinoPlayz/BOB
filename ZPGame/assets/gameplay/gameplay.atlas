@@ -6,30 +6,44 @@ filter: Nearest, Nearest
 repeat: none
 background_map
   rotate: false
-  xy: 2, 312
+  xy: 2, 468
   size: 1060, 795
   orig: 1060, 795
   offset: 0, 0
   index: -1
 map_land
   rotate: false
-  xy: 2, 1109
+  xy: 2, 1265
   size: 1480, 781
   orig: 1480, 781
   offset: 0, 0
   index: -1
-passengers
+passangers
   rotate: false
-  xy: 1484, 1378
+  xy: 1064, 2
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+railway-station
+  rotate: false
+  xy: 1484, 1534
   size: 512, 512
   orig: 512, 512
   offset: 0, 0
   index: -1
 train
   rotate: false
-  xy: 2, 2
+  xy: 2, 158
   size: 1034, 308
   orig: 1034, 308
+  offset: 0, 0
+  index: -1
+train_icon
+  rotate: false
+  xy: 1064, 516
+  size: 637, 747
+  orig: 637, 747
   offset: 0, 0
   index: -1
 
@@ -41,14 +55,7 @@ repeat: none
 train_joker
   rotate: false
   xy: 2, 2
-  size: 1034, 308
-  orig: 1034, 308
-  offset: 0, 0
-  index: -1
-train_icon
-  rotate: false
-  xy: 1064, 360
-  size: 637, 747
-  orig: 637, 747
+  size: 1033, 284
+  orig: 1033, 284
   offset: 0, 0
   index: -1

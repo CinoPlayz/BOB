@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -61,6 +62,7 @@ public class MapScreen implements Screen {
     private Stage stage;
     private Skin skin;
     private Main game;
+    private SpriteBatch batch;
     private List<TrainLocHistory> listOfTrainLocHistory;
     private int speedOfAnimation = 1;
     private int iterInAnimation = 0;
@@ -73,12 +75,13 @@ public class MapScreen implements Screen {
 
     private final Geolocation MARKER_GEOLOCATION = new Geolocation(46.559070, 15.638100);
 
-    public MapScreen(FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, Skin skin, Main game) {
+    public MapScreen(FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, Skin skin, Main game, SpriteBatch batch) {
         this.viewport = viewport;
         this.camera = camera;
         this.gameplayAtlas = gameplayAtlas;
         this.skin = skin;
         this.game = game;
+        this.batch = batch;
     }
 
     @Override
@@ -132,6 +135,7 @@ public class MapScreen implements Screen {
         drawAnimationInput();
         drawTrainLoc();
         drawAddData();
+        drawOpenGame();
     }
 
     @Override
@@ -162,6 +166,7 @@ public class MapScreen implements Screen {
                 drawTrainLoc();
                 drawAnimationInput();
                 drawAddData();
+                drawOpenGame();
             }
         }
 
@@ -285,6 +290,7 @@ public class MapScreen implements Screen {
                 drawAnimationInput();
                 drawTrainLoc();
                 drawAddData();
+                drawOpenGame();
             }
         });
 
@@ -659,6 +665,44 @@ public class MapScreen implements Screen {
             windowUpdateData.setPosition(x-600, y-600);
             stage.addActor(windowUpdateData);
         }
+    }
+
+    private void drawOpenGame(){
+        Vector2 markerLjubljana = MapRasterTiles.getPixelPosition(46.058254, 14.510534, beginTile.x, beginTile.y);
+        Vector2 markerMaribor = MapRasterTiles.getPixelPosition(46.56195, 15.658112, beginTile.x, beginTile.y);
+        TextureRegion textureStation = gameplayAtlas.findRegion(RegionNames.RAILWAY_STATION);
+
+        Image trainStationLjubljana = new Image(textureStation);
+        float trainStationIconWidth = trainStationLjubljana.getWidth() / 10;
+        float trainStationIconHeight = trainStationLjubljana.getHeight() / 10;
+        trainStationLjubljana.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                viewport = new FitViewport(2360, 1562, camera);
+                viewport.apply(true);
+                game.setScreen(new GameScreen(viewport, camera, gameplayAtlas, batch, game, skin));
+            }
+        });
+
+        trainStationLjubljana.setWidth(trainStationIconWidth);
+        trainStationLjubljana.setHeight(trainStationIconHeight);
+        trainStationLjubljana.setPosition(markerLjubljana.x - trainStationIconWidth / 2, markerLjubljana.y);
+
+        Image trainStationMaribor = new Image(textureStation);
+        trainStationMaribor.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                viewport = new FitViewport(1760, 1562, camera);
+                viewport.apply(true);
+                game.setScreen(new GameScreenOne(viewport, camera, gameplayAtlas, batch, game, skin));
+            }
+        });
+
+        trainStationMaribor.setWidth(trainStationIconWidth);
+        trainStationMaribor.setHeight(trainStationIconHeight);
+        trainStationMaribor.setPosition(markerMaribor.x - trainStationIconWidth / 2, markerMaribor.y);
+        stage.addActor(trainStationLjubljana);
+        stage.addActor(trainStationMaribor);
     }
 
     private float getCurrentTime(){

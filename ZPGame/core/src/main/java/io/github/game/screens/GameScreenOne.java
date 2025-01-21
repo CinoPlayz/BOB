@@ -3,19 +3,16 @@ package io.github.game.screens;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
-import io.github.game.RailwayPath;
-import io.github.game.Waypoints;
+import io.github.game.Main;
 import io.github.game.WaypointsOne;
 
 public class GameScreenOne extends GameScreen {
 
-    public GameScreenOne(FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, SpriteBatch batch) {
-        super(viewport, camera, gameplayAtlas, batch);
+    public GameScreenOne(FitViewport viewport, OrthographicCamera camera, TextureAtlas gameplayAtlas, SpriteBatch batch, Main game, Skin skin) {
+        super(viewport, camera, gameplayAtlas, batch, game, skin);
 
 
         initializeSpawnConfigs();
