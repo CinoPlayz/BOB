@@ -317,7 +317,6 @@ module.exports = {
             }
 
             let userDelay = { "delay": requestDelay, "time": requestTimeDate };
-            console.log(userDelay);
             user.traveledDelays.push(userDelay);
             await user.save();
 

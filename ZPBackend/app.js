@@ -1,3 +1,5 @@
+process.removeAllListeners('warning'); // supress punycode deprecated warning
+
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
@@ -5,6 +7,13 @@ var mongoose = require('mongoose');
 var cors = require('cors');
 const cron = require('node-cron');
 const { exec } = require('child_process');
+const aedes = require('aedes')();
+const server = require('net').createServer(aedes.handle);
+const PORT = 1883;
+
+server.listen(PORT, function () {
+    console.log(`Aedes MQTT broker started on port ${PORT}`);
+});
 
 //Reading mongoDB URI from args or env variable
 var args = process.argv.slice(2);
@@ -63,6 +72,10 @@ cron.schedule('*/5 * * * *', () => {
 });
 
 
+require('./mqtt/mqttClient');  // Initialize MQTT connection
+require('./mqtt/mqttHandler'); // Handle MQTT messages
+
+
 var indexRouter = require('./routes/index');
 var testRouter = require('./routes/testRoutes');
 const trainLocHistoryRouter = require('./routes/trainLocHistoryRoutes');
@@ -70,6 +83,7 @@ var userRouter = require('./routes/userRoutes');
 const stationRouter = require('./routes/stationRoutes');
 const delayRouter = require('./routes/delayRoutes');
 const routeRouter = require('./routes/routeRoutes');
+const passengerRouter = require('./routes/passengerRoutes');
 
 app.use('/', indexRouter);
 app.use('/tests', testRouter);
@@ -78,5 +92,6 @@ app.use('/users', userRouter);
 app.use('/stations', stationRouter);
 app.use('/delays', delayRouter);
 app.use('/routes', routeRouter);
+app.use('/passengers', passengerRouter);
 
 module.exports = app;
