@@ -254,7 +254,7 @@ public class MapScreen implements Screen {
         Label labelSpeed = new Label("Speed:", labelStyle);
         SelectBox<Integer> selectBoxSpeed = new SelectBox<>(selectBoxStyle);
         selectBoxSpeed.setItems(1, 2, 3, 4, 5);
-        selectBoxSpeed.setSelected(1);
+        selectBoxSpeed.setSelected(speedOfAnimation);
         Label labelTime = new Label("Time:", labelStyle);
         Label labelCurrentTime = new Label(dateTimeCurrent.format(DateTimeFormatter.ISO_DATE_TIME), labelStyle);
 
