@@ -161,6 +161,7 @@ public class MapScreen implements Screen {
                 stage.clear();
                 drawTrainLoc();
                 drawAnimationInput();
+                drawAddData();
             }
         }
 
@@ -283,6 +284,7 @@ public class MapScreen implements Screen {
                 stage.clear();
                 drawAnimationInput();
                 drawTrainLoc();
+                drawAddData();
             }
         });
 
@@ -295,6 +297,7 @@ public class MapScreen implements Screen {
                 iterInAnimation = 0;
                 stage.clear();
                 drawAnimationInput();
+                drawAddData();
             }
         });
 
@@ -327,7 +330,7 @@ public class MapScreen implements Screen {
         }
         windowAnimationInput.center();
 
-        windowAnimationInput.sizeBy(600, 200);
+        windowAnimationInput.sizeBy(650, 250);
         windowAnimationInput.setPosition(100, 2000);
 
 
@@ -396,7 +399,7 @@ public class MapScreen implements Screen {
             windowAboveTrain.add(labelNextStop).row();
             windowAboveTrain.add(labelDelay).row();
             windowAboveTrain.add(textButtonUpdate);
-            windowAboveTrain.sizeBy(300, 100);
+            windowAboveTrain.sizeBy(400, 150);
             windowAboveTrain.setPosition(marker.x - windowAboveTrain.getWidth()/2, marker.y + trainIconHeight);
             windowAboveTrain.setVisible(false);
 
@@ -430,7 +433,6 @@ public class MapScreen implements Screen {
                 displayAddWindow = !displayAddWindow;
                 stage.clear();
                 drawAnimationInput();
-                drawTrainLoc();
                 drawAddData();
             }
         });
@@ -533,7 +535,7 @@ public class MapScreen implements Screen {
 
             windowAddData.add(textButtonAddData).colspan(2).padTop(10f);
 
-            windowAddData.sizeBy(600, 600);
+            windowAddData.sizeBy(600, 670);
             windowAddData.setPosition(1600, 1800);
             stage.addActor(windowAddData);
         }
@@ -653,7 +655,7 @@ public class MapScreen implements Screen {
             windowUpdateData.add(textButtonCancel).padTop(10f);
             windowUpdateData.add(textButtonAddData).padTop(10f);
 
-            windowUpdateData.sizeBy(600, 600);
+            windowUpdateData.sizeBy(600, 670);
             windowUpdateData.setPosition(x-600, y-600);
             stage.addActor(windowUpdateData);
         }
