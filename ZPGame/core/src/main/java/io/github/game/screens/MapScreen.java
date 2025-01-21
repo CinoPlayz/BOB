@@ -166,7 +166,6 @@ public class MapScreen implements Screen {
                 drawTrainLoc();
                 drawAnimationInput();
                 drawAddData();
-                drawOpenGame();
             }
         }
 
@@ -304,6 +303,7 @@ public class MapScreen implements Screen {
                 stage.clear();
                 drawAnimationInput();
                 drawAddData();
+                drawOpenGame();
             }
         });
 
